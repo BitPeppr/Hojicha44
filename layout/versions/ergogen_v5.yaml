@@ -1,0 +1,220 @@
+meta:
+  engine: 4.2.1
+  name: kbd-v2-curved-thumb
+  version: 0.8.0
+
+units:
+  kx: u
+  ky: u
+  px: kx + 3
+  py: ky + 3
+
+points:
+  zones:
+    matrix:
+      key:
+        padding: 1ky
+        spread: 1kx
+        tags:
+          - key
+      anchor:
+        shift: [0, 0]
+      columns:
+        outer:
+          key:
+            stagger: -8
+        pinky:
+          key:
+            stagger: 4
+        ring:
+          key:
+            stagger: 5
+        middle:
+          key:
+            stagger: 7
+        index:
+          key:
+            stagger: -3
+        inner:
+          key:
+            stagger: -6
+      rows:
+        bottom:
+        home:
+        top:
+    encoder:
+      anchor:
+        ref: matrix_inner_home
+        shift: [23, -26]
+      key:
+        function: Enc
+        tags:
+          - key
+          - encoder
+    thumbs:
+      key:
+        padding: 1ky
+        spread: 1kx
+        tags:
+          - key
+      anchor:
+        ref: matrix_middle_bottom
+        shift: [0.6, -24.5]
+      columns:
+        t_ctrl:
+          key:
+            rotate: 0.5
+            shift: [0, 0]
+            function: Ctrl
+            mirror:
+              function: Shift
+        t_cmd:
+          key:
+            rotate: -13.5
+            shift: [2.7, -2.5]
+            function: Cmd
+            mirror:
+              function: Opt
+        t_l1:
+          key:
+            rotate: -27.5
+            shift: [4.4, -10.2]
+            function: L1
+            mirror:
+              function: L2
+        t_space:
+          key:
+            rotate: -41.5
+            shift: [4.6, -22.6]
+            function: Space
+            mirror:
+              function: Enter
+      rows:
+        cluster:
+    mcu:
+      key:
+        tags:
+          - helper
+        function: MCU
+        width: 18
+        height: 33
+      anchor:
+        ref: encoder
+        shift: [0, 38]
+  mirror:
+    ref: matrix_inner_top
+    distance: 4.5kx
+
+outlines:
+  board:
+    - what: polygon
+      points:
+        - ref: matrix_outer_top
+          shift: [-9.5, 9.5]
+        - ref: matrix_ring_top
+          shift: [-9.5, 9.5]
+        - ref: matrix_middle_top
+          shift: [-9.5, 9.5]
+        - ref: matrix_middle_top
+          shift: [9.5, 9.5]
+        - ref: matrix_index_top
+          shift: [9.5, 9.5]
+        - ref: matrix_inner_top
+          shift: [9.5, 9.5]
+        - ref: mcu
+          shift: [9, 16.5]
+        - ref: mcu
+          shift: [9, -16.5]
+        - ref: encoder
+          shift: [14, 0]
+        - ref: thumbs_t_space_cluster
+          shift: [12.7, 0.78]
+        - ref: thumbs_t_space_cluster
+          shift: [0.78, -12.7]
+        - ref: thumbs_t_ctrl_cluster
+          shift: [-8.92, -9.08]
+        - ref: thumbs_t_ctrl_cluster
+          shift: [-9.08, 8.92]
+        - ref: matrix_ring_bottom
+          shift: [0.0, -15.0]
+        - ref: matrix_outer_bottom
+          shift: [9.5, -9.5]
+        - ref: matrix_outer_bottom
+          shift: [-9.5, -9.5]
+    - what: polygon
+      expand: 3
+      fillet: 2
+      points:
+        - ref: mirror_matrix_outer_top
+          shift: [-9.5, 9.5]
+        - ref: mirror_matrix_ring_top
+          shift: [-9.5, 9.5]
+        - ref: mirror_matrix_middle_top
+          shift: [-9.5, 9.5]
+        - ref: mirror_matrix_middle_top
+          shift: [9.5, 9.5]
+        - ref: mirror_matrix_index_top
+          shift: [9.5, 9.5]
+        - ref: mirror_matrix_inner_top
+          shift: [9.5, 9.5]
+        - ref: mirror_mcu
+          shift: [9.0, 16.5]
+        - ref: mirror_mcu
+          shift: [9.0, -16.5]
+        - ref: mirror_encoder
+          shift: [14.0, 0.0]
+        - ref: mirror_thumbs_t_space_cluster
+          shift: [12.7, 0.78]
+        - ref: mirror_thumbs_t_space_cluster
+          shift: [0.78, -12.7]
+        - ref: mirror_thumbs_t_ctrl_cluster
+          shift: [-8.92, -9.08]
+        - ref: mirror_thumbs_t_ctrl_cluster
+          shift: [-9.08, 8.92]
+        - ref: mirror_matrix_ring_bottom
+          shift: [-0.0, -15.0]
+        - ref: mirror_matrix_outer_bottom
+          shift: [9.5, -9.5]
+        - ref: mirror_matrix_outer_bottom
+          shift: [-9.5, -9.5]
+    - operation: subtract
+      what: circle
+      where: [encoder, mirror_encoder]
+      radius: 8
+  demo:
+    - what: rectangle
+      where: [key]
+      size: [kx - 1, ky - 1]
+  _keycaps:
+    - what: rectangle
+      where: [key]
+      size: 18
+      fillet: 3
+  _mcu:
+    - what: rectangle
+      where: [mcu, mirror_mcu]
+      size: [18, 33]
+      fillet: 1
+    - what: rectangle
+      where: [mcu, mirror_mcu]
+      size: [8.94, 7.35]
+      operation: stack
+      fillet: 0.1
+      adjust:
+        shift: [0, 33/2 - 7.35/2 + 0.7]
+  encoder_holes:
+    - what: circle
+      where: [encoder, mirror_encoder]
+      radius: 8
+  preview:
+    - what: outline
+      name: board
+    - what: outline
+      name: _keycaps
+      operation: stack
+    - what: outline
+      name: encoder_holes
+      operation: stack
+    - what: outline
+      name: _mcu
+      operation: stack

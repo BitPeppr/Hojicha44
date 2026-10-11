@@ -1,0 +1,97 @@
+# Layout-phase specification (frozen v2 baseline).
+# Source of truth for geometry is layout/ergogen yaml/config.yaml;
+# this file records the keymap and decisions around it.
+# Statuses: fixed | provisional | candidate | measured | undecided.
+
+version: 0.9.0
+status: provisional  # geometry agreed, awaiting print-test before baseline tag
+
+key_count:
+  total: 44
+  per_side: 22
+  matrix: 18        # 6 columns x 3 rows, MX 19 mm pitch
+  thumbs: 4
+  number_row: false # status: fixed — numbers/symbols live on L1
+
+matrix:
+  columns: [outer, pinky, ring, middle, index, inner]
+  rows: [top, home, bottom]
+  splay: 0                  # status: fixed — parallel columns
+  stagger:                  # status: provisional — mm offsets, outer sits low
+    outer: -8
+    pinky: 4
+    ring: 5
+    middle: 7
+    index: -3
+    inner: -6
+
+thumbs:
+  # Left west->east / right west->east. All standalone keys (status: fixed),
+  # all 1u. The four sit on one true circle (R=90 about the thumb joint,
+  # fitted residual 0.1mm): even ~13.2deg steps give even ~22mm chords and
+  # clock-tangent rotations (tangent error <=1.6deg), so every key sits ON
+  # the curve facing along it. Edge clearance >=1.3mm on every cap pair
+  # (verified by polygon check, not center distance).
+  left: [Ctrl, Cmd, L1, Space]
+  right: [Enter, L2, Opt, Shift]
+  notes:
+    - Cmd is Super; Opt is Alt (status: fixed).
+    - L1 and L2 stay separate layers (status: fixed).
+    - Fn is the L1+L2 chord, not a key (status: provisional).
+    - Tab is an L1+Space combo (status: provisional).
+    - Cluster arcs down-east into the split gap; inner key most rotated.
+
+encoder:
+  per_side: 1 # status: provisional
+  position: south of the inner column, clear of the MCU zone at top-inner
+  plate_cutout: 16mm circle at the encoder point, in the board outline
+  footprint: Ergogen stock `rotary` (EC11), attached in the PCB phase
+
+mcu:
+  keepout: 18x33 rect north of the encoder, in the gap (`_mcu` outline)
+  part: nice!nano (Pro Micro footprint) # status: provisional
+
+screws:
+  removed # no screws in the layout phase; revisit at CAD if plates need mounting
+
+preview:
+  outline: stacks board + keycaps + encoder holes + MCU rect
+  use: ergogen.xyz Outlines tab, not the points demo
+
+board:
+  construction: concave hull per half (concavity 25) incl. MCU rect,
+    expanded 3mm with rounded joints + fillet, encoder circles cut
+  smoothing: helper point bridges the dip between thumb fan and outer
+    columns so the contour runs gentle there
+  note: plate truth moves to CadQuery in the CAD phase; this is a preview
+
+relocated_keys:  # v1 -> v2 dispositions (status: fixed unless noted)
+  Tab_1_5u: inner-bottom-left
+  Cmd_1_5u: left thumb
+  Shift_1_5u: right thumb
+  quote_column: L1 layer
+  Func_key: dropped  # superseded by the Fn chord
+  blank_placeholders: dropped
+
+keymap:
+  # (column, row): left-hand legends; right hand mirrors per
+  # layout/generators/export_kle.py MLAB. Inner-bottom Tab/Esc status: provisional.
+  left:
+    outer: [Q, A, Z]
+    pinky: [W, S, X]
+    ring: [E, D, C]
+    middle: [R, F, V]
+    index: [T, G, B]
+    inner: ["~`", "{[_-", Tab]
+  right:
+    inner: ["|\\", "}]", Esc]
+    index: [Y, H, N]
+    middle: [U, J, M]
+    ring: [I, K, "<"]
+    pinky: [O, L, ">."]
+    outer: [P, ":;0", "?/"]
+
+open_points:
+  - Left-hand Shift chords depend on the right-thumb Shift.
+  - Backspace/Delete live on layers (unmapped so far): decide L1 positions.
+  - Print-test at 1:1, then tag layout baseline in git.

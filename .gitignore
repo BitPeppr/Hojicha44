@@ -1,0 +1,9 @@
+# dependencies
+node_modules/
+
+# macOS
+.DS_Store
+
+# reproducible outputs (regenerate via README; sources are the truth)
+layout/generated/
+*.log
