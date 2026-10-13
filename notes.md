@@ -459,3 +459,21 @@ keymap content.
    Knob: kriscables anodized aluminium EC11 (13×13mm, 6mm bore, €4.90) —
    clears the 16mm cutout, set-screw takes the 20mm shaft; spin/push
    clearance is a first-article item.
+
+## Release hardening (2026-10-14)
+
+- **DRC rules tightened to fab-real values** (`Hojicha44-{Left,Right}.kicad_pro`,
+  `board.design_settings.rules`): `min_copper_edge_clearance` 0.075→0.2,
+  `min_via_annular_width` 0.05→0.15, `min_clearance` 0.0→0.2. Netclasses
+  already enforced 0.2/0.25, so nothing routed changed — but the gate now
+  protects instead of waving through. Fresh DRC both halves: still only W1,
+  0 unconnected. (Generator only owns track/via presets + netclasses, so
+  direct pro-file edits survive regen. `min_track_width` was already 0.2.)
+- **Release Gerbers use explicit layers.** Default export dumps 21 layers
+  (Courtyard/Fab/Adhesive/Margin/Eco/User_* junk); `out/release/<Half>/`
+  now holds exactly F.Cu,B.Cu,F/B.Mask,F/B.Silkscreen,F/B.Paste,Edge.Cuts
+  + job + drill + pos (verified file list, all non-empty). Command shape
+  in fix.md §5.3 stands, with `-l` as used here. Outputs stay gitignored.
+- **ZMK `left_encoder` is shared-node naming, not a bug.** Defined once in
+  the dtsi, enabled per overlay, consumed by `sensors` — renaming per half
+  would break the reference. Comment added at the definition.

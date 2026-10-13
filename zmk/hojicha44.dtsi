@@ -60,6 +60,9 @@
     };
 
     left_encoder: encoder_left {
+        /* Shared node: defined ONCE here, enabled per-half by each overlay's
+           &left_encoder { status = "okay"; } and consumed by sensors below.
+           The name is NOT a left-half leak — do NOT rename per half. */
         compatible = "alps,ec11";
         a-gpios = <&gpio1 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A0 */
         b-gpios = <&gpio0  2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A1 */

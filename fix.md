@@ -43,9 +43,9 @@ defects.
 | P0-1 | Blocker | PCB outline | USB notch is an enclosed hole, not an open edge notch (both halves) | §2.1 |
 | P0-2 | Blocker | PCB fiducials | All 6 fiducials sit outside the board outline | §2.2 |
 | P0-3 | Blocker | Pipeline | `gen_pcb.py` (11:13) is newer than the PCB it generated (11:12), and layout outputs are gitignored | §2.3 |
-| P0-4 | Blocker | Routing | No copper exists (0 tracks, 0 vias, no pour); 77 unconnected items per half | §2.4 |
+| P0-4 | Blocker | Routing | No copper exists (0 tracks, 0 vias, no pour); 77 unconnected items per half (→ §9: DONE — routed, 0 unconnected) | §2.4 |
 | P0-5 | Blocker (verify) | Battery | Battery RAW vs B+ path needs a physical continuity check and spec citation fix | §2.5 |
-| P0-6 | Blocker (order) | BOM | No locked MPNs: switch, slide switch, encoder, JST, battery, socket height | §2.6 |
+| P0-6 | Blocker (order) | BOM | No locked MPNs: switch, slide switch, encoder, JST, battery, socket height (→ §9: DONE — MPNs in symbols + spec/bom.md; cell/knob locked to stock) | §2.6 |
 | P1-1 | Must-fix | Silk | `+` polarity mark overlaps JST silk (DRC error) | §3.1 |
 | P1-2 | Must-fix | Silk | Silk over pads on diodes, TRRS, and a back-side switch pad | §3.2 |
 | P1-3 | Must-fix | Silk | Reference text overlaps silk on SW_L20/L21 and SW_R20/R21 | §3.3 |
