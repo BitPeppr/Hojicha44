@@ -3,8 +3,8 @@
 # this file records the keymap and decisions around it.
 # Statuses: fixed | provisional | candidate | measured | undecided.
 
-version: 0.9.0
-status: provisional  # geometry agreed, awaiting print-test before baseline tag
+version: 0.9.2
+status: provisional  # geometry agreed + PCB envelope added, awaiting print-test
 
 key_count:
   total: 44
@@ -44,23 +44,101 @@ thumbs:
 encoder:
   per_side: 1 # status: provisional
   position: south of the inner column, clear of the MCU zone at top-inner
-  plate_cutout: 16mm circle at the encoder point, in the board outline
+  # Knock-through belongs to the PLATE/CASE, not the PCB: the EC11E body sits
+  # ON the board and all seven of its pads need copper (the A/B/C row is within
+  # 7.9mm of the knob centre, i.e. inside an 8mm-radius hole).
+  plate_cutout: 16mm circle at the encoder point, in the `plate` outline
   footprint: Ergogen stock `rotary` (EC11), attached in the PCB phase
 
 mcu:
   keepout: 18x33 rect north of the encoder, in the gap (`_mcu` outline)
   part: nice!nano (Pro Micro footprint) # status: provisional
+  orientation: >-
+    USB-UP — the USB end points at the north board edge, which is open, so
+    the plug seats in the `usb` notch. The module's USB shell does NOT
+    overhang that edge (measured: shell x 113.5..122.5 vs board edge x=131.5,
+    so it sits ~9mm inboard); the notch alone provides plug seating.
+    Because the nice!nano v2 puts D1/RAW at the USB end, that means pads
+    1 (D1) and 24 (RAW) face north and the ANTENNA end (pads 12/13) faces
+    south, into the board. Antenna keepout is the `antenna_keepout` circle
+    (r=5) at `antenna`, copper-free for 5mm past the module's south edge.
+  status: fixed (placement); case clearance for the antenna is a CAD-phase
+    cut — mark the keepout on the case too.
+  battery: 301230 (3x12x30) sits UNDER the socketed module; the `batt`
+    outline reserves its footprint. JST tail exits south to the `jst` point.
+
+non-key anchors:  # PCB-phase mechanical envelope (status: fixed; see config)
+  usb:    module USB-C centre at the north edge (opens the seat notch)
+  antenna: module south (antenna) end — r=5 copper keepout
+  batt:   301230 cell under the module (outline `_batt`, 12.5x31)
+  jst:    JST-PH socket, south of the battery (`_jst`, 9x9 zone)
+  pwrsw:  WS-SLTV slide switch on the north edge, west of the USB notch;
+    outline `_pwrsw` (13x5), case slot over the actuator
+  trrs:   PJ-320A at the inner (gap-facing) edge; outline `_trrs` (17x7)
+    centred on the `trrs` anchor, so the mouth (rect east edge) sits 3.46mm
+    PROUD of the board edge, inside the split gap, for plug access.
+    # Measured on the live config: board edge x=135.54, mouth x=139.00.
+    # The jack is THT with its pin row inboard, so only the barrel overhangs.
+
+split_width:
+  mirror_distance: 4.5kx + 16
+      # status: fixed — user-approved widening
+    # Single line in `layout/ergogen yaml/config.yaml` under `mirror:`.
+    # Revert by deleting the "+ 16" — that restores the frozen baseline.
+    # Snapshots of both widths: layout/iterations/keyboard_layout_v8.yaml
+    # (4.5kx) and keyboard_layout_v8_exp_split.yaml (4.5kx + 16).
+    # Left-half key geometry is bit-identical in both; only the right half
+    # translates. Frozen v7 left-half key positions unchanged.
+  inner_gap_at_encoder: 18.50mm between the two board edges  # status: measured
+  inner_gap_at_trrs: 20.42mm board-edge to board-edge; the two TRRS mouths
+    stand 3.46mm proud each, leaving 13.50mm mouth-to-mouth. Two plugs need
+    ~6mm engagement per side (12mm), so this engages with ~1.5mm of slack.
+    # PCB GATE: confirm the molded plug BOOTS (wider than the barrel) also
+    # clear within 13.50mm. If they foul, use thinner boots or option (a).
+  trrs_resolution: the +16mm widening RESOLVED the frozen-width problem — at
+    4.5kx the mouths faced each other across ~4.4mm and no plug could seat.
+    # The widening was chosen because it fixes TRRS without moving any key.
+    # Superseded alternatives, if the widened gap ever becomes a problem:
+    #   (a) both jacks on the OUTER edge, cable looping around the back,
+    #   (b) one jack per half on the north edge above the MCU zone,
+    #   (d) drop the wired split (BLE-only; TRRS is optional per
+    #       spec/electronics.yaml architecture.split_link).
+    # All of these change only the jack, never the key geometry.
+  battery_antenna_overlap: the 301230 cell (`_batt`, y 16.5..47.5) sits over
+    the antenna keepout circle (r=5 centred y=16.5) over y 16.5..21.5  # status: fixed — accepted, standard practice
+    # RESOLVED 2026-10-13 by researching the reference builds. EVERY mainstream
+    # wireless split puts the cell directly under the socketed nice!nano:
+    #   Lily58 (typeractive build guide)  2x 301230 under the module; "you can't
+    #     go much larger than 301230"
+    #   Corne (crkbd#149, typeractive)     301230 under the module; needs a
+    #     taller pin row (Mill-Max 335/800/350) for the 3mm cell
+    #   Sofle v2.0w / SofleChocWireless / Aurora Sofle V2 — 110mAh slid under
+    #     the controller; 4mm spring pins required, or lift the pins to make room
+    #   splitkb Aurora series (Lily58/Corne/Sofle/Sweep/Helix): "80mAh or 110mAh
+    #     ... can usually be placed between the PCB and the controller"
+    #   nicekeyboards nice!nano docs: "in most cases the battery should fit
+    #     underneath the socketed nice!nano"
+    # NOT ONE of them applies an antenna keepout for the cell. Physically the
+    # cell sits ABOVE this PCB and BELOW the module, so the r=5 COPPER keepout
+    # on our board is honoured regardless — the two are independent layers.
+    # Electrically a PCB trace antenna has a null perpendicular to its plane,
+    # so a cell 3mm directly below the antenna end sits in that null rather
+    # than shadowing the main lobe. Empirically it is not a practical problem.
+    # IF range ever disappoints: 301228 (90mAh) is a drop-in shorter cell, and
+    # the documented capacity upgrade is a 306080 between PCB and bottom plate
+    # with 9mm standoffs (Sofle) — which also puts FR4 between antenna and cell.
 
 screws:
   removed # no screws in the layout phase; revisit at CAD if plates need mounting
 
 preview:
-  outline: stacks board + keycaps + encoder holes + MCU rect
+  outline: stacks board + keycaps + encoder holes + MCU rect + non-key zones
   use: ergogen.xyz Outlines tab, not the points demo
 
 board:
   construction: concave hull per half (concavity 25) incl. MCU rect,
-    expanded 3mm with rounded joints + fillet, encoder circles cut
+    expanded 4.5mm with rounded joints + fillet; encoder circles NOT cut
+    (they live in `plate`) — the EC11E body rests on the PCB
   smoothing: helper point bridges the dip between thumb fan and outer
     columns so the contour runs gentle there
   note: plate truth moves to CadQuery in the CAD phase; this is a preview

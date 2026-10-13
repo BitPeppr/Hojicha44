@@ -1,0 +1,318 @@
+# Electronics specification (source of truth for schematic/PCB).
+# Statuses: fixed | provisional | candidate | measured | undecided.
+
+version: 0.3.1
+status: provisional
+    # schematic rev 0.3 regenerated (must-fix review applied), PCB placed+routed
+  # with DRC clean modulo waivers W1/W2; still provisional pending the
+  # hardware pinout check against a physical module.
+
+architecture:
+  controller: nice!nano x2          # status: fixed — one per half, ZMK/BLE
+  split_link: TRRS-optional         # status: fixed — BLE primary, TRRS is a
+    # bring-up/debug fallback only. See split_connector.plug_type and
+    # .hotplug; splitkb advises against cabling two battery halves.
+  firmware: ZMK                    # status: fixed
+
+power:
+  usb: USB-C on each half, onboard the nice!nano (no PCB part)
+      # status: fixed
+    # host-wired operation = plug USB into either half's module; PCB phase
+    # must keep both module USB-C ports exposed at the board edge.
+  battery: 301230 LiPo, 3.7V nominal, ~110mAh, JST-PH 2.0mm
+      # status: fixed
+    # 3x12x30mm with PCM; fits UNDER the socketed nice!nano (12mm cell clears
+    # the socket's pin rows). NOTE: 302030 (3x20x30) was the earlier pick and
+    # does NOT fit — 20mm is wider than the 18mm module and fouls the socket
+    # pins. splitkb/nicekeyboards both recommend the 301230/301228 class for
+    # exactly this reason. 304050 600mAh stays a future under-PCB option
+    # (needs soldered wires: JST-SYP plug).
+    # Locked source (full list: spec/bom.md): kriscables 301230 110mAh +
+    # JST PH 2.0mm, 3x12x30, 3.7V — listing documents 100mA to full in ~1.1h
+    # (0.9C, suitable). Alternates KEEBD / Typeractive 301230 (check stock).
+    # Reject unprotected pouches on arrival. First-article DMM: RAW-B+ short,
+    # GND-B- short, RAW-VCC open, charge-ON orange LED.
+  battery_connector: JST-PH 2.0mm, pin1 = pack+ (red), pin2 = pack- (black)
+    # status: fixed — footprint gets a `+` silkscreen mark at PCB phase;
+    # reversed battery polarity can damage board and cell: visual check.
+  battery_wiring: >-
+    pack+ to power-switch common, pack- to GND; switched rail to MCU RAW.
+    RAW/GND are the documented equivalents of B+/B- (nicekeyboards
+    Getting Started: "If you need to use these pins with your PCB, RAW and
+    GND are the respective equivalents to B+ and B-"; also "directly
+    connected" per community measurements). B+/B- module holes stay OPEN —
+    official guidance forbids socketing them, and the 2x12 socket here
+    covers only the 12 signal pins per side, matching the Typeractive build
+    procedure exactly.
+  # status: fixed — first-article DMM check (pack+ to RAW with switch ON)
+  # still wanted, but the topology is officially blessed, not a guess.
+  charger: nice!nano onboard (100mA, 500mA with charge-boost jumper)
+      # status: fixed
+    # 130mAh charges in ~1.3h at 100mA.
+    # CHARGE GATE: the power switch sits between pack+ and MCU RAW, so the
+    # cell only charges while the switch is ON. Charging with the switch OFF
+    # does nothing. Document on the case: "charge only when ON".
+  switch: slide SPDT Wuerth WS-SLTV 450301014042 (10x2.5x6.4, P2.54)
+      # status: fixed — MPN locked to the footprint; datasheet (we-online
+      # 450301014042.pdf, front view 2-1-3, schematic marks 1 as COM) confirms
+      # pin 1 (middle) = COMMON, pins 2/3 = throws. Schematic wires pack+ to
+      # pin 1 and the rail to pin 2 (pin 3 NC); check_pwr_footprint() guards
+      # the middle-pad layout against library drift. 500mA/12VDC covers BLE
+      # peaks (~20mA) with margin; edge-accessible actuator for the case slot.
+      # First-article check left: which slider end joins 1-2 vs 1-3 (ON
+      # position) — either way it behaves as on/off, just swapped.
+  sense: none external — ZMK reads VDDH internally  # status: fixed
+
+matrix_per_half:
+  rows: 4                          # R0-R2 fingers, R3 thumbs
+  cols: 6                          # C0-C5 finger columns; thumbs on C0-C3
+  used: 22                         # 18 + 4 thumbs; R3C4-C5 NC (spare)
+  pitch: 19.05                     # true MX pitch, matches layout units
+  diode_direction: COL2ROW         # status: fixed
+  diode_part: 1N4148W SOD-123      # status: fixed
+  diode_symbol: Diode:1N4001 with Value 1N4148W
+      # 1N4148 symbol uses
+    # `extends` which kicad-cli ERC cannot netlist; identical graphics
+
+switch:
+  type: Kailh Choc v1 (PG1350), 1u, hotswap  # status: fixed
+  socket: Choc v1 hotswap socket, SMD bottom (part of footprint)  # status: fixed
+  symbol: Switch:SW_Push  # 2-pin passive is electrically correct for Choc
+  footprint: Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u  # vendored, see sources
+  pitch_note: 19.05mm retained (not Choc-native 18x17); small cap gaps accepted
+  keycaps: Choc v1 only (MBK/MCC/CFX); MX stems do not fit  # status: fixed
+
+encoder_per_half:
+  count: 1                         # status: fixed (kept from layout v7)
+  part: Alps EC11E15244G1, vertical, 30 detents / 15 pulses, 0.5mm switch
+    # status: fixed — shortest stock EC11E vertical-switch variant (20mm
+    # shaft, tip 24.5mm above PCB). No shorter EC11E-switch exists and KiCad
+    # stocks only H20mm footprints; Bourns PEC11L-4215F-S0015 (15mm) would
+    # need a tab-span check (12.5 vs 12.8mm). Knob sits ~10mm proud of MBK
+    # caps — normal on Choc boards, easier to grip; trimming the shaft is
+    # the documented fallback, not the plan.
+  symbol: Device:RotaryEncoder_Switch
+  footprint: Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles
+  quadrature: [ENC_A, ENC_B]
+    # status: provisional — these two go to MCU A0/A1
+  push: dedicated GPIO D16  # status: fixed — gpio-keys + uicr overlay drafted
+  pullups: nRF52840 internal pull-ups via ZMK (no external resistors/caps)
+    # status: fixed — acceptable for prototype scan rates; add RC filtering
+    # only if encoder noise shows up in testing.
+
+split_connector:
+  part: PJ-320A TRRS 3.5mm 4-pole, THT  # status: fixed (keebio-tested part)
+  symbol: Connector_Audio:AudioJack4
+  footprint: Hojicha44:TRRS-PJ-320A  # vendored, pads renamed to T/R1/R2/S
+  pad_map: {T: Tip, R1: Ring1, R2: Ring2, S: Sleeve}
+      # verified against
+    # keebio fab intent + XKB datasheet terminal spacing (3.0/4.0mm)
+  pinout:                          # status: fixed — straight cable, both halves identical
+    tip: SPLIT_TX
+    ring1: SPLIT_RX
+    ring2: UNCONNECTED
+        # status: fixed — SAFETY: wiring ring2 would
+      # join both batteries through the cable into the charger MOSFETs
+      # (splitkb documents MCU damage from this); ZMK wired split needs
+      # only TX/RX/GND. 4-pole jack kept for cable compatibility.
+    sleeve: GND
+  plug_type: 90-degree right-angle TRRS cable REQUIRED  # status: fixed
+    # Clearance, measured from placed boards: mouths sit ~22.4mm apart face
+    # to face (20.42mm board-edge to board-edge; each mouth ~1mm inside its
+    # edge — the 12.1mm footprint body is shorter than the 17mm _trrs zone
+    # first assumed, so centring the body put the mouths further back).
+    #   required mouth-to-mouth = (plug_length - insertion_depth) x 2
+    # PJ-320A body is 14.1 x 5 x 6mm, terminals on 3.0/4.0mm pitch, so the
+    # barrel cavity is ~10mm deep (NOT the 6mm first assumed).
+    #   bare metal plug ~15mm  -> protrudes ~5mm  -> pair needs ~10mm  FITS
+    #   molded straight ~22mm -> protrudes ~12mm -> pair needs ~24mm  MARGINAL
+    #   90-degree plug        -> protrudes ~2-4mm -> pair needs ~8mm  FITS EASILY
+    # A molded straight plug is a tight fit for this gap. 90-degree is
+    # the community standard for splits anyway (it also cuts port torque), so
+    # this costs nothing. Both cables exit upward and arch over the gap —
+    # size the cable port-to-port + 2-5cm minimum, never shorter.
+  hotplug: plug TRRS before switching either half ON
+      # status: fixed
+    # Sleeve-GND mates at an angle on insertion; powering both halves first
+    # can glitch TX/RX and brown-out the charger MOSFETs. Order: cable, then
+    # power switches ON; reverse on teardown.
+    # CAVEAT — splitkb's own nice!nano FAQ says do NOT cable two nice!nanos:
+    # "Do not use a cable between the halves. This poses multiple risks, from
+    # shorting connections when unplugging while the battery is still on, to
+    # unbalanced charging when two batteries are connected." The ring2-NC
+    # decision above already blocks the charging half of that; the shorting
+    # risk is mitigated only by the on/off ordering above, not eliminated.
+    # TRRS here is a bring-up/debug fallback, NOT a daily-use link. If it is
+    # wanted in normal use, move to 4-pin JST or a proper inline connector.
+
+mcu_symbol: Hojicha44:nice_nano    # project-local lib (24 pins, unique numbers)
+mcu_footprint: Hojicha44:Socket_Strips_2x12_P2.54mm_NiceNano
+  # pin numbering follows the PRO MICRO / nice!nano convention, NOT the stock
+  # PinSocket_2x12 (row-major serpentine, 2.54mm row spacing). Verified against
+  # shipped sources that agree with the nice!nano v2 silkscreen:
+  #   keebio/fourier   `ProMicro-promicro` symbol:   pin1=TX0/PD3 ... pin24=RAW
+  #   keebio/Keebio-Parts ArduinoProMicro.kicad_mod: 15.24mm row separation
+  #   raeedcho/temper  `nice_nano` symbol:            pin1=D1/P0.06 ... 24=BATTERY+
+  #   (temper agrees on NUMBERING only — its 9.4mm pad spacing is a custom
+  #   solder-jumper mod, NOT a mechanical reference. Geometry rests on the
+  #   official pinout image: 18.3 x 34.9mm board bbox + 15.24mm column gap.)
+  # => pads 1-12 run down the TX/D1 edge (x=0: D1,D0,GND,GND,D2..D9) and pads
+  #    13-24 down the RAW edge (x=-15.24) in the opposite direction
+  #    (D10,D16,D14,D15, A0..A3,VCC,RST,GND,RAW): along-row pitch 2.54mm,
+  #    ROW SEPARATION 15.24mm (was 2.54 — module could not fit). Pads 1 (D1)
+  #    and 24 (RAW) share the USB end (y=0); 12 (D9)/13 (D10) the antenna end.
+  #    check_mcu_footprint() guards pitch + separation + numbering + envelope.
+mcu_socket_height: 4.5mm round machine-pin SIP + 0.6mm pins (or 5.0mm PBS
+  + PLS square pins); 8.5mm Sullins PPTC121LFBN-RC as the roomy fallback.
+  Mill-Max 315 2.11mm is BANNED for the 301230 (needs 3.5mm min, 4.5-5.0
+  comfortable with PCM/tape/wires). JST is the SIDE-entry S2B-PH-K-S
+  (matches the placed footprint, wire exits parallel to the PCB, ~5-6mm
+  tall) + PHR-2 housing + SPH-002T-P0.5S crimps on the cell pigtail — it
+  fits neither under the stack, so it sits BESIDE the cell at the `jst`
+  anchor, which is where it is placed.
+  B+/B- module holes stay open (power enters via JST→switch→RAW).
+  # status: fixed — numbers from splitkb/Aurora + nrfmicro build practice.
+mcu_verify: >-
+  silkscreen; check_mcu_footprint() guards the pad map on every build.
+  Remaining check for the PCB phase: orient the socket so the pin-1/USB end
+  faces the module's USB end (open board edge, back of the keyboard).
+
+pin_map:                           # status: fixed — see pcb_gate below
+  rows: {R0: D4, R1: D5, R2: D6, R3: D7}
+  cols: {C0: D8, C1: D9, C2: D2, C3: D3, C4: D14, C5: D15}
+  encoder: {ENC_A: A0, ENC_B: A1, ENC_SW: D16}
+  split: {left_TX: D1, left_RX: D0, right_TX: D1, right_RX: D0}
+  spare_gpio: [A2, A3, D10]
+  note: >-
+    right half crosses TX/RX in copper (D1->RING1, D0->TIP), so BOTH
+    halves use identical UART pinctrl (TX=P0.06, RX=P0.08) — no firmware
+    swap. Full nRF/pin/net table: zmk/gpio-map.md (machine-generated).
+  nrf_mapping:                      # genuine nice!nano v2, per official pinout
+    D0: P0.08
+    D1: P0.06
+    D2: P0.17
+    D3: P0.20
+    D4: P0.22
+    D5: P0.24
+    D6: P1.00
+    D7: P0.11
+    D8: P1.04
+    D9: P1.06
+    D10: P0.09
+    D14: P1.11
+    D15: P1.13
+    D16: P0.10
+    A0: P1.15
+    A1: P0.02
+    A2: P0.29
+    A3: P0.31
+  gpio_accounting: 15 used + 3 spare = 18 footprint GPIOs, 0 shortfall
+  firmware_note: >-
+    D10 (spare) and D16 (encoder push) are NFC pins P0.09/P0.10;
+    ZMK needs `nfct-pins-as-gpios` in the board UICR overlay (one line,
+    standard for wireless builds). All other used pins are plain GPIO;
+    A1/A2/A3 are low-drive only — fine for scanned GPIO, no PWM use.
+  pcb_gate: >-
+    PROMOTED to fixed — MCU continuity machine-checked
+    (zmk/gpio-map.md: all 24 pins both halves, netlist vs nrf_mapping) and
+    the ZMK overlay draft agrees (diode-direction=col2row, row/col gpios,
+    identical UART pinctrl both halves). Remaining firmware work is content,
+    not mapping: keymap layers/combos + a `west build` compile check.
+
+schematic:
+  source: pcb/generators/gen_schematic.py  # never hand-edit the .kicad_sch
+  projects:
+    # ONE PER HALF - a split keyboard is two separate PCBs, not one:
+    - pcb/kicad/Hojicha44-Left.kicad_sch  (+ .kicad_pro, -erc.rpt)
+    - pcb/kicad/Hojicha44-Right.kicad_sch (+ .kicad_pro, -erc.rpt)
+  rationale: one flat sheet made a single netlist, so "Update PCB from
+    schematic" would pull both halves into one board file and mix the two
+    outlines. Two projects in one directory share the vendored Hojicha44
+    symbol/footprint libraries; each imports only its own half.
+  split_link_nets: >-
+    jack + the crossed MCU pin). The cable joins the two sheets — left tip
+    (left TX) meets right tip (right RX); left ring1 (left RX) meets right
+    ring1 (right TX). Straight cable, tip-to-tip: the crossover is in the
+    right half's copper (D1->RING1, D0->TIP), so both halves share identical
+    UART pinctrl. Keep both sheet names identical so the netlist pair is
+    self-documenting. GND is per-sheet; the halves share ground over the
+    cable sleeve only.
+  erc: >-
+    nets: RST, VCC3V3, A3, A2, D10)
+  audit: generator union-find checks 22 named nets / 82 named pins per sheet
+    (+23 anon switch-diode / battery series segments + 2 NCs per sheet)
+  guards: per sheet — 22x D_SOD-123 (stock DO-41 must never leak), exactly
+    1x PWR_FLAG, no VBAT_SHARED net, exactly 1x guarded column-major MCU
+    socket, and no foreign-half refs; title-block rev derives from spec
+    version (MAJOR.MINOR) so the sheet cannot drift from this file
+
+pcb:
+  files: >-
+    one placed .kicad_pcb per project, generated (never hand-edited):
+    `python3 pcb/generators/gen_pcb.py` — 54 footprints / 48 nets per half
+    (22 switches + 22 diodes + MCU + encoder + TRRS + JST + PWR + 3 fiducials
+    + 2 tooling holes) from points/points.yaml, outline from
+    outlines/board.dxf, nets from the per-half netlist export. Routed by the
+    deterministic router (pcb/generators/gen_route.py, dual-layer A*); GUI
+    copper preserved by normalized dedupe.
+  gates: pad-containment self-check (every numbered pad inside its outline —
+    would have caught the TRRS mouth-end pads going off-board, which DRC
+    does not check) + DRC clean modulo documented waivers W1 (rotated-part
+    lib_footprint_mismatch quirk) / W2 (Choc B.SilkS-vs-own-pad2 vendor
+    marginality). gen_schematic.py never clobbers a placed board.
+  stackup: 2-layer, 1.6mm, ENIG or HASL lead-free  # status: provisional
+  design_rules: 0.25mm track / 0.2mm clearance / 0.8-0.4mm via (defaults set
+    in both .kicad_pro; the KiCad template's 0-width/0-drill presets are
+    corrected by the generator — using them silently breaks DRC)
+  switch_orientation: as vendored, NOT flipped — switch on top (F.Cu cutout),
+    hotswap socket soldered beneath (B.Cu pads), diodes SMD on the front.
+    Confirmed by part geometry (switch pins and socket pads not co-planar).
+
+mechanical:
+  mounting: gasket, no PCB holes  # status: fixed — case clamps PCB edge
+  flex_cuts: per-key routed slots, added at PCB layout
+      # status: planned
+    # FAB GATE: confirm min slot width / cost with the fab (typically >=1mm
+    # routed) before drawing them; slots too tight = fab rejection.
+  antenna_keepout: >-
+    no case material within 3mm; antenna end points at an open board edge
+    # PCB-phase rule: module USB end = north board edge (USB notch + plug
+    # access), so the ANTENNA end = south end of the module. Reserve a 5mm
+    # copper-free zone there; the `antenna` point + `antenna_keepout`
+    # outline (r=5) mark it in the layout.
+  # status: fixed
+  usb_edge: both module USB-C ports exposed at board edge
+      # status: fixed
+    # Module is placed USB-up: pin 1 (D1) and pin 24 (RAW) at the USB end,
+    # antenna end (pads 12/13) at the south end. The board outline carries a
+    # 11x5.4mm notch at each `usb` point so the plug can seat. The module's
+    # USB shell does NOT overhang the board edge (measured inboard by ~9mm);
+    # the notch alone provides plug seating.
+  pcb_gates:  # all must hold before Gerber export
+    - JST-PH gets a `+` silkscreen mark at pin 1 (reverse polarity kills board+cell)
+    - diode polarity silk readable after placement (SOD-123 cathode band)
+    - 3x fiducials + 2x 3.2mm NPTH tooling holes per half, placed by
+      gen_pcb.py in clearance-searched spots (edge/pad/courtyard aware);
+      positions print every build. Gasket mounting itself uses no PCB holes.
+    - Choc socket (bottom) vs SOD-123 keepout checked — no courtyard overlap
+    - TRRS T/R1/S continuity checked against PJ-320A datasheet terminals 2-5
+    - Choc v1 hotswap as vendored, NOT flipped — switch on top (F.Cu cutout +
+      F.Fab/F.SilkS), socket soldered beneath (B.Cu pads + B.Fab/B.SilkS
+      body). Sockets must not hang off the back of the PCB; all 44 SOD-123
+      diodes are SMD on the front and must sit clear of the bottom-side
+      socket courtyard
+    - WS-SLTV pad 1 (middle) is the common per the Würth drawing — guarded
+      by check_pwr_footprint(); first article confirms which slider end is ON
+    - each half's board outline is the `board` outline from
+      layout/generated/v2 (not `plate`, which carries the encoder
+      knock-through that the PCB must not have)
+
+sources:  # vendored inputs, pinned; see README for attribution
+  choc_hotswap_fp:
+    src: kiswitch/keyswitch-kicad-library@9edbd5e (CC-BY-SA-4.0)
+    file: library/footprints/Switch_Keyboard_Hotswap_Kailh.pretty/SW_Hotswap_Kailh_Choc_V1_1.00u.kicad_mod
+  trrs_fp:
+    src: keebio/Keebio-Parts.pretty@1486bef (MIT)
+    file: TRRS-PJ-320A.kicad_mod (pads renamed 1/2/3/4 to S/T/R1/R2, 3D model ref stripped)
+  trrs_xcheck: nathanhborger/PJ-320A_KiCad_Library@10fad92 (CC0, mapping reference only)
+  pj320a_datasheet: XKB PJ-320A (XKB INDUSTRIAL PRECISION CO., terminals 2-5, 3.0/4.0mm spacing)

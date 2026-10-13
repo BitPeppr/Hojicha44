@@ -1,7 +1,7 @@
 meta:
   engine: 4.2.1
   name: kbd-v2-curved-thumb
-  version: 0.9.0
+  version: 0.9.3
 
 units:
   kx: u
@@ -59,7 +59,7 @@ points:
           - key
       anchor:
         ref: matrix_middle_bottom
-        shift: [0.6, -24.5]
+        shift: [0.6, -25.5]
       columns:
         t_ctrl:
           key:
@@ -96,14 +96,80 @@ points:
         tags:
           - helper
         function: MCU
-        width: 18
-        height: 33
+        width: 18.3
+        height: 34.9
       anchor:
         ref: encoder
-        shift: [0, 38]
+        shift: [0, 40]
+    # --- non-key mechanical anchors (PCB phase; see spec/electronics.yaml) ---
+    # USB-C port of the socketed module, placed USB-UP at the north edge so
+    # the plug can seat in the notch cut below.
+    usb:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: mcu
+        shift: [0, 17.95]
+    # Antenna end = module SOUTH end (nice!nano v2 puts the antenna opposite
+    # the USB end). 5mm copper-pour keepout, no case material within 3mm.
+    antenna:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: mcu
+        shift: [0, -16.45]
+    # 301230 cell (3x12x30 + PCM) sandwiched between the socketed module and
+    # the PCB. (302030 is 20mm wide: wider than the 18mm module and it fouls
+    # the socket pin rows, so it cannot go under a socketed nice!nano.)
+    batt:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: mcu
+    # JST-PH 2.0mm socket, south of the battery; plug enters from the north.
+    jst:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: mcu
+        shift: [0, -25]
+    # WS-SLTV slide SPDT on the north edge, west of the USB notch; the case
+    # needs a slot over the actuator (CAD phase).
+    pwrsw:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: matrix_inner_top
+        shift: [9, 14]
+    # PJ-320A TRRS at the inner edge, south of the encoder, plug facing the
+    # split gap (east). `trrs` is the jack centre; the `_trrs` outline is 17mm
+    # wide, so its east edge (the mouth) is 8.5mm east of the anchor and sits
+    # 3.46mm PROUD of the board edge, inside the split gap, for plug access.
+    # With the split widened below, the two mouths clear each other by 13.50mm
+    # (board edge to board edge is 20.42mm). Two plugs need ~6mm engagement per
+    # side = 12mm, so they seat with ~1.5mm of slack.
+    trrs:
+      key:
+        tags:
+          - helper
+      anchor:
+        ref: matrix_inner_bottom
+        shift: [35.5, -21]
   mirror:
     ref: matrix_inner_top
-    distance: 4.5kx
+    # SPLIT WIDTH (the one line that re-spaces the whole right half — every
+    # mirror_* point, both outlines and all downstream renders move together).
+    # 4.5kx leaves only 2.5-4.4mm between the two board edges at the
+    # encoder/TRRS height: a facing TRRS pair needs ~6mm of plug engagement
+    # per side, so the jacks cannot both seat, and 2.5mm is a marginal fab web.
+    # +16mm gives an 18.5mm worst-case inner gap. Left-half geometry is
+    # untouched; only the right half translates. Revert by deleting the "+ 16".
+    distance: 4.5kx + 16
 
 outlines:
   board:
@@ -119,12 +185,17 @@ outlines:
           shift: [9.5, 9.5]
         - ref: matrix_index_top
           shift: [9.5, 9.5]
+        # power-switch body, so the case slot over the actuator stays on-board
+        - ref: pwrsw
+          shift: [-6.5, 2.5]
+        - ref: pwrsw
+          shift: [6.5, 2.5]
         - ref: matrix_inner_top
           shift: [9.5, 9.5]
         - ref: mcu
-          shift: [9.0, 16.5]
+          shift: [9.15, 17.45]
         - ref: mcu
-          shift: [9.0, -16.5]
+          shift: [9.15, -17.45]
         - ref: encoder
           shift: [14.0, 0.0]
         - ref: thumbs_t_space_cluster
@@ -138,7 +209,7 @@ outlines:
         - ref: matrix_outer_bottom
           shift: [-9.5, -9.5]
     - what: polygon
-      expand: 3
+      expand: 4.5
       fillet: 2
       points:
         - ref: mirror_matrix_outer_top
@@ -151,12 +222,16 @@ outlines:
           shift: [9.5, 9.5]
         - ref: mirror_matrix_index_top
           shift: [9.5, 9.5]
+        - ref: mirror_pwrsw
+          shift: [6.5, 2.5]
+        - ref: mirror_pwrsw
+          shift: [-6.5, 2.5]
         - ref: mirror_matrix_inner_top
           shift: [9.5, 9.5]
         - ref: mirror_mcu
-          shift: [9.0, 16.5]
+          shift: [9.15, 17.45]
         - ref: mirror_mcu
-          shift: [9.0, -16.5]
+          shift: [9.15, -17.45]
         - ref: mirror_encoder
           shift: [14.0, 0.0]
         - ref: mirror_thumbs_t_space_cluster
@@ -169,6 +244,28 @@ outlines:
           shift: [9.5, -9.5]
         - ref: mirror_matrix_outer_bottom
           shift: [-9.5, -9.5]
+    # USB-C seat notch: the mid-mount port sits at the module's end face, so
+    # the board edge must be cut back there or the plug cannot seat. Clears
+    # the topmost socket pads (pad 1/13 top edge ~47.0mm) by ~0.5mm.
+    # Open to the north edge: top 58.05 clears the expanded edge (57.5 at x=112.5,
+    # 54.0 at x=115, 52.7 at x=117). Bottom 47.25 stays >=0.5 mm above the top
+    # socket pad copper (pad 1/24 centre mcu+13.47, r~0.85). See fix.md P0-1.
+    - operation: subtract
+      what: rectangle
+      where: [usb, mirror_usb]
+      size: [11, 10.8]
+      adjust:
+        shift: [0, 2.7]
+    # NOTE: `expand`/`fillet` below are hoisted by Ergogen to every item in
+    # this group, so both halves come out identically expanded/filleted.
+  # The encoder knock-through belongs to the plate/case, NOT the PCB: the
+  # EC11E body sits ON the PCB and all seven of its pads need copper (the
+  # A/B/C row sits within 7.9mm of the knob centre, i.e. inside an
+  # 8mm-radius hole). Kept in `plate` below for reference/CAD.
+  plate:
+    - what: outline
+      name: board
+      operation: stack
     - operation: subtract
       what: circle
       where: [encoder, mirror_encoder]
@@ -185,7 +282,7 @@ outlines:
   _mcu:
     - what: rectangle
       where: [mcu, mirror_mcu]
-      size: [18, 33]
+      size: [18.3, 34.9]
       fillet: 1
     - what: rectangle
       where: [mcu, mirror_mcu]
@@ -193,11 +290,42 @@ outlines:
       operation: stack
       fillet: 0.1
       adjust:
-        shift: [0, 33/2 - 7.35/2 + 0.7]
+        shift: [0, 34.9/2 - 7.35/2 + 0.7]
   encoder_holes:
     - what: circle
       where: [encoder, mirror_encoder]
       radius: 8
+  # --- non-key part zones (reference for CAD/PCB; not part of the board) ---
+  _batt:
+    - what: rectangle
+      where: [batt, mirror_batt]
+      size: [12.5, 31]
+      fillet: 1
+  _jst:
+    - what: rectangle
+      where: [jst, mirror_jst]
+      size: [9, 9]
+      fillet: 0.5
+  _pwrsw:
+    - what: rectangle
+      where: [pwrsw, mirror_pwrsw]
+      size: [13, 5]
+      fillet: 0.5
+  _trrs:
+    - what: rectangle
+      where: [trrs, mirror_trrs]
+      size: [17, 7]
+      fillet: 0.5
+  _usb:
+    - what: rectangle
+      where: [usb, mirror_usb]
+      size: [11, 10.8]
+      adjust:
+        shift: [0, 2.7]
+  antenna_keepout:
+    - what: circle
+      where: [antenna, mirror_antenna]
+      radius: 5
   preview:
     - what: outline
       name: board
@@ -209,4 +337,22 @@ outlines:
       operation: stack
     - what: outline
       name: _mcu
+      operation: stack
+    - what: outline
+      name: _batt
+      operation: stack
+    - what: outline
+      name: _jst
+      operation: stack
+    - what: outline
+      name: _pwrsw
+      operation: stack
+    - what: outline
+      name: _trrs
+      operation: stack
+    - what: outline
+      name: _usb
+      operation: stack
+    - what: outline
+      name: antenna_keepout
       operation: stack

@@ -1,0 +1,3459 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "53461079-9da6-4c59-9657-d1117b2d9cd5")
+	(paper "A2")
+	(title_block
+		(title "Hojicha44 Hojicha44-Left")
+		(date "2026-10-14")
+		(rev "0.3")
+		(company "BitPeppr")
+	)
+	(lib_symbols
+(symbol "Switch:SW_Push"
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(offset 1.016)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "SW"
+			(at 1.27 2.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SW_Push"
+			(at 0 -1.524 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Push button switch, generic, two pins"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "switch normally-open pushbutton push-button"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "SW_Push_0_1"
+			(circle
+				(center -2.032 0)
+				(radius 0.508)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0 1.27) (xy 0 3.048)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center 2.032 0)
+				(radius 0.508)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.54 1.27) (xy -2.54 1.27)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(pin passive line
+				(at -5.08 0 0)
+				(length 2.54)
+				(name "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 5.08 0 180)
+				(length 2.54)
+				(name "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+			(symbol "SW_Push_1_1"
+				(circle
+					(center -2.032 0)
+					(radius 0.508)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 1.27) (xy 0 3.048)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 2.032 0)
+					(radius 0.508)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 1.27) (xy -2.54 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 0 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+(embedded_fonts no)
+	)
+(symbol "Switch:SW_SPDT"
+		(pin_names
+			(offset 0)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "SW"
+			(at 0 5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SW_SPDT"
+			(at 0 -5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 -7.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Switch, single pole double throw"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "switch single-pole double-throw spdt ON-ON"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "SW_SPDT_0_1"
+			(circle
+				(center -2.032 0)
+				(radius 0.4572)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.651 0.254) (xy 1.651 2.286)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center 2.032 2.54)
+				(radius 0.4572)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center 2.032 -2.54)
+				(radius 0.4572)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "SW_SPDT_1_1"
+			(rectangle
+				(start -3.175 3.81)
+				(end 3.175 -3.81)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(pin passive line
+				(at 5.08 2.54 180)
+				(length 2.54)
+				(name "A"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 0 0)
+				(length 2.54)
+				(name "B"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 5.08 -2.54 180)
+				(length 2.54)
+				(name "C"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "Diode:1N4001"
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "D"
+			(at 0 2.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "1N4001"
+			(at 0 -2.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "http://www.vishay.com/docs/88503/1n4001.pdf"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "50V 1A General Purpose Rectifier Diode, DO-41"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "diode"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "D*DO?41*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "1N4001_0_1"
+			(polyline
+				(pts
+					(xy -1.27 1.27) (xy -1.27 -1.27)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0) (xy 1.27 1.27)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 1.27 0) (xy -1.27 0)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "1N4001_1_1"
+			(pin passive line
+				(at -3.81 0 0)
+				(length 2.54)
+				(name "K"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 3.81 0 180)
+				(length 2.54)
+				(name "A"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "Device:RotaryEncoder_Switch"
+		(pin_names
+			(offset 0.254)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "SW"
+			(at 0 6.604 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "RotaryEncoder_Switch"
+			(at 0 -6.604 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at -3.81 4.064 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 6.604 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Rotary encoder, dual channel, incremental quadrate outputs, with switch"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "rotary switch encoder switch push button"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "RotaryEncoder*Switch*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "RotaryEncoder_Switch_0_1"
+			(rectangle
+				(start -5.08 5.08)
+				(end 5.08 -5.08)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(polyline
+				(pts
+					(xy -5.08 2.54) (xy -3.81 2.54) (xy -3.81 2.032)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -5.08 0) (xy -3.81 0) (xy -3.81 -1.016) (xy -3.302 -2.032)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -5.08 -2.54) (xy -3.81 -2.54) (xy -3.81 -2.032)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -4.318 0) (xy -3.81 0) (xy -3.81 1.016) (xy -3.302 2.032)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center -3.81 0)
+				(radius 0.254)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type outline)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.635 -1.778) (xy -0.635 1.778)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center -0.381 0)
+				(radius 1.905)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.381 -1.778) (xy -0.381 1.778)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(arc
+				(start -0.381 -2.794)
+				(mid -3.0988 -0.0635)
+				(end -0.381 2.667)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -0.127 1.778) (xy -0.127 -1.778)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0.254 2.921) (xy -0.508 2.667) (xy 0.127 2.286)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0.254 -3.048) (xy -0.508 -2.794) (xy 0.127 -2.413)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 3.81 1.016) (xy 3.81 -1.016)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 3.81 0) (xy 3.429 0)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center 4.318 1.016)
+				(radius 0.127)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(circle
+				(center 4.318 -1.016)
+				(radius 0.127)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 5.08 2.54) (xy 4.318 2.54) (xy 4.318 1.016)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 5.08 -2.54) (xy 4.318 -2.54) (xy 4.318 -1.016)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "RotaryEncoder_Switch_1_1"
+			(pin passive line
+				(at -7.62 2.54 0)
+				(length 2.54)
+				(name "A"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "A"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -7.62 -2.54 0)
+				(length 2.54)
+				(name "B"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "B"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -7.62 0 0)
+				(length 2.54)
+				(name "C"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "C"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 2.54 180)
+				(length 2.54)
+				(name "S1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "S1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 -2.54 180)
+				(length 2.54)
+				(name "S2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "S2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "Connector_Audio:AudioJack4"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 0 8.89 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "AudioJack4"
+			(at 0 6.35 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Audio Jack, 4 Poles (TRRS)"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "audio jack receptacle stereo headphones TRRS connector"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "Jack*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "AudioJack4_0_1"
+			(rectangle
+				(start -6.35 -5.08)
+				(end -7.62 -7.62)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type outline)
+				)
+			)
+			(polyline
+				(pts
+					(xy -5.715 -5.08) (xy -5.08 -5.715) (xy -4.445 -5.08) (xy -4.445 2.54) (xy 2.54 2.54)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.905 -5.08) (xy -1.27 -5.715) (xy -0.635 -5.08) (xy -0.635 -2.54) (xy 2.54 -2.54)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0 -5.08) (xy 0.635 -5.715) (xy 1.27 -5.08) (xy 2.54 -5.08)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 2.54 3.81)
+				(end -6.35 -7.62)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.54 0) (xy -2.54 0) (xy -2.54 -5.08) (xy -3.175 -5.715) (xy -3.81 -5.08)
+				)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "AudioJack4_1_1"
+			(pin passive line
+				(at 5.08 -2.54 180)
+				(length 2.54)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "R1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 5.08 0 180)
+				(length 2.54)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "R2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 5.08 2.54 180)
+				(length 2.54)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "S"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 5.08 -5.08 180)
+				(length 2.54)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "T"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "Connector:Conn_01x02_Socket"
+		(pin_names
+			(offset 1.016)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 0 2.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Conn_01x02_Socket"
+			(at 0 -5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_locked" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "connector"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "Connector*:*_1x??_*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "Conn_01x02_Socket_1_1"
+			(polyline
+				(pts
+					(xy -1.27 0) (xy -0.508 0)
+				)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy -1.27 -2.54) (xy -0.508 -2.54)
+				)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(arc
+				(start 0 -0.508)
+				(mid -0.5058 0)
+				(end 0 0.508)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(arc
+				(start 0 -3.048)
+				(mid -0.5058 -2.54)
+				(end 0 -2.032)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(pin passive line
+				(at -5.08 0 0)
+				(length 3.81)
+				(name "Pin_1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 -2.54 0)
+				(length 3.81)
+				(name "Pin_2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "power:GND"
+		(power global)
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(offset 0)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "#PWR"
+			(at 0 -6.35 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 0 -3.81 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "global power"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "GND_0_1"
+			(polyline
+				(pts
+					(xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "GND_1_1"
+			(pin power_in line
+				(at 0 0 270)
+				(length 0)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "power:VCC"
+		(power global)
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(offset 0)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "#PWR"
+			(at 0 -3.81 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VCC"
+			(at 0 3.556 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VCC\""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "global power"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "VCC_0_1"
+			(polyline
+				(pts
+					(xy -0.762 1.27) (xy 0 2.54)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0 2.54) (xy 0.762 1.27)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 0 0) (xy 0 2.54)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "VCC_1_1"
+			(pin power_in line
+				(at 0 0 90)
+				(length 0)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "power:PWR_FLAG"
+		(power global)
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(offset 0)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "#FLG"
+			(at 0 1.905 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 0 3.81 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "flag power"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "PWR_FLAG_0_0"
+			(pin power_out line
+				(at 0 0 90)
+				(length 0)
+				(name ""
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(symbol "PWR_FLAG_0_1"
+			(polyline
+				(pts
+					(xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+			(symbol "PWR_FLAG_1_1"
+				(pin power_out line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+(embedded_fonts no)
+	)
+(symbol "Hojicha44:nice_nano"
+	(pin_names (offset 1.016) (hide yes))
+	(exclude_from_sim no) (in_bom yes) (on_board yes)
+	(property "Reference" "U" (at 0 33.02 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "nice_nano" (at 0 -33.02 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "" (at 0 -38.1 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "https://nicekeyboards.com/docs/nice-nano/" (at 0 -43.18 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(symbol "nice_nano_0_1"
+		(rectangle (start -10.16 30.48) (end 10.16 -30.48)
+			(stroke (width 0.254) (type default)) (fill (type background)))
+	)
+	(symbol "nice_nano_1_1"
+		(pin bidirectional line (at -12.7 27.94 0) (length 2.54)
+			(name "D1" (effects (font (size 1.27 1.27))))
+			(number "1" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 22.86 0) (length 2.54)
+			(name "D0" (effects (font (size 1.27 1.27))))
+			(number "2" (effects (font (size 1.27 1.27))))
+		)
+		(pin power_in line (at -12.7 17.78 0) (length 2.54)
+			(name "GND" (effects (font (size 1.27 1.27))))
+			(number "3" (effects (font (size 1.27 1.27))))
+		)
+		(pin power_in line (at -12.7 12.7 0) (length 2.54)
+			(name "GND" (effects (font (size 1.27 1.27))))
+			(number "4" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 7.62 0) (length 2.54)
+			(name "D2" (effects (font (size 1.27 1.27))))
+			(number "5" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 2.54 0) (length 2.54)
+			(name "D3" (effects (font (size 1.27 1.27))))
+			(number "6" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -2.54 0) (length 2.54)
+			(name "D4" (effects (font (size 1.27 1.27))))
+			(number "7" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -7.62 0) (length 2.54)
+			(name "D5" (effects (font (size 1.27 1.27))))
+			(number "8" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -12.7 0) (length 2.54)
+			(name "D6" (effects (font (size 1.27 1.27))))
+			(number "9" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -17.78 0) (length 2.54)
+			(name "D7" (effects (font (size 1.27 1.27))))
+			(number "10" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -22.86 0) (length 2.54)
+			(name "D8" (effects (font (size 1.27 1.27))))
+			(number "11" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at -12.7 -27.94 0) (length 2.54)
+			(name "D9" (effects (font (size 1.27 1.27))))
+			(number "12" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 27.94 180) (length 2.54)
+			(name "D10" (effects (font (size 1.27 1.27))))
+			(number "13" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 22.86 180) (length 2.54)
+			(name "D16" (effects (font (size 1.27 1.27))))
+			(number "14" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 17.78 180) (length 2.54)
+			(name "D14" (effects (font (size 1.27 1.27))))
+			(number "15" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 12.7 180) (length 2.54)
+			(name "D15" (effects (font (size 1.27 1.27))))
+			(number "16" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 7.62 180) (length 2.54)
+			(name "A0" (effects (font (size 1.27 1.27))))
+			(number "17" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 2.54 180) (length 2.54)
+			(name "A1" (effects (font (size 1.27 1.27))))
+			(number "18" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 -2.54 180) (length 2.54)
+			(name "A2" (effects (font (size 1.27 1.27))))
+			(number "19" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 -7.62 180) (length 2.54)
+			(name "A3" (effects (font (size 1.27 1.27))))
+			(number "20" (effects (font (size 1.27 1.27))))
+		)
+		(pin power_out line (at 12.7 -12.7 180) (length 2.54)
+			(name "VCC" (effects (font (size 1.27 1.27))))
+			(number "21" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 -17.78 180) (length 2.54)
+			(name "RST" (effects (font (size 1.27 1.27))))
+			(number "22" (effects (font (size 1.27 1.27))))
+		)
+		(pin power_in line (at 12.7 -22.86 180) (length 2.54)
+			(name "GND" (effects (font (size 1.27 1.27))))
+			(number "23" (effects (font (size 1.27 1.27))))
+		)
+		(pin bidirectional line (at 12.7 -27.94 180) (length 2.54)
+			(name "RAW" (effects (font (size 1.27 1.27))))
+			(number "24" (effects (font (size 1.27 1.27))))
+		)
+	)
+)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+	(text "LEFT HALF — 22 keys + EC11" (at 25.4 292.1 0) (uuid "10d53e8a-01e2-4cb7-9ead-710c7e15378d") (effects (font (size 3.0 3.0) bold) (justify left)))
+	(symbol (lib_id "Hojicha44:nice_nano") (at 86.36 48.26 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "e113666b-f1b3-49ea-8539-a23e342c4de5")
+	(property "Reference" "U_L1" (at 86.36 7.62 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "nice!nano v2" (at 86.36 3.62 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:Socket_Strips_2x12_P2.54mm_NiceNano" (at 86.36 -0.38 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "https://nicekeyboards.com/docs/nice-nano/" (at 86.36 -4.38 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "nice!nano v2" (at 86.36 -8.38 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "adbb1b93-9ce7-480b-8856-dd42383324b9"))
+		(pin "2" (uuid "1b187b86-77dc-4fb5-bd3b-d3b48820c3dd"))
+		(pin "3" (uuid "cf7e53ee-43f4-455b-bcb6-d8d8e1144898"))
+		(pin "4" (uuid "a81666cc-d3fc-493d-b0e6-efdf8595cfdf"))
+		(pin "5" (uuid "47dd2a28-d2d6-4ddd-9e44-3962ca61d5e8"))
+		(pin "6" (uuid "bcabd923-e21c-44d2-a96f-b790b8801c20"))
+		(pin "7" (uuid "b73ed79e-4b26-4f29-9c15-6aa78e42eb78"))
+		(pin "8" (uuid "298a731f-4866-4fdd-8cda-8fbf63f1bbe8"))
+		(pin "9" (uuid "8f38a495-1c79-4e7f-b487-308be37d7563"))
+		(pin "10" (uuid "5f0b999a-20b9-4373-8275-f67ade130217"))
+		(pin "11" (uuid "e986fdaa-1597-409d-aea0-03e1a7b9609a"))
+		(pin "12" (uuid "388bc96e-0a3c-4099-b2fe-e90522b7fa88"))
+		(pin "13" (uuid "b9ba25aa-309a-415e-94af-dc79aec63255"))
+		(pin "14" (uuid "6c612ed5-a854-47fb-b239-622283b271be"))
+		(pin "15" (uuid "a172edd3-891a-4bcf-9563-2a2d2fb28b37"))
+		(pin "16" (uuid "bef3eee3-9177-488c-bba0-cd1aacda2c5d"))
+		(pin "17" (uuid "8900d7d9-6ef9-4538-a537-9edb2aa1fbc0"))
+		(pin "18" (uuid "43378e95-6859-438c-834b-d46e67b3ba94"))
+		(pin "19" (uuid "b4f66d4a-9981-4886-bd1b-cf2271f6b489"))
+		(pin "20" (uuid "fcaf5d80-4229-4824-8bd4-a39ae1a58e59"))
+		(pin "21" (uuid "5a50958d-25c4-4e51-a7bd-ab752b585718"))
+		(pin "22" (uuid "30194bc0-21c9-4077-b52e-beb31d55834b"))
+		(pin "23" (uuid "8e2ac984-0b8e-4e69-8d59-42b69986f8ec"))
+		(pin "24" (uuid "1cee2468-1bf7-4785-8dff-eb057ee8e924"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "U_L1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 73.66 20.32) (xy 63.5 20.32)) (stroke (width 0) (type default)) (uuid "f7e0b2d4-c5a6-4f07-873d-6e61cb995d75"))
+	(label "TRRS_T" (at 63.5 20.32 0) (fields_autoplaced yes) (uuid "fb6d9d81-6b39-4c40-ab92-a87e2538211e") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 25.4) (xy 63.5 25.4)) (stroke (width 0) (type default)) (uuid "9a33f91c-5670-438d-a347-3c9977ab04e6"))
+	(label "TRRS_R1" (at 63.5 25.4 0) (fields_autoplaced yes) (uuid "6b47ad96-3d5b-4bf4-8d4f-0f9dcdafc591") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 30.48) (xy 63.5 30.48)) (stroke (width 0) (type default)) (uuid "51bf760e-552c-4aa7-9aa4-4a1fa289d968"))
+	(label "GND" (at 63.5 30.48 0) (fields_autoplaced yes) (uuid "691ec558-257d-4bf4-ac1c-06e885444cd2") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 35.56) (xy 63.5 35.56)) (stroke (width 0) (type default)) (uuid "b531dd69-8d94-4e17-ab8d-32bf06fa7a9d"))
+	(label "GND" (at 63.5 35.56 0) (fields_autoplaced yes) (uuid "41f24e3f-325c-4584-93bb-1dc1c44ded2c") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 40.64) (xy 63.5 40.64)) (stroke (width 0) (type default)) (uuid "27cf059c-d422-4ef2-a736-c80abf3788f3"))
+	(label "COL2_L" (at 63.5 40.64 0) (fields_autoplaced yes) (uuid "dd419b1d-2c43-45f2-b306-c5fe4c623fda") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 45.72) (xy 63.5 45.72)) (stroke (width 0) (type default)) (uuid "4f8ce232-a73f-4212-8d6c-1cd50b2ee708"))
+	(label "COL3_L" (at 63.5 45.72 0) (fields_autoplaced yes) (uuid "8d186678-0fb8-4c44-aab0-369587b11f3e") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 50.8) (xy 63.5 50.8)) (stroke (width 0) (type default)) (uuid "deb17970-38dd-4c25-9ddf-38a753033bf7"))
+	(label "ROW0_L" (at 63.5 50.8 0) (fields_autoplaced yes) (uuid "b73a35c5-8a33-4d58-8017-a74217ac24b0") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 55.88) (xy 63.5 55.88)) (stroke (width 0) (type default)) (uuid "6646fd9a-28a2-46cf-b77c-6ea58143412c"))
+	(label "ROW1_L" (at 63.5 55.88 0) (fields_autoplaced yes) (uuid "4acde034-3015-4240-8cae-c6c00a0b8ae3") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 60.96) (xy 63.5 60.96)) (stroke (width 0) (type default)) (uuid "ec52b504-14cc-47ce-abbe-3593e4bfa48b"))
+	(label "ROW2_L" (at 63.5 60.96 0) (fields_autoplaced yes) (uuid "1a202f44-adee-4e41-8999-08c1210b01e6") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 66.04) (xy 63.5 66.04)) (stroke (width 0) (type default)) (uuid "eb74394e-bb02-4ce4-8856-5bb755d05975"))
+	(label "ROW3_L" (at 63.5 66.04 0) (fields_autoplaced yes) (uuid "79d74320-53f6-4051-b049-cc0f1fc5cd61") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 71.12) (xy 63.5 71.12)) (stroke (width 0) (type default)) (uuid "bf45b057-bb28-402a-b0c2-356bbaa6daff"))
+	(label "COL0_L" (at 63.5 71.12 0) (fields_autoplaced yes) (uuid "0854430f-b51f-450c-8522-f0402e768c2b") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 73.66 76.2) (xy 63.5 76.2)) (stroke (width 0) (type default)) (uuid "0483bd00-141e-412c-994d-c0ec43b96f1b"))
+	(label "COL1_L" (at 63.5 76.2 0) (fields_autoplaced yes) (uuid "61dcffb6-4330-4737-95d7-4c5f735d9bad") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 20.32) (xy 109.22 20.32)) (stroke (width 0) (type default)) (uuid "f58cc14d-1850-484e-b700-14fe8d12cd69"))
+	(label "D10_L" (at 109.22 20.32 0) (fields_autoplaced yes) (uuid "6400359f-c1da-4f29-994a-d93d38d6f2f5") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 25.4) (xy 109.22 25.4)) (stroke (width 0) (type default)) (uuid "1c542136-27bc-43da-aec5-50ce437e3bf2"))
+	(label "ENC_SW_L" (at 109.22 25.4 0) (fields_autoplaced yes) (uuid "b5c40d42-839f-4d12-bda5-e2e9caa71979") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 30.48) (xy 109.22 30.48)) (stroke (width 0) (type default)) (uuid "546488ff-57ad-405b-89ad-e2ac0e20fa4b"))
+	(label "COL4_L" (at 109.22 30.48 0) (fields_autoplaced yes) (uuid "460f3852-6af1-46a4-9f4e-1bc7a8d8eb78") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 35.56) (xy 109.22 35.56)) (stroke (width 0) (type default)) (uuid "75c44d91-f7b2-4bc8-ac8f-8509e23491a3"))
+	(label "COL5_L" (at 109.22 35.56 0) (fields_autoplaced yes) (uuid "4079899d-ca1d-4760-ac8a-21af84ab4f87") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 40.64) (xy 109.22 40.64)) (stroke (width 0) (type default)) (uuid "c6e8680c-43a4-4de0-99ae-f3b183429fbc"))
+	(label "ENC_A_L" (at 109.22 40.64 0) (fields_autoplaced yes) (uuid "1e7efbc6-7636-48b5-bc6b-078edf83ad0f") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 45.72) (xy 109.22 45.72)) (stroke (width 0) (type default)) (uuid "ee3fab79-80e4-4e9d-b688-1732be27453c"))
+	(label "ENC_B_L" (at 109.22 45.72 0) (fields_autoplaced yes) (uuid "93a81cfd-46c4-460a-b2f7-d0a8c795f679") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 50.8) (xy 109.22 50.8)) (stroke (width 0) (type default)) (uuid "252f6a04-ea47-4d40-ad87-d0da1577e4ba"))
+	(label "A2_L" (at 109.22 50.8 0) (fields_autoplaced yes) (uuid "5213f102-6c9f-4d9d-a370-18191a4db649") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 55.88) (xy 109.22 55.88)) (stroke (width 0) (type default)) (uuid "ab61d710-f28f-473c-b35a-567bddd54798"))
+	(label "A3_L" (at 109.22 55.88 0) (fields_autoplaced yes) (uuid "d8c635ae-00ec-4357-9890-ae5391650c19") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 60.96) (xy 109.22 60.96)) (stroke (width 0) (type default)) (uuid "e0b49c74-98c1-495b-bdb8-6514ed2bb30e"))
+	(label "VCC3V3_L" (at 109.22 60.96 0) (fields_autoplaced yes) (uuid "465b005c-28f4-4b2e-b3e5-70e90e45416e") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 66.04) (xy 109.22 66.04)) (stroke (width 0) (type default)) (uuid "1afd7bb8-5545-4a2d-8562-17b32cf4f1e0"))
+	(label "RST_L" (at 109.22 66.04 0) (fields_autoplaced yes) (uuid "76d8feeb-f84a-484c-85c4-78f04fb66685") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 71.12) (xy 109.22 71.12)) (stroke (width 0) (type default)) (uuid "2d8990b4-62d3-4512-afd5-96060f894add"))
+	(label "GND" (at 109.22 71.12 0) (fields_autoplaced yes) (uuid "db0b4734-b504-4e31-a67e-26075bccf6b3") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 99.06 76.2) (xy 109.22 76.2)) (stroke (width 0) (type default)) (uuid "65901a27-6e45-4583-8162-75703a7c15d2"))
+	(label "VBAT_SW_L" (at 109.22 76.2 0) (fields_autoplaced yes) (uuid "f1716460-829b-4f9d-87a6-f9cb3cc479a5") (effects (font (size 1.27 1.27)) (justify left)))
+	(symbol (lib_id "Switch:SW_Push") (at 38.1 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "12705c8e-b030-4f43-80e9-14a9ee61e245")
+	(property "Reference" "SW_L00" (at 38.1 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K00" (at 38.1 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 38.1 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 38.1 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 38.1 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "8fa2819e-ef97-45ae-8b67-c59175b15b0f"))
+		(pin "2" (uuid "26d9a081-30a8-48e1-819e-e4e1c8300d34"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L00")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 33.02 120.65) (diameter 0) (color 0 0 0 0) (uuid "99f153d7-d878-43a8-b572-cc219e4f25d2"))
+	(symbol (lib_id "Diode:1N4001") (at 45.72 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "28b6724f-a7a6-49ed-a9ea-1915d3a1a405")
+	(property "Reference" "D_L00" (at 45.72 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 45.72 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 45.72 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 45.72 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 45.72 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "16039931-c5db-4a59-8a53-c27ca61e452f"))
+		(pin "2" (uuid "c39edc0f-cebd-4fc7-aad3-ccc213ebaeaa"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L00")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 43.18 120.65) (xy 49.53 120.65)) (stroke (width 0) (type default)) (uuid "566f5eea-c48b-4390-afda-528afef3db93"))
+	(wire (pts (xy 41.91 120.65) (xy 41.91 127.0)) (stroke (width 0) (type default)) (uuid "433e3fd5-5a4b-47ad-835e-3d4ecba6388f"))
+	(junction (at 41.91 127.0) (diameter 0) (color 0 0 0 0) (uuid "8b5d212f-e8a9-4c15-80c0-20b7daf788ab"))
+	(symbol (lib_id "Switch:SW_Push") (at 57.15 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "6dc032b3-c2a5-4a16-8c93-1124abc5340f")
+	(property "Reference" "SW_L01" (at 57.15 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K01" (at 57.15 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 57.15 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 57.15 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 57.15 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "3aee9ae0-a9c7-44e8-9c09-7d5cfbc2c280"))
+		(pin "2" (uuid "cb655274-9e8c-4c59-b5d9-aa33477fd7ce"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 52.07 120.65) (diameter 0) (color 0 0 0 0) (uuid "c8c1120e-e3f6-4449-8c61-5f14acf184f7"))
+	(symbol (lib_id "Diode:1N4001") (at 64.77 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "7cf86cfd-1cf6-4758-843f-840d8a898677")
+	(property "Reference" "D_L01" (at 64.77 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 64.77 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 64.77 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 64.77 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 64.77 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "1fd34bc0-a225-4495-9984-6c71b5da2662"))
+		(pin "2" (uuid "64edc2cc-e428-4ab8-832e-9ffdbe0895d2"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 62.23 120.65) (xy 68.58 120.65)) (stroke (width 0) (type default)) (uuid "e0dbc68a-1601-4211-bbaf-3b7380572683"))
+	(wire (pts (xy 60.96 120.65) (xy 60.96 127.0)) (stroke (width 0) (type default)) (uuid "11726452-4111-463d-8aa6-eeeb466651f0"))
+	(junction (at 60.96 127.0) (diameter 0) (color 0 0 0 0) (uuid "385cd368-baf6-4825-ab51-ca53cf5eb5f8"))
+	(symbol (lib_id "Switch:SW_Push") (at 76.2 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "4702ba75-ca4d-434c-90d0-f5c584005e4e")
+	(property "Reference" "SW_L02" (at 76.2 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K02" (at 76.2 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 76.2 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 76.2 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 76.2 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "bdc87623-4509-4cc4-b053-f41487f6216b"))
+		(pin "2" (uuid "252bb048-b1b6-415f-882e-3582c8759530"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 71.12 120.65) (diameter 0) (color 0 0 0 0) (uuid "840fb142-a606-4631-be16-b03dfda8f13a"))
+	(symbol (lib_id "Diode:1N4001") (at 83.82 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "05631c9f-2e25-4ae9-af21-788372608bdc")
+	(property "Reference" "D_L02" (at 83.82 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 83.82 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 83.82 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 83.82 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 83.82 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "449643a6-9753-40be-90c3-4514beec80b2"))
+		(pin "2" (uuid "633456a2-73bf-45a2-87d7-5b7a7bbd1c4c"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 81.28 120.65) (xy 87.63 120.65)) (stroke (width 0) (type default)) (uuid "4c890777-7bef-4628-be30-9750e944221f"))
+	(wire (pts (xy 80.01 120.65) (xy 80.01 127.0)) (stroke (width 0) (type default)) (uuid "21980942-0de0-446e-a38e-85199fc769cb"))
+	(junction (at 80.01 127.0) (diameter 0) (color 0 0 0 0) (uuid "b7ba6da9-1b64-4785-9236-4d4aae61850f"))
+	(symbol (lib_id "Switch:SW_Push") (at 95.25 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "a38f4399-48d0-4649-b14c-fcba8c3c7058")
+	(property "Reference" "SW_L03" (at 95.25 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K03" (at 95.25 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 95.25 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 95.25 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 95.25 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "66eeed92-dd6e-4292-a1b8-59f9d2e0505f"))
+		(pin "2" (uuid "b1e50de6-6a55-456a-8a49-df5d048d202c"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L03")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 90.17 120.65) (diameter 0) (color 0 0 0 0) (uuid "a48b10f8-d75c-41e4-a251-e656e3111cd5"))
+	(symbol (lib_id "Diode:1N4001") (at 102.87 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "800c6525-4913-42ff-b25a-04fbc3d0e8ae")
+	(property "Reference" "D_L03" (at 102.87 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 102.87 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 102.87 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 102.87 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 102.87 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "46345059-0f1d-46e6-b0f5-46a408a3b018"))
+		(pin "2" (uuid "ef46c31e-d0de-46ec-b9a0-a5dd515fac3d"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L03")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 100.33 120.65) (xy 106.68 120.65)) (stroke (width 0) (type default)) (uuid "8461c81f-eab2-47c3-96a3-1c67a734f046"))
+	(wire (pts (xy 99.06 120.65) (xy 99.06 127.0)) (stroke (width 0) (type default)) (uuid "e0873334-1f73-41fa-871c-8586b364c788"))
+	(junction (at 99.06 127.0) (diameter 0) (color 0 0 0 0) (uuid "d13d5165-05de-4b78-95ac-4622993ff47f"))
+	(symbol (lib_id "Switch:SW_Push") (at 114.3 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "c606620f-76b2-4112-b414-6ac494223f7a")
+	(property "Reference" "SW_L04" (at 114.3 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K04" (at 114.3 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 114.3 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 114.3 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 114.3 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "ebb54791-da14-4c7f-b43b-50face3994ff"))
+		(pin "2" (uuid "a717625a-6295-435d-922a-8b472f033a71"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 109.22 120.65) (diameter 0) (color 0 0 0 0) (uuid "c3a2e1b8-d63d-4811-8635-6726f6a18576"))
+	(symbol (lib_id "Diode:1N4001") (at 121.92 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "dd8efc21-d2ce-4341-be12-4b6687c258de")
+	(property "Reference" "D_L04" (at 121.92 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 121.92 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 121.92 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 121.92 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 121.92 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "6ebe1b4d-4549-44f0-a70c-4d65d4149181"))
+		(pin "2" (uuid "93a77c92-9e42-4c75-8e07-b9c331178e81"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 119.38 120.65) (xy 125.73 120.65)) (stroke (width 0) (type default)) (uuid "b41a6162-2fb6-48a1-b75d-7c0ef7dfed53"))
+	(wire (pts (xy 118.11 120.65) (xy 118.11 127.0)) (stroke (width 0) (type default)) (uuid "7c8ae0df-df88-47f0-b458-a3e3ae5ad9a2"))
+	(junction (at 118.11 127.0) (diameter 0) (color 0 0 0 0) (uuid "da0bc3a6-3b5b-4f24-a7e0-e15ad9312fb9"))
+	(symbol (lib_id "Switch:SW_Push") (at 133.35 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "433ee709-b2c1-4b95-a21d-493897b661f3")
+	(property "Reference" "SW_L05" (at 133.35 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K05" (at 133.35 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 133.35 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 133.35 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 133.35 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "e10a4a16-50c2-4f54-9c69-d423cdb0f52e"))
+		(pin "2" (uuid "ae459fc2-dc00-486f-8cc2-fec927d20c15"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L05")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 128.27 120.65) (diameter 0) (color 0 0 0 0) (uuid "be138e92-31fb-487a-9b07-1f0292e8f72f"))
+	(symbol (lib_id "Diode:1N4001") (at 140.97 120.65 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "00100829-acfd-405f-847f-6ea7d3fe21dc")
+	(property "Reference" "D_L05" (at 140.97 110.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 140.97 106.49 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 140.97 102.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 140.97 98.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 140.97 94.49 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "f2cd7ad3-aca9-439f-bb76-7dfc9cfaf2c3"))
+		(pin "2" (uuid "7c6bf77a-02da-4562-b9db-5c7edaff460f"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L05")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 138.43 120.65) (xy 144.78 120.65)) (stroke (width 0) (type default)) (uuid "5cf17637-f1d1-434f-b98f-ffb67ad86436"))
+	(wire (pts (xy 137.16 120.65) (xy 137.16 127.0)) (stroke (width 0) (type default)) (uuid "dcd5ff0b-9c8e-4a50-9757-aa6094305e2a"))
+	(junction (at 137.16 127.0) (diameter 0) (color 0 0 0 0) (uuid "26878d40-fbeb-4722-8e12-f686061e4cbd"))
+	(symbol (lib_id "Switch:SW_Push") (at 38.1 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "dfb39cdd-56a4-4933-b0a5-a24c56fe3dcd")
+	(property "Reference" "SW_L06" (at 38.1 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K06" (at 38.1 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 38.1 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 38.1 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 38.1 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "7381dddf-216b-4221-86ea-e478af8b7ca0"))
+		(pin "2" (uuid "66e354b8-589d-47d3-8ef6-b70f28c62c1b"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 33.02 139.7) (diameter 0) (color 0 0 0 0) (uuid "59685ec7-64d3-427f-a6cf-d7b77e82d7c4"))
+	(symbol (lib_id "Diode:1N4001") (at 45.72 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "def04919-c376-4800-83c4-a5b4bee52e02")
+	(property "Reference" "D_L06" (at 45.72 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 45.72 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 45.72 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 45.72 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 45.72 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "7cc4edf7-6529-4fcd-aa71-7b4cf0414dd8"))
+		(pin "2" (uuid "56988a87-6c06-49cf-b8c6-fa68cbfcc852"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 43.18 139.7) (xy 49.53 139.7)) (stroke (width 0) (type default)) (uuid "0864bf73-52cc-497b-8be8-8b836fe317ec"))
+	(wire (pts (xy 41.91 139.7) (xy 41.91 146.05)) (stroke (width 0) (type default)) (uuid "dc14eac1-527b-43bd-99ad-3862c74f41ab"))
+	(junction (at 41.91 146.05) (diameter 0) (color 0 0 0 0) (uuid "7d114d29-7756-4b5d-9940-d443a7a1592b"))
+	(symbol (lib_id "Switch:SW_Push") (at 57.15 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "3c749d09-4d4d-406c-9866-5ff5323fef4e")
+	(property "Reference" "SW_L07" (at 57.15 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K07" (at 57.15 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 57.15 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 57.15 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 57.15 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "8292c234-6101-4fe7-ba98-32470285e1a4"))
+		(pin "2" (uuid "56c6e318-25ed-4a9b-96cc-abf474eb7098"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 52.07 139.7) (diameter 0) (color 0 0 0 0) (uuid "581b5cce-20d8-4c51-ab6c-2d7468d65385"))
+	(symbol (lib_id "Diode:1N4001") (at 64.77 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "096f8e9b-769c-4dcf-b1f6-7ad04c7e3d9b")
+	(property "Reference" "D_L07" (at 64.77 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 64.77 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 64.77 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 64.77 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 64.77 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "22c3cfc4-f7f6-42b8-8dd9-38b57ad6e5c4"))
+		(pin "2" (uuid "7782d6f4-8093-4c5b-8306-93d0825a8f5f"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 62.23 139.7) (xy 68.58 139.7)) (stroke (width 0) (type default)) (uuid "8a6b7a5b-e9df-490e-be30-42c49bec4485"))
+	(wire (pts (xy 60.96 139.7) (xy 60.96 146.05)) (stroke (width 0) (type default)) (uuid "bef8b77e-9950-49d9-9698-fc655c30b056"))
+	(junction (at 60.96 146.05) (diameter 0) (color 0 0 0 0) (uuid "e1b70bde-e6d4-457f-bd30-556351191c1b"))
+	(symbol (lib_id "Switch:SW_Push") (at 76.2 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "7f62f2c9-2f73-47d8-ad97-3136e51ff40c")
+	(property "Reference" "SW_L08" (at 76.2 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K08" (at 76.2 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 76.2 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 76.2 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 76.2 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "383667e1-b425-46c8-a73d-cc2680581a79"))
+		(pin "2" (uuid "2dd44479-f393-4fee-97bd-bab28aae6b5e"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 71.12 139.7) (diameter 0) (color 0 0 0 0) (uuid "c311c96d-d424-406a-b1e0-a407a6ca2a31"))
+	(symbol (lib_id "Diode:1N4001") (at 83.82 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "cd5d40a8-64de-4897-b459-d9d6a544748b")
+	(property "Reference" "D_L08" (at 83.82 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 83.82 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 83.82 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 83.82 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 83.82 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "ef03dbc2-6eae-455f-82b2-4f6bab505758"))
+		(pin "2" (uuid "09c49dd6-5fd7-446f-b0ab-0f8c55ef3bb4"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 81.28 139.7) (xy 87.63 139.7)) (stroke (width 0) (type default)) (uuid "f724b287-45c3-4238-839e-f77718d2915b"))
+	(wire (pts (xy 80.01 139.7) (xy 80.01 146.05)) (stroke (width 0) (type default)) (uuid "7828635d-61a7-458e-8f66-0b577ad8c087"))
+	(junction (at 80.01 146.05) (diameter 0) (color 0 0 0 0) (uuid "8ed3ec88-0411-4b25-a440-ed554de2ef8c"))
+	(symbol (lib_id "Switch:SW_Push") (at 95.25 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "8caed674-ab92-4b43-91ee-85dadef1fd65")
+	(property "Reference" "SW_L09" (at 95.25 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K09" (at 95.25 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 95.25 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 95.25 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 95.25 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "92138c4e-329a-451f-b013-94f05e12a737"))
+		(pin "2" (uuid "931963a3-eefc-49e4-baf5-3f7416dacb5f"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L09")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 90.17 139.7) (diameter 0) (color 0 0 0 0) (uuid "72b542ad-c822-4ab9-b02d-6b2642aed134"))
+	(symbol (lib_id "Diode:1N4001") (at 102.87 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "f2e2e743-dc74-445c-a038-46747ddc2e4b")
+	(property "Reference" "D_L09" (at 102.87 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 102.87 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 102.87 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 102.87 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 102.87 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "c4edf745-fb4a-4ba8-89e7-f2567604fb4c"))
+		(pin "2" (uuid "a84b0680-6187-44dc-ae68-63707c1f1a0b"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L09")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 100.33 139.7) (xy 106.68 139.7)) (stroke (width 0) (type default)) (uuid "56eb6d2f-05e5-469d-beef-99e23861b5b7"))
+	(wire (pts (xy 99.06 139.7) (xy 99.06 146.05)) (stroke (width 0) (type default)) (uuid "fe7cc98f-a2c2-487a-8d36-59c17af28a70"))
+	(junction (at 99.06 146.05) (diameter 0) (color 0 0 0 0) (uuid "3030c667-47c3-409c-bab6-0c8256eb2705"))
+	(symbol (lib_id "Switch:SW_Push") (at 114.3 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "a1f4ef3e-cf4f-4dac-a8be-8fe751f8e77b")
+	(property "Reference" "SW_L10" (at 114.3 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K10" (at 114.3 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 114.3 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 114.3 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 114.3 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "db84931b-f94a-4f3c-8562-5b2c15a5a1a9"))
+		(pin "2" (uuid "f0593758-43b3-4a99-9aed-f2d1e2fbf67b"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 109.22 139.7) (diameter 0) (color 0 0 0 0) (uuid "8ccc5178-80db-4a04-895c-5f04d6050a26"))
+	(symbol (lib_id "Diode:1N4001") (at 121.92 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "ada6a500-ba4c-480a-8fe2-ed1c9d193eb0")
+	(property "Reference" "D_L10" (at 121.92 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 121.92 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 121.92 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 121.92 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 121.92 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "c630b3e7-b934-4e2d-adbb-2155e98278c3"))
+		(pin "2" (uuid "6b9760f6-4d93-4617-8bdc-d627e1d72f09"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 119.38 139.7) (xy 125.73 139.7)) (stroke (width 0) (type default)) (uuid "9b7fd919-cb20-4b6e-8481-c5d67588dded"))
+	(wire (pts (xy 118.11 139.7) (xy 118.11 146.05)) (stroke (width 0) (type default)) (uuid "23560cea-58bf-49fd-9ea9-635ff304784c"))
+	(junction (at 118.11 146.05) (diameter 0) (color 0 0 0 0) (uuid "a3fc816a-71c2-4689-9ac9-da2f26257f17"))
+	(symbol (lib_id "Switch:SW_Push") (at 133.35 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "f3b8a1fd-bb03-49c4-90a4-924586b18ee3")
+	(property "Reference" "SW_L11" (at 133.35 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K11" (at 133.35 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 133.35 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 133.35 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 133.35 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "31a10242-d70c-4de9-b783-0a32655b137b"))
+		(pin "2" (uuid "731048a8-5d59-4f85-9d61-ec042d0acdfb"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L11")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 128.27 139.7) (diameter 0) (color 0 0 0 0) (uuid "87102eb8-15a5-4c0e-8d48-2b34fa91a661"))
+	(symbol (lib_id "Diode:1N4001") (at 140.97 139.7 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "2a0f4350-e27e-4930-af41-43b59ac02340")
+	(property "Reference" "D_L11" (at 140.97 129.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 140.97 125.54 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 140.97 121.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 140.97 117.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 140.97 113.54 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "d43126ba-85fa-4d51-8e70-17a56056d2b4"))
+		(pin "2" (uuid "4f2c3d3d-ff2d-4308-a521-bc354c918858"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L11")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 138.43 139.7) (xy 144.78 139.7)) (stroke (width 0) (type default)) (uuid "66f3f5da-7907-40b3-9f5a-caaff200cc49"))
+	(wire (pts (xy 137.16 139.7) (xy 137.16 146.05)) (stroke (width 0) (type default)) (uuid "694cb1c5-2e78-473d-9fee-47a849853e20"))
+	(junction (at 137.16 146.05) (diameter 0) (color 0 0 0 0) (uuid "eb4069f2-f1d3-4ae1-8a9c-0bf42731984e"))
+	(symbol (lib_id "Switch:SW_Push") (at 38.1 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "b13c4758-0907-4c6b-8ceb-53cb211c4844")
+	(property "Reference" "SW_L12" (at 38.1 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K12" (at 38.1 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 38.1 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 38.1 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 38.1 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "81494100-120c-4562-b9a0-48af6f7e3ccc"))
+		(pin "2" (uuid "79ec577b-4fdd-4bdf-ac0c-5dac0a8242b1"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L12")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 33.02 158.75) (diameter 0) (color 0 0 0 0) (uuid "b4886ec9-5077-4a94-8fa3-5a63fd8fa1b2"))
+	(symbol (lib_id "Diode:1N4001") (at 45.72 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "badec396-eaa3-4992-b95d-a645a685992c")
+	(property "Reference" "D_L12" (at 45.72 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 45.72 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 45.72 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 45.72 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 45.72 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "85bf37ff-4bee-4e3e-a3fd-99efc1fad239"))
+		(pin "2" (uuid "5ccfd898-fe07-4de4-82f4-fcad79dc4e29"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L12")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 43.18 158.75) (xy 49.53 158.75)) (stroke (width 0) (type default)) (uuid "3fcfd13b-5c54-41b8-8c2a-3b3f40959238"))
+	(wire (pts (xy 41.91 158.75) (xy 41.91 165.1)) (stroke (width 0) (type default)) (uuid "8d8c19da-f6f5-4d61-b39b-5b2993ad5b20"))
+	(junction (at 41.91 165.1) (diameter 0) (color 0 0 0 0) (uuid "773e3342-e370-4e2d-a850-f5b15844db20"))
+	(symbol (lib_id "Switch:SW_Push") (at 57.15 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "98f1afa7-9ced-4256-afce-81c2a1090d59")
+	(property "Reference" "SW_L13" (at 57.15 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K13" (at 57.15 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 57.15 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 57.15 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 57.15 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "97baa653-8629-4bde-b600-38ec87bc7b2f"))
+		(pin "2" (uuid "c63c3dbb-0003-4b39-8f10-104109ff6647"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L13")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 52.07 158.75) (diameter 0) (color 0 0 0 0) (uuid "f294f5e9-be98-4264-b791-5550709b1466"))
+	(symbol (lib_id "Diode:1N4001") (at 64.77 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "412afc86-43e9-4b43-8ab5-ed375c47581d")
+	(property "Reference" "D_L13" (at 64.77 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 64.77 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 64.77 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 64.77 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 64.77 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "d0d94fd9-1d3d-48dc-923b-0291b7af20ce"))
+		(pin "2" (uuid "d3ddaad5-687e-4e0a-961f-f949586b0f06"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L13")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 62.23 158.75) (xy 68.58 158.75)) (stroke (width 0) (type default)) (uuid "f1f09c56-78e9-4a0c-838b-9c3b38b14295"))
+	(wire (pts (xy 60.96 158.75) (xy 60.96 165.1)) (stroke (width 0) (type default)) (uuid "ceb15aee-85f2-4a61-b578-e7ef01a2d8bb"))
+	(junction (at 60.96 165.1) (diameter 0) (color 0 0 0 0) (uuid "7709e65e-681f-44ca-83dd-71b40ad8e5b5"))
+	(symbol (lib_id "Switch:SW_Push") (at 76.2 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "1a47a97c-1aa6-4e64-818e-91d753f506a2")
+	(property "Reference" "SW_L14" (at 76.2 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K14" (at 76.2 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 76.2 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 76.2 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 76.2 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "850bda85-a05e-469b-b38c-b5dda98e5f5e"))
+		(pin "2" (uuid "41e7ed20-33b3-435e-842e-b1c9ab692bd1"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L14")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 71.12 158.75) (diameter 0) (color 0 0 0 0) (uuid "870c1360-b29b-4c5f-9264-19e5662ea8b8"))
+	(symbol (lib_id "Diode:1N4001") (at 83.82 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "4fcec7c7-4311-48a1-85b8-c1192c0956dc")
+	(property "Reference" "D_L14" (at 83.82 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 83.82 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 83.82 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 83.82 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 83.82 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "f0fc9d04-ec5d-4d81-a612-f64daa9b89e7"))
+		(pin "2" (uuid "92ffb716-0434-4ccc-a950-a375cf3dae41"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L14")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 81.28 158.75) (xy 87.63 158.75)) (stroke (width 0) (type default)) (uuid "b9d3ee35-d84b-4d64-8424-87d6ac33f1bf"))
+	(wire (pts (xy 80.01 158.75) (xy 80.01 165.1)) (stroke (width 0) (type default)) (uuid "a16924e0-8238-48ed-b88c-0224a0a315c2"))
+	(junction (at 80.01 165.1) (diameter 0) (color 0 0 0 0) (uuid "292c9bd1-33ac-4967-9e98-80b04d4be3d6"))
+	(symbol (lib_id "Switch:SW_Push") (at 95.25 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "4d719281-610b-44e9-a089-c4741d29538c")
+	(property "Reference" "SW_L15" (at 95.25 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K15" (at 95.25 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 95.25 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 95.25 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 95.25 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "c71d9064-c5bf-4ed3-84b2-1f1738f0961b"))
+		(pin "2" (uuid "7fbc10ed-5284-421e-921e-bb9d0db26d59"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L15")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 90.17 158.75) (diameter 0) (color 0 0 0 0) (uuid "deeddd4c-2dcb-4d45-be2e-2ef4d7990cf1"))
+	(symbol (lib_id "Diode:1N4001") (at 102.87 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "fdb27231-3329-42e9-ae92-33ad12d9c874")
+	(property "Reference" "D_L15" (at 102.87 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 102.87 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 102.87 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 102.87 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 102.87 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "d3bea3ea-5e4b-4061-9407-0dfc26170bca"))
+		(pin "2" (uuid "737eb61c-0d38-4d34-b4f0-177fc1f618fc"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L15")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 100.33 158.75) (xy 106.68 158.75)) (stroke (width 0) (type default)) (uuid "b8821ceb-b7fd-4b55-847c-7a1c09570df7"))
+	(wire (pts (xy 99.06 158.75) (xy 99.06 165.1)) (stroke (width 0) (type default)) (uuid "4ba50d1a-4ffe-4c09-a879-08b41728448b"))
+	(junction (at 99.06 165.1) (diameter 0) (color 0 0 0 0) (uuid "1cc642dc-b0ac-4fdd-9782-ef98160dfe6c"))
+	(symbol (lib_id "Switch:SW_Push") (at 114.3 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "41963051-6049-4da6-9828-53145c0ed2a9")
+	(property "Reference" "SW_L16" (at 114.3 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K16" (at 114.3 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 114.3 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 114.3 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 114.3 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "1a86a0d2-919f-47e5-bf3e-844b85e09a02"))
+		(pin "2" (uuid "fa23d41e-e210-48e9-bf22-f8250558339f"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L16")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 109.22 158.75) (diameter 0) (color 0 0 0 0) (uuid "7430728b-dd37-4318-9df5-72e56d656126"))
+	(symbol (lib_id "Diode:1N4001") (at 121.92 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "d21c0ba7-5c1d-4929-bd48-6f2ee642db81")
+	(property "Reference" "D_L16" (at 121.92 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 121.92 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 121.92 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 121.92 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 121.92 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "4bef5949-084c-4db9-9403-06f2eb59373f"))
+		(pin "2" (uuid "66a06990-76eb-4977-b746-85105a6a33ee"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L16")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 119.38 158.75) (xy 125.73 158.75)) (stroke (width 0) (type default)) (uuid "658ba3bc-9d3d-456b-9095-39ddcb22abcf"))
+	(wire (pts (xy 118.11 158.75) (xy 118.11 165.1)) (stroke (width 0) (type default)) (uuid "81a4fc59-39a0-4f11-9186-a76fd01f90cf"))
+	(junction (at 118.11 165.1) (diameter 0) (color 0 0 0 0) (uuid "5d94c06f-1b4a-4796-8c9e-2c82e53b3574"))
+	(symbol (lib_id "Switch:SW_Push") (at 133.35 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "7296d06c-1a11-432f-8ec3-e6fcc5b9d28e")
+	(property "Reference" "SW_L17" (at 133.35 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K17" (at 133.35 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 133.35 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 133.35 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 133.35 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "176b4d2f-6c44-4dad-af0d-f52838be284e"))
+		(pin "2" (uuid "54e9abe3-84a8-484f-aac5-c1f4541161c3"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 128.27 158.75) (diameter 0) (color 0 0 0 0) (uuid "93544112-3e7d-48ab-9966-5a0579dfe532"))
+	(symbol (lib_id "Diode:1N4001") (at 140.97 158.75 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "6e277536-4cfe-4ee5-b227-e412a7540565")
+	(property "Reference" "D_L17" (at 140.97 148.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 140.97 144.59 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 140.97 140.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 140.97 136.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 140.97 132.59 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "83fcf2d4-350e-44f1-ad81-d6079a99491c"))
+		(pin "2" (uuid "1567d763-d220-4629-8352-8449e0972d1b"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 138.43 158.75) (xy 144.78 158.75)) (stroke (width 0) (type default)) (uuid "b7a75a09-ef7b-487b-8a5e-4a443c2925f0"))
+	(wire (pts (xy 137.16 158.75) (xy 137.16 165.1)) (stroke (width 0) (type default)) (uuid "688ddfa4-0839-4e09-a154-745f8efc3efe"))
+	(junction (at 137.16 165.1) (diameter 0) (color 0 0 0 0) (uuid "81a818a2-25d9-4b82-9ddf-553ca96a7ce8"))
+	(symbol (lib_id "Switch:SW_Push") (at 38.1 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "2f5d5390-0051-4bef-8cee-6e731535c323")
+	(property "Reference" "SW_L18" (at 38.1 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K18" (at 38.1 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 38.1 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 38.1 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 38.1 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "a2a6e61f-af91-4316-8fa8-819cc746e50c"))
+		(pin "2" (uuid "c5f11e9c-6206-4a0f-b880-0dbd09c97bc1"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 33.02 177.8) (diameter 0) (color 0 0 0 0) (uuid "72489b61-987b-47cb-9918-7a4a1a29d8c7"))
+	(symbol (lib_id "Diode:1N4001") (at 45.72 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "dd055418-d291-4da9-9ed7-68464b7f26d5")
+	(property "Reference" "D_L18" (at 45.72 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 45.72 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 45.72 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 45.72 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 45.72 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "8e1a2b38-8fb0-4a98-b691-53897f04eff6"))
+		(pin "2" (uuid "0023e905-6fe2-457d-96cc-3ea869422e5b"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 43.18 177.8) (xy 49.53 177.8)) (stroke (width 0) (type default)) (uuid "5e310953-8434-446b-a3ce-749c6a51af96"))
+	(wire (pts (xy 41.91 177.8) (xy 41.91 184.15)) (stroke (width 0) (type default)) (uuid "a2a0b6d6-21d5-488e-8d17-5aa0e36f90d7"))
+	(junction (at 41.91 184.15) (diameter 0) (color 0 0 0 0) (uuid "5ec1cac2-64df-4f00-a8bf-8cb3d754ec19"))
+	(symbol (lib_id "Switch:SW_Push") (at 57.15 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "a5c35d5b-0f10-4aab-a873-c393cfa59cc8")
+	(property "Reference" "SW_L19" (at 57.15 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K19" (at 57.15 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 57.15 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 57.15 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 57.15 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "2e0b9d47-49ce-404b-b682-f943eb55beba"))
+		(pin "2" (uuid "4a2d7f55-6f0d-4cae-9da1-07a827af0e74"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L19")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 52.07 177.8) (diameter 0) (color 0 0 0 0) (uuid "dcdb92fd-9753-428e-b72b-ea531a63c0d6"))
+	(symbol (lib_id "Diode:1N4001") (at 64.77 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "11cbaf09-4a98-4165-b303-0a1014121c31")
+	(property "Reference" "D_L19" (at 64.77 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 64.77 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 64.77 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 64.77 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 64.77 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "ef663fe8-9b30-4a0c-b34e-df5c4c264b94"))
+		(pin "2" (uuid "87d4b7e1-9cdd-4cea-9373-2fc2f11ec130"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L19")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 62.23 177.8) (xy 68.58 177.8)) (stroke (width 0) (type default)) (uuid "d581d371-a2e5-43d3-945e-02de40f4291b"))
+	(wire (pts (xy 60.96 177.8) (xy 60.96 184.15)) (stroke (width 0) (type default)) (uuid "5b16366d-6e85-498e-a7ff-6099ac880ccc"))
+	(junction (at 60.96 184.15) (diameter 0) (color 0 0 0 0) (uuid "9b776dcf-9a56-4c4b-978b-c2c2a8934480"))
+	(symbol (lib_id "Switch:SW_Push") (at 76.2 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "de5eba21-08bb-44bb-84f8-1851972f1ba4")
+	(property "Reference" "SW_L20" (at 76.2 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K20" (at 76.2 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 76.2 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 76.2 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 76.2 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "418771be-5a31-4bf5-a38b-c5af3e8fb4ef"))
+		(pin "2" (uuid "fcd231a3-9411-4efb-8d9d-05bebcc4ff5d"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L20")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 71.12 177.8) (diameter 0) (color 0 0 0 0) (uuid "0c0d052d-ced8-4cb2-8b3f-a8206421a686"))
+	(symbol (lib_id "Diode:1N4001") (at 83.82 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "21c4354e-e502-4bac-af37-fef17aa3df82")
+	(property "Reference" "D_L20" (at 83.82 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 83.82 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 83.82 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 83.82 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 83.82 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "a6198e63-2819-483e-a149-98d3011dfe4c"))
+		(pin "2" (uuid "9c3c30b0-e8c1-4116-93d9-c8b5e99bd999"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L20")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 81.28 177.8) (xy 87.63 177.8)) (stroke (width 0) (type default)) (uuid "a5b68a67-45b7-42ef-95a4-3bbb3ce109d4"))
+	(wire (pts (xy 80.01 177.8) (xy 80.01 184.15)) (stroke (width 0) (type default)) (uuid "9cfabec3-ec4d-4301-9aa6-f3fd4bfcbee7"))
+	(junction (at 80.01 184.15) (diameter 0) (color 0 0 0 0) (uuid "9ef3aba5-7085-49bb-bd48-dbd42dee9240"))
+	(symbol (lib_id "Switch:SW_Push") (at 95.25 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "fe3ee8bb-6bf6-46c3-9d54-82343b09faa2")
+	(property "Reference" "SW_L21" (at 95.25 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "K21" (at 95.25 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u" (at 95.25 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 95.25 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Kailh PG1350" (at 95.25 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "dd2af5aa-63cd-4a72-82c6-71eb4597c73b"))
+		(pin "2" (uuid "e2a39f38-c513-4e19-a71a-a6941a9e54c8"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_L21")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(junction (at 90.17 177.8) (diameter 0) (color 0 0 0 0) (uuid "a3deec09-4c73-4292-ad48-75af2c6c1187"))
+	(symbol (lib_id "Diode:1N4001") (at 102.87 177.8 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "e2d50898-a464-46ec-9ef0-496107bac2ad")
+	(property "Reference" "D_L21" (at 102.87 167.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "1N4148W" (at 102.87 163.64 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Diode_SMD:D_SOD-123" (at 102.87 159.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 102.87 155.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "1N4148W" (at 102.87 151.64 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "eedb7b8e-0901-439e-ac0a-9bd1c536e739"))
+		(pin "2" (uuid "35d74ea5-6db8-4c3d-8b9d-9bed51977aae"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "D_L21")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 100.33 177.8) (xy 106.68 177.8)) (stroke (width 0) (type default)) (uuid "8338e3f3-86cc-4b19-9b48-4832f94ae17c"))
+	(wire (pts (xy 99.06 177.8) (xy 99.06 184.15)) (stroke (width 0) (type default)) (uuid "3e7ae12d-f1ca-4785-9816-c6ab117971fa"))
+	(junction (at 99.06 184.15) (diameter 0) (color 0 0 0 0) (uuid "b611bff9-534e-4bf9-903e-7b05495ce125"))
+	(wire (pts (xy 33.02 120.65) (xy 33.02 177.8)) (stroke (width 0) (type default)) (uuid "a91436ee-5416-4cb9-aea9-a1b829c626c0"))
+	(wire (pts (xy 33.02 114.3) (xy 33.02 120.65)) (stroke (width 0) (type default)) (uuid "b18d43cc-aeae-4462-9272-64a6ef0e766b"))
+	(junction (at 33.02 120.65) (diameter 0) (color 0 0 0 0) (uuid "200ce0c3-4e35-4c1e-abd6-deeadb756a1c"))
+	(label "COL0_L" (at 33.02 114.3 0) (fields_autoplaced yes) (uuid "9cd0f18d-7623-49ca-a10b-90964b52bb13") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 52.07 120.65) (xy 52.07 177.8)) (stroke (width 0) (type default)) (uuid "13d0df70-5f53-48c1-8a2e-8a9e798af734"))
+	(wire (pts (xy 52.07 114.3) (xy 52.07 120.65)) (stroke (width 0) (type default)) (uuid "8f4995a0-2363-487c-8f58-eb5dbb856a7e"))
+	(junction (at 52.07 120.65) (diameter 0) (color 0 0 0 0) (uuid "e3fa8026-c036-4532-ab19-925bf79b9b7a"))
+	(label "COL1_L" (at 52.07 114.3 0) (fields_autoplaced yes) (uuid "b2e8c4fd-7ece-4c86-80d5-405f770828b5") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 71.12 120.65) (xy 71.12 177.8)) (stroke (width 0) (type default)) (uuid "11bab234-b2bd-4b80-90ae-3a8423d4efc6"))
+	(wire (pts (xy 71.12 114.3) (xy 71.12 120.65)) (stroke (width 0) (type default)) (uuid "ef1e01d7-6efe-4d85-bc9d-c723b748a189"))
+	(junction (at 71.12 120.65) (diameter 0) (color 0 0 0 0) (uuid "13b42520-292d-4912-9a38-172d78582c9d"))
+	(label "COL2_L" (at 71.12 114.3 0) (fields_autoplaced yes) (uuid "4dd45227-f096-422b-9b2f-83cfd12c2664") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 90.17 120.65) (xy 90.17 177.8)) (stroke (width 0) (type default)) (uuid "4ba7c522-aa85-4b36-a5ba-810d2246c633"))
+	(wire (pts (xy 90.17 114.3) (xy 90.17 120.65)) (stroke (width 0) (type default)) (uuid "c6d5c274-fcb2-4875-b0a2-c1da55cba337"))
+	(junction (at 90.17 120.65) (diameter 0) (color 0 0 0 0) (uuid "7f3e72ae-67cb-42e0-8a55-d60beee81560"))
+	(label "COL3_L" (at 90.17 114.3 0) (fields_autoplaced yes) (uuid "7f623022-a107-4151-b934-40364b2ed10c") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 109.22 120.65) (xy 109.22 158.75)) (stroke (width 0) (type default)) (uuid "0a4d63d9-42fd-4ba2-a549-5ff890195935"))
+	(wire (pts (xy 109.22 114.3) (xy 109.22 120.65)) (stroke (width 0) (type default)) (uuid "6397494e-dffc-4bd5-94c1-37f55a99e74d"))
+	(junction (at 109.22 120.65) (diameter 0) (color 0 0 0 0) (uuid "c26fa32a-68bb-4d6a-bc29-5b31195793e9"))
+	(label "COL4_L" (at 109.22 114.3 0) (fields_autoplaced yes) (uuid "5e706f69-3792-4365-9f3b-94aa705a4960") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 128.27 120.65) (xy 128.27 158.75)) (stroke (width 0) (type default)) (uuid "a53ff741-485d-44e1-89cc-7ef4ccc30668"))
+	(wire (pts (xy 128.27 114.3) (xy 128.27 120.65)) (stroke (width 0) (type default)) (uuid "8c526087-a64d-4c09-8746-f4e85cd4174c"))
+	(junction (at 128.27 120.65) (diameter 0) (color 0 0 0 0) (uuid "aa61c049-3526-4731-bc1b-9f26873778f3"))
+	(label "COL5_L" (at 128.27 114.3 0) (fields_autoplaced yes) (uuid "6e6febca-7cfe-4e82-bbba-65e36c990fb9") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 41.91 127.0) (xy 137.16 127.0)) (stroke (width 0) (type default)) (uuid "fbc9d89a-afef-4aea-8802-06011ebc0901"))
+	(wire (pts (xy 137.16 127.0) (xy 137.16 133.35)) (stroke (width 0) (type default)) (uuid "237e8b0d-e2db-4afd-860a-26d669b5d88c"))
+	(label "ROW0_L" (at 137.16 133.35 0) (fields_autoplaced yes) (uuid "899c0694-c808-475b-875e-f5719e5a813e") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 41.91 146.05) (xy 137.16 146.05)) (stroke (width 0) (type default)) (uuid "e591408b-ead3-49d4-8e7d-8e7ae7535687"))
+	(wire (pts (xy 137.16 146.05) (xy 137.16 152.4)) (stroke (width 0) (type default)) (uuid "120340e8-76c8-4cb1-969f-9ebf06157e0d"))
+	(label "ROW1_L" (at 137.16 152.4 0) (fields_autoplaced yes) (uuid "87d20224-1df6-4c26-bb09-785498d1e15a") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 41.91 165.1) (xy 137.16 165.1)) (stroke (width 0) (type default)) (uuid "30aec5f7-1bb5-473d-8b84-cd552426bd71"))
+	(wire (pts (xy 137.16 165.1) (xy 137.16 171.45)) (stroke (width 0) (type default)) (uuid "2b7b9186-2eec-4e22-9f7c-5efc8290d0e9"))
+	(label "ROW2_L" (at 137.16 171.45 0) (fields_autoplaced yes) (uuid "76179e3d-2487-471c-bebe-371230160260") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 41.91 184.15) (xy 99.06 184.15)) (stroke (width 0) (type default)) (uuid "e64fdaf7-c56d-4262-b69e-33b7832bf641"))
+	(wire (pts (xy 99.06 184.15) (xy 99.06 190.5)) (stroke (width 0) (type default)) (uuid "baec9862-686b-4f59-be7e-649d1a0826da"))
+	(label "ROW3_L" (at 99.06 190.5 0) (fields_autoplaced yes) (uuid "11d633f3-ea41-47ba-96c1-6d1593badb7c") (effects (font (size 1.27 1.27)) (justify left)))
+	(symbol (lib_id "Device:RotaryEncoder_Switch") (at 63.5 222.25 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "d88d8cc5-345d-4e7f-925d-f80a9d1ecb8a")
+	(property "Reference" "ENC_L1" (at 63.5 207.01 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "EC11E-Switch" (at 63.5 203.01 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles" (at 63.5 199.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 63.5 195.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Alps EC11E15244G1" (at 63.5 191.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "A" (uuid "716a5db0-61f2-4bb0-b057-9d080bce8154"))
+		(pin "B" (uuid "d1ae0170-39e2-4776-999a-dca53f872f14"))
+		(pin "C" (uuid "49bd4034-3dcb-4056-afd1-c9726b99eef6"))
+		(pin "S1" (uuid "298198a3-d211-4a27-b3f8-d71a13a30f1a"))
+		(pin "S2" (uuid "0c4a3403-98e8-460b-96b4-e5edb7b56175"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "ENC_L1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 55.88 219.71) (xy 45.72 219.71)) (stroke (width 0) (type default)) (uuid "db7026b6-8ed2-47f4-b575-91775ac4f5ce"))
+	(label "ENC_A_L" (at 45.72 219.71 0) (fields_autoplaced yes) (uuid "d8d4317f-32af-4bcf-92dc-0830d0d7c25b") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 55.88 224.79) (xy 45.72 224.79)) (stroke (width 0) (type default)) (uuid "c0a7f6a6-8c14-4a34-9acf-9ec758904d9c"))
+	(label "ENC_B_L" (at 45.72 224.79 0) (fields_autoplaced yes) (uuid "2d119c44-50c9-47bb-8a76-6a73c1ff4974") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 55.88 222.25) (xy 40.64 222.25)) (stroke (width 0) (type default)) (uuid "eb58024a-39d1-49d7-8087-bc4fdecf0f65"))
+	(symbol (lib_id "power:GND") (at 40.64 222.25 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "77d912bf-031b-49f1-a5ed-1216c1902db2")
+	(property "Reference" "#PWR001" (at 40.64 228.25 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "GND" (at 40.64 224.25 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "" (at 40.64 220.25 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 40.64 216.25 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "" (at 40.64 212.25 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "786e4541-7706-4131-87d5-4e1ff4b91cb1"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "#PWR001")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 71.12 219.71) (xy 81.28 219.71)) (stroke (width 0) (type default)) (uuid "44c86da7-f252-4e8a-a57d-fe9e4ca2d451"))
+	(label "ENC_SW_L" (at 81.28 219.71 0) (fields_autoplaced yes) (uuid "42cd75f3-b065-41b7-967b-7861d72a3e47") (effects (font (size 1.27 1.27)) (justify left)))
+	(symbol (lib_id "power:GND") (at 71.12 224.79 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "d2b64a2c-d8de-4a61-9ba8-39cb6e3a8f72")
+	(property "Reference" "#PWR002" (at 71.12 230.79 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "GND" (at 71.12 226.79 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "" (at 71.12 222.79 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 71.12 218.79 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "" (at 71.12 214.79 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "9b404e57-d376-4916-8f17-cbf718305a18"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "#PWR002")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol (lib_id "Connector_Audio:AudioJack4") (at 139.7 222.25 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "72700402-381c-4e42-b37e-5eb34e8cd578")
+	(property "Reference" "J_L1" (at 139.7 207.01 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "PJ-320A TRRS" (at 139.7 203.01 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Hojicha44:TRRS-PJ-320A" (at 139.7 199.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 139.7 195.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "XKB PJ-320A" (at 139.7 191.01 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "R1" (uuid "a7e34925-5181-45e1-a9c1-db2d20d62f4f"))
+		(pin "R2" (uuid "55fa6143-8436-43c6-b578-8e5ae5bcf25e"))
+		(pin "S" (uuid "93b96352-a1fc-4537-9c17-36b984ed9559"))
+		(pin "T" (uuid "4f239973-49d6-40ad-b8c8-093988e3aff5"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "J_L1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 144.78 227.33) (xy 154.94 227.33)) (stroke (width 0) (type default)) (uuid "8a291fd3-c56f-4238-9c7d-b355c3595013"))
+	(label "TRRS_T" (at 154.94 227.33 0) (fields_autoplaced yes) (uuid "fdd78d96-6829-4acb-ba27-cf340dd73b12") (effects (font (size 1.27 1.27)) (justify left)))
+	(wire (pts (xy 144.78 224.79) (xy 154.94 224.79)) (stroke (width 0) (type default)) (uuid "927af328-6484-4c58-ac19-4a9d392072ec"))
+	(label "TRRS_R1" (at 154.94 224.79 0) (fields_autoplaced yes) (uuid "c195fb91-fe68-447e-a9b4-bbc7e112006c") (effects (font (size 1.27 1.27)) (justify left)))
+	(no_connect (at 144.78 222.25) (uuid "55d2a804-bab1-498b-b389-c12d060bd5b2"))
+	(wire (pts (xy 144.78 219.71) (xy 175.26 219.71)) (stroke (width 0) (type default)) (uuid "f51b9c07-09f6-4710-9e2d-ba3f5c3d2769"))
+	(symbol (lib_id "power:GND") (at 175.26 219.71 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "697f5576-fb8d-4545-91f2-433608705658")
+	(property "Reference" "#PWR003" (at 175.26 225.71 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "GND" (at 175.26 221.71 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "" (at 175.26 217.71 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 175.26 213.71 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "" (at 175.26 209.71 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "789b3078-4ddc-4276-a7f6-b4aec07ce8bd"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "#PWR003")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol (lib_id "Connector:Conn_01x02_Socket") (at 177.8 48.26 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "c1b8d316-67b3-4aba-90bf-8c09b631c311")
+	(property "Reference" "J_L2" (at 177.8 35.56 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "BATT_LIPO" (at 177.8 31.56 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Connector_JST:JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal" (at 177.8 27.56 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 177.8 23.56 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "JST S2B-PH-K-S" (at 177.8 19.56 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "0c2be599-4493-4c64-8973-0d7251cce763"))
+		(pin "2" (uuid "04c1171e-eccb-4bcd-9efb-9e6fccf7be7c"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "J_L2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 172.72 50.8) (xy 167.64 50.8)) (stroke (width 0) (type default)) (uuid "26283e54-4ab9-42e9-b866-ee06f2164dc0"))
+	(label "GND" (at 167.64 50.8 0) (fields_autoplaced yes) (uuid "9648e9a0-d417-4f7b-a473-292966120f58") (effects (font (size 1.27 1.27)) (justify left)))
+	(symbol (lib_id "Switch:SW_SPDT") (at 177.8 73.66 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "3acd1310-a7e9-4a79-b417-f6896a52e06c")
+	(property "Reference" "SW_LPWR1" (at 177.8 58.42 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "PWR_SW" (at 177.8 54.42 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "Button_Switch_THT:SW_Slide-03_Wuerth-WS-SLTV_10x2.5x6.4_P2.54mm" (at 177.8 50.42 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 177.8 46.42 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "Wuerth 450301014042" (at 177.8 42.42 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "117d78bf-bace-404e-98a8-091a7ed84c38"))
+		(pin "2" (uuid "42693696-7281-4999-abbd-5ab02514ab42"))
+		(pin "3" (uuid "9e3a6dfb-35fa-46f4-8caf-a738469b84b4"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "SW_LPWR1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 172.72 48.26) (xy 166.37 48.26)) (stroke (width 0) (type default)) (uuid "ab8114a5-2336-4e7f-8419-579bef3da793"))
+	(wire (pts (xy 166.37 48.26) (xy 166.37 71.12)) (stroke (width 0) (type default)) (uuid "9a8eb12b-6cef-4c22-ad61-9cba585203d9"))
+	(wire (pts (xy 166.37 71.12) (xy 182.88 71.12)) (stroke (width 0) (type default)) (uuid "81ddd71d-9e4f-4738-bd16-f9d1255d208c"))
+	(junction (at 166.37 48.26) (diameter 0) (color 0 0 0 0) (uuid "18a4cac3-a108-450d-930c-1d2b27243b1b"))
+	(junction (at 166.37 71.12) (diameter 0) (color 0 0 0 0) (uuid "e3541fb2-0359-4f26-9b8d-818150fe7613"))
+	(wire (pts (xy 172.72 73.66) (xy 182.88 73.66)) (stroke (width 0) (type default)) (uuid "26769c38-f898-4e59-bcd5-918b6261c031"))
+	(label "VBAT_SW_L" (at 182.88 73.66 0) (fields_autoplaced yes) (uuid "d7660801-40d3-411a-8bc3-3a520a0dce5e") (effects (font (size 1.27 1.27)) (justify left)))
+	(no_connect (at 182.88 76.2) (uuid "dc3fb9a5-34d7-4742-af61-a5b1c8972119"))
+	(symbol (lib_id "power:PWR_FLAG") (at 25.4 241.3 0) (unit 1)
+		(in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)
+		(uuid "e2cc5878-89a3-4dd7-854e-720daae908af")
+	(property "Reference" "#FLG1" (at 25.4 231.14 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Value" "PWR_FLAG" (at 25.4 227.14 0)
+		(effects (font (size 1.27 1.27))))
+	(property "Footprint" "" (at 25.4 223.14 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "Datasheet" "" (at 25.4 219.14 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+	(property "MPN" "" (at 25.4 215.14 0) (hide yes)
+		(effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "f8a6f9d6-35fe-42e7-9ddc-83577a52e605"))
+		(instances
+			(project "Hojicha44-Left"
+				(path "/53461079-9da6-4c59-9657-d1117b2d9cd5"
+					(reference "#FLG1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire (pts (xy 25.4 241.3) (xy 25.4 251.46)) (stroke (width 0) (type default)) (uuid "2b330952-9941-4dbc-8c87-a30bbbf67c60"))
+	(label "GND" (at 25.4 251.46 0) (fields_autoplaced yes) (uuid "a4069613-c8f3-425f-aba5-38c94de3d9e3") (effects (font (size 1.27 1.27)) (justify left)))
+)

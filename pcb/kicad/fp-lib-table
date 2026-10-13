@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Hojicha44")(type "KiCad")(uri "${KIPRJMOD}/Hojicha44.pretty")(options "")(descr "Hojicha44 project footprints"))
+)

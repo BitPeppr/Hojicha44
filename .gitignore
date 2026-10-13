@@ -7,3 +7,18 @@ node_modules/
 # reproducible outputs (regenerate via README; sources are the truth)
 layout/generated/
 *.log
+
+# KiCad working-tree noise (release reports go to generated/release/)
+*.kicad_prl
+*-erc.rpt
+*-drc.rpt
+
+# regenerable render exports (kicad-cli sch export ...)
+pcb/kicad/export/
+
+# KiCad lock files + local scratch backups (never versioned)
+*.lck
+.backup/
+
+# generated fit-print / release PDFs (kicad-cli; regenerate on demand)
+out/
