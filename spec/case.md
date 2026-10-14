@@ -9,12 +9,17 @@ jacket pockets)
 
 ## Mounting: tab-and-jacket suspension
 
-The plate grows 8 discrete tongues per half (10mm wide, 5mm proud,
+The plate grows 6 discrete tongues per half (10mm wide, 5mm proud,
 2mm root fillets, chamfered tips) that slot into silicone jackets held
 captive in the case walls — no rim strips, no plate screws, no hard
 contact anywhere. The assembly floats on 8 soft mounts per half, so
 support uniformity comes from identical jackets at even spacing, not
-from foam proximity (measured worst key-to-tab 46–47mm at 2.5 pitches).
+from foam proximity (measured worst key-to-tab 51mm at the bottom-row
+middle keys, 2.7 pitches; encoder sits 42mm out). The inner
+(microcontroller) edge carries no tab: MCU/TRRS/encoder windows occupy
+it fully and the remaining rim finger is narrower than a tab root, so
+that zone floats between its flanking tabs by design — encoder push
+stays soft there.
 Encoder push over the window zone stays soft by design.
 
 ## Stack (top to bottom, per half)

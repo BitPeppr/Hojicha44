@@ -56,7 +56,8 @@ GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
 TAB_W = 10.0             # tab width along the rim (jacket pocket ~12)
 TAB_L = 5.0              # tab protrusion past the outline
 TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
-TAB_N = 8                # tab count per half (even suspension)
+TAB_N = 6                # tab count per half: fewer, softer mounts =
+                             # more suspension; even spacing keeps it uniform
 TAB_TIP_CH = 1.5         # tip chamfer for jacket entry
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
                          # root (measured worst 46-47mm at 2.5 pitches).
@@ -174,17 +175,24 @@ def arc_center(p0, pm, p1):
     return (ux, uy)
 
 
-def subdivide(segs, step=1.0):
+def subdivide(seq, step=1.0):
+    # seq entries are (seg, flip) from chain_loop: walk every segment in
+    # CHAIN direction, or backward-stored segments spike out-and-back
+    # (parallel double tracks + jumps in the resample).
     pts = []
-    for s in segs:
+    for s, flip in seq:
         if s[0] == 'line':
             _, a, b = s
+            if flip:
+                a, b = b, a
             n = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
             for k in range(n):
                 t = k / n
                 pts.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
         else:
             _, a, m, b = s
+            if flip:
+                a, b = b, a
             c = arc_center(a, m, b)
             r = math.hypot(a[0] - c[0], a[1] - c[1])
             a0 = math.atan2(a[1] - c[1], a[0] - c[0])
@@ -313,7 +321,7 @@ def build_half(tag):
     pcb = os.path.join(PCB_DIR, f'Hojicha44-{tag}.kicad_pcb')
     inst = parse_instances(pcb)
     seq = chain_loop(parse_outline(pcb))
-    loop = subdivide([s for s, _ in seq])
+    loop = subdivide(seq)
 
     sw = sorted((r, v[1], v[2], v[3]) for r, v in inst.items()
                 if CHOC_RE.match(r))
@@ -550,32 +558,22 @@ def build_half(tag):
             fail('tab roots overlap/clash')
 
     def fillet_arc(corner, u_away, o_out, r, n=6):
+        # 90° concave fillet joining the rim (direction u_away from the
+        # corner) to the tab side (direction o_out). Sweeps from the rim
+        # tangent point to the side tangent point THROUGH the corner side;
+        # the long way around would draw a near-full loop in the plate.
         T1 = (corner[0] + u_away[0] * r, corner[1] + u_away[1] * r)
         T2 = (corner[0] + o_out[0] * r, corner[1] + o_out[1] * r)
         O = (T1[0] + o_out[0] * r, T1[1] + o_out[1] * r)
         a0 = math.atan2(T1[1] - O[1], T1[0] - O[0])
         a1 = math.atan2(T2[1] - O[1], T2[0] - O[0])
         amid = math.atan2(corner[1] - O[1], corner[0] - O[0])
-
-        def norm(t):
-            while t <= -math.pi:
-                t += 2 * math.pi
-            while t > math.pi:
-                t -= 2 * math.pi
-            return t
-        if (norm(amid - a0) > 0) != (norm(a1 - a0) > 0) and \
-                abs(norm(a1 - a0)) > 1e-9:
-            step = -abs(norm(a1 - a0)) / n
-            base, direction = a0, -1.0
-            total = norm(a0 - a1)
-            if total < 0:
-                total += 2 * math.pi
-            angs = [a0 - total * k / n for k in range(n + 1)]
+        ccw = (a1 - a0) % (2 * math.pi)
+        if (amid - a0) % (2 * math.pi) <= ccw:
+            angs = [a0 + ccw * k / n for k in range(n + 1)]
         else:
-            total = norm(a1 - a0)
-            if total < 0:
-                total += 2 * math.pi
-            angs = [a0 + total * k / n for k in range(n + 1)]
+            cw = (a0 - a1) % (2 * math.pi)
+            angs = [a0 - cw * k / n for k in range(n + 1)]
         return [(O[0] + r * math.cos(t), O[1] + r * math.sin(t))
                 for t in angs]
 
@@ -614,8 +612,10 @@ def build_half(tag):
         path.append(E2)
         S2 = (B[0] + o[0] * (TL - CH), B[1] + o[1] * (TL - CH))
         path.append(S2)
-        # outgoing fillet (right side -> rim)
-        path += fillet_arc(B, (tx, ty), o, F)
+        # outgoing fillet (right side -> rim): traverse T2->T1, i.e. the
+        # reverse of the rim->side order used on the incoming side, or the
+        # path doubles back on itself into a spike
+        path += fillet_arc(B, (tx, ty), o, F)[::-1]
         return path
 
     intervals = []
@@ -641,11 +641,12 @@ def build_half(tag):
                 break
     inject = {}
     for (a, b), c in zip(intervals, centers):
-        best, bi = 1e18, 0
-        for i, s in enumerate(dcum):
-            d = min(abs((s % P) - (a % P)), P - abs((s % P) - (a % P)))
-            if d < best:
-                best, bi = d, i
+        # splice position = first dense index at/after the interval start
+        # (NOT the nearest: nearest can fall just BEFORE the start, which
+        # emits the whole tab path before its rim anchor and spikes
+        # out-and-back across the interval width).
+        target = a % P
+        bi = next(i for i, s in enumerate(dcum) if (s % P) >= target)
         inject.setdefault(bi, []).append(c)
     final = []
     for i, pt in enumerate(dense):
@@ -654,7 +655,46 @@ def build_half(tag):
                 final.extend(tab_paths[c])
         if not inside[i]:
             final.append(pt)
-    new_loop = final
+    # dedupe consecutive near-coincident points (segment-joint doubles
+    # laser as zero-length moves and read as spikes)
+    new_loop = [final[0]]
+    for pt in final[1:]:
+        if math.hypot(pt[0] - new_loop[-1][0], pt[1] - new_loop[-1][1]) >= 0.01:
+            new_loop.append(pt)
+    # drop an explicit closure duplicate (closed POLYLINE/SVG-polygon
+    # auto-close; keeping it lasers a zero-length spike). A genuine small
+    # closing segment (<=0.6) stays.
+    if math.hypot(new_loop[-1][0] - new_loop[0][0],
+                  new_loop[-1][1] - new_loop[0][1]) < 0.05:
+        new_loop.pop()
+    # self-checks: outline simplicity (no loops/spikes), per-tab area
+    n = len(new_loop)
+    for i in range(n):
+        a, b = new_loop[i], new_loop[(i + 1) % n]
+        for j in range(i + 2, n):
+            if j == n - 1 and i == 0:
+                continue
+            c, d = new_loop[j], new_loop[(j + 1) % n]
+            rx, ry = b[0] - a[0], b[1] - a[1]
+            sx, sy = d[0] - c[0], d[1] - c[1]
+            den = rx * sy - ry * sx
+            if abs(den) < 1e-12:
+                continue
+            t = ((c[0] - a[0]) * sy - (c[1] - a[1]) * sx) / den
+            u = ((c[0] - a[0]) * ry - (c[1] - a[1]) * rx) / den
+            if 0 < t < 1 and 0 < u < 1:
+                fail(f'outline self-intersects near '
+                     f'{r2(a[0])},{r2(a[1])}')
+                break
+        else:
+            continue
+        break
+    for c in centers:
+        tp = tab_paths[c]
+        area = abs(sum(p[0] * q[1] - q[0] * p[1]
+                       for p, q in zip(tp, tp[1:] + tp[:1])) / 2)
+        if not (30.0 <= area <= 90.0):
+            fail(f'tab at {r2(c)} area {area:.0f} outside 30-90')
     # closure + area sanity (tabs add ~55mm^2 each)
     if math.hypot(new_loop[0][0] - new_loop[-1][0],
                   new_loop[0][1] - new_loop[-1][1]) > 0.6:

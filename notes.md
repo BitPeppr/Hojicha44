@@ -676,3 +676,15 @@ outline as one dense polyline; jackets are case-side (10.5x2mm slot).
 Uniformity now comes from identical mounts at even spacing (measured
 worst key-to-tab 46-47mm), not foam proximity. Outline differs from PCB
 by the tabs only; ports, windows, and gates unchanged, all green.
+
+## Plate rev-4: geometry debugged, 6 tabs (2026-10-15)
+
+Review found real defects, all fixed and now self-checked. (1) Splice
+bug: tab paths injected at nearest-dense-index could precede their rim
+anchor, spiking 15mm out-and-back — inject at lower-bound instead.
+(2) B-side fillet arcs swept the long way (270° loops) — traverse
+T2->T1. (3) Closure duplicates dropped. Generator now asserts outline
+simplicity (0 crossings, verified), per-tab area, min segment, closure.
+8 -> 6 tabs; inner edge stays tab-free by physics (windows occupy it,
+rim finger < tab root) and floats between flanks — documented in
+spec/case.md with measured worst key-to-tab 51mm.
