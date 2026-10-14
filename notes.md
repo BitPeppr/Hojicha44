@@ -472,8 +472,10 @@ keymap content.
 - **Release Gerbers use explicit layers.** Default export dumps 21 layers
   (Courtyard/Fab/Adhesive/Margin/Eco/User_* junk); `out/release/<Half>/`
   now holds exactly F.Cu,B.Cu,F/B.Mask,F/B.Silkscreen,F/B.Paste,Edge.Cuts
-  + job + drill + pos (verified file list, all non-empty). Command shape
-  in fix.md §5.3 stands, with `-l` as used here. Outputs stay gitignored.
+  + job + drill + pos + bom + MANIFEST (verified file list, all non-empty).
+  fix.md §5.3 now carries the exact verified commands (explicit `-l` layer
+  list, `--format csv --units mm` pos, MPN-field BOM, `out/release/` paths).
+  Outputs stay gitignored.
 - **ZMK `left_encoder` is shared-node naming, not a bug.** Defined once in
   the dtsi, enabled per overlay, consumed by `sensors` — renaming per half
   would break the reference. Comment added at the definition.

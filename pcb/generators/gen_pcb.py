@@ -1006,8 +1006,9 @@ def build_board(tag, pts):
 def drc(tag):
     """Run DRC and enforce the placement gate.
 
-    Passes with: unconnected_items (no tracks yet — routing comes next) and
-    documented waivers below. Anything else fails the build.
+    Passes with: documented waivers W1/W2 only. unconnected_items is NOT
+    waived (routing landed — DRC is the connectivity backstop).
+    Anything else fails the build.
     """
     out = os.path.join(PCB_DIR, PROJECT[tag] + "-drc.rpt")
     r = subprocess.run(
@@ -1028,8 +1029,8 @@ def check_drc_report(path):
     bad = []
     for typ, desc, body in pats:
         counts[typ] += 1
-        if typ == "unconnected_items":
-            continue  # waived until routing lands; router enforces zero
+        # unconnected_items: NOT waived — routing landed (r10), DRC is the
+        # backstop and must stay armed. Any unconnected item fails the build.
         if typ == "lib_footprint_mismatch":
             continue  # waiver W1: KiCad-version quirk — rotation alone
             # triggers it (proven: identical footprint at rot 0 clean, at
@@ -1059,9 +1060,14 @@ def main():
     pts = load_points()
     for tag in HALVES:
         build_board(tag, pts)
-    # DRC gate: placement must be clean modulo documented waivers
-    # (unconnected pre-routing + W1/W2). Exit non-zero on anything else.
+    # Artifact gates (committed check_board.py — were /tmp scripts):
+    # outline topology, fiducials, notch openness, per built board file.
+    import check_board
     rc = 0
+    for tag in HALVES:
+        rc |= check_board.check(tag, pts)
+    # DRC gate: placement must be clean modulo documented waivers
+    # (W1/W2 only — unconnected is NOT waived). Exit non-zero otherwise.
     for tag in HALVES:
         rc |= drc(tag)
     sys.exit(rc)

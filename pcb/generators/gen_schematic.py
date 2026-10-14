@@ -843,13 +843,48 @@ def audit(sch_path, offs, tag):
 
 def erc(tag):
     out = os.path.join(PCB_DIR, PROJECT[tag] + "-erc.rpt")
+    # NOTE: no --exit-code-violations — kicad-cli returns the violation COUNT,
+    # so the 5 deliberate spare-pin warnings would fail the build (exit 5).
+    # Enforcement is by report parsing below instead: 0 errors, warnings
+    # limited to the documented spares (same waiver style as the DRC gate).
     r = subprocess.run(
         [KICAD_CLI, "sch", "erc", "--format", "report",
          "--severity-all", "-o", out, sch_path(tag)],
         capture_output=True, text=True)
     tail = (r.stdout + r.stderr).strip().splitlines()
     print(f"  {tail[-1] if tail else 'erc done'}")
-    return r.returncode
+    return check_erc_report(out, tag)
+
+
+# Spare MCU pins, deliberately single-pin (future use + UICR). They stay
+# labeled — no_connect markers would hide intent (notes.md P1-6) — so the
+# gate allowlists exactly these five isolated-pin warnings per half.
+SPARE_LABELS = {"RST", "VCC3V3", "A3", "A2", "D10"}
+
+
+def check_erc_report(path, tag):
+    """0 if clean (0 errors + only documented spare warnings), 1 otherwise."""
+    s = open(path).read()
+    pats = re.findall(r"\[(.*?)\]: (.*?)\n((?:    .*\n)+)", s)
+    want = {f"{n}_{tag}" for n in SPARE_LABELS}
+    bad = []
+    for typ, desc, body in pats:
+        if "; error" in body:
+            bad.append((typ, desc, body))
+            continue
+        if typ != "isolated_pin_label" or "; warning" not in body:
+            bad.append((typ, desc, body))
+            continue
+        labels = set(re.findall(r"Label '([^']+)'", body))
+        if labels - want:
+            bad.append((typ, desc, body))
+    nwarn = sum(1 for _, _, body in pats if "; warning" in body)
+    nerr = sum(1 for _, _, body in pats if "; error" in body)
+    print(f"  erc: {len(pats)} items ({nerr} errors, {nwarn} warnings, "
+          f"{len(bad)} non-waived)" + ("" if not bad else " — FAILING"))
+    for typ, desc, body in bad[:10]:
+        print(f"  !! [{typ}] {desc}\n{body}")
+    return 1 if bad else 0
 
 
 def check_mcu_footprint():

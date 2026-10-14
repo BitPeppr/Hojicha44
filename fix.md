@@ -380,7 +380,10 @@ pins, intentional).
 spare pins), so ERC reports them as deliberately unconnected instead of as
 warnings. Don't disable the ERC rule.
 
-**Acceptance.** `erc` reports 0 errors and 0 warnings per half.
+**Acceptance.** `erc` reports 0 errors per half; warnings are limited to
+the 5 documented spare-pin `isolated_pin_label` warnings (RST, VCC3V3, A3,
+A2, D10), enforced by the gate — silencing them with `no_connect` was
+declined (hides future-use/UICR intent).
 
 Sources: ERC report (`pcb/kicad/Hojicha44-{Left,Right}-erc.rpt`).
 
@@ -504,18 +507,20 @@ Source: `spec/electronics.yaml` (`firmware_note`); ZMK documentation.
 Run them in this order; each must pass before the next.
 
 1. **Schematic:** `python3 pcb/generators/gen_schematic.py` — the audit, guards,
-   and ERC must pass.
-2. **PCB placement:** `python3 pcb/generators/gen_pcb.py` — placement, then DRC.
-3. **Outline topology (new):** each half has **1** Edge.Cuts loop, no dangling
-   segments (script: `/tmp/pcbcheck.py`, to be moved into
-   `pcb/generators/check_board.py`).
-4. **Fiducials (new):** each fiducial is inside the outline with ≥ 3.0 mm edge
-   clearance (script: `/tmp/fid.py`, to be moved).
-5. **Notch open (new):** the notch merges with the outer loop (check 3), and
-   top-pad copper ≥ 0.5 mm from the notch edge.
-6. **DRC:** `kicad-cli pcb drc` — 0 unconnected after routing; silk, mismatch,
-   and edge items resolved per §3.
-7. **ERC:** 0 errors and 0 warnings per half.
+   and ERC must pass (gate: 0 errors; warnings limited to the 5 documented
+   spare-pin warnings — see §3/P1-6).
+2. **PCB:** `python3 pcb/generators/gen_pcb.py` — place + route + artifact
+   gates + DRC. Artifact gates run inside the build.
+3. **Outline topology:** each half has **1** Edge.Cuts loop, no dangling
+   segments (`pcb/generators/check_board.py`, wired into the build).
+4. **Fiducials:** each fiducial is inside the outline with ≥ 3.0 mm edge
+   clearance (same script).
+5. **Notch open:** the notch merges with the outer loop (check 3: bite
+   floor 47.25 below the usb anchor), and pad copper ≥ 0.5 mm from the
+   bite floor in-window (same script).
+6. **DRC:** `kicad-cli pcb drc` — 0 unconnected (NOT waived since routing
+   landed); silk, mismatch, and edge items resolved per §3.
+7. **ERC:** 0 errors; warnings limited to the 5 documented spares per half.
 
 ### 5.2 Pre-Gerber checklist
 
@@ -533,18 +538,25 @@ Run them in this order; each must pass before the next.
 
 Commands use the KiCad CLI at
 `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`. Check the exact flags with
-`--help` before running; this list is the intended set, not verified against
-KiCad 10.0.6:
+`--help` before running; verified against 10.0.6. Gerbers take an explicit
+layer list — the default dumps 21 layers (Courtyard/Fab/Adhesive/Margin/Eco/
+User_* junk); fabs want only the 9 below. Position files need
+`--format csv --units mm` (default is inches ASCII misnamed .csv):
 
 ```sh
 K=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+LAYERS="F.Cu,B.Cu,F.Mask,B.Mask,F.Silkscreen,B.Silkscreen,F.Paste,B.Paste,Edge.Cuts"
 for half in Left Right; do
-  $K pcb export gerbers    --output out/$half/gerbers  pcb/kicad/Hojicha44-$half.kicad_pcb
-  $K pcb export drill      --output out/$half/drill    pcb/kicad/Hojicha44-$half.kicad_pcb
-  $K pcb export pos        --output out/$half/pos.csv  pcb/kicad/Hojicha44-$half.kicad_pcb
-  $K sch export bom        --output out/$half/bom.csv  pcb/kicad/Hojicha44-$half.kicad_sch
+  mkdir -p out/release/$half
+  $K pcb export gerbers -l "$LAYERS" -o out/release/$half pcb/kicad/Hojicha44-$half.kicad_pcb
+  $K pcb export drill -o out/release/$half pcb/kicad/Hojicha44-$half.kicad_pcb
+  $K pcb export pos --format csv --units mm -o out/release/$half/pos.csv pcb/kicad/Hojicha44-$half.kicad_pcb
+  $K sch export bom --fields "Reference,Value,Footprint,MPN,Datasheet,QUANTITY" -o out/release/$half/bom.csv pcb/kicad/Hojicha44-$half.kicad_sch
 done
 ```
+Then write `out/release/MANIFEST.txt` (spec version, git commit/tag,
+kicad-cli version, router rev, sha256 per file, gate status) and verify each
+half lists exactly 9 gerbers + job + drill + pos + bom.
 
 Then: open the Gerbers in a viewer (e.g. KiCad's gerber viewer) and confirm the
 outline, the notch, the fiducials, the tooling holes, and the silk.
