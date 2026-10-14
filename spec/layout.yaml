@@ -89,7 +89,7 @@ split_width:
       # status: fixed — user-approved widening
     # Single line in `layout/ergogen yaml/config.yaml` under `mirror:`.
     # Revert by deleting the "+ 16" — that restores the frozen baseline.
-    # Snapshots of both widths: layout/iterations/keyboard_layout_v8.yaml
+    # Snapshots of both widths: layout/- FINAL/keyboard_layout_v8.yaml
     # (4.5kx) and keyboard_layout_v8_exp_split.yaml (4.5kx + 16).
     # Left-half key geometry is bit-identical in both; only the right half
     # translates. Frozen v7 left-half key positions unchanged.

@@ -4,12 +4,12 @@
 //
 // Usage (from repo root):
 //   node layout/generators/render_preview.mjs [kle.json] [out stem]
-// Defaults: layout/iterations/keyboard_layout_v2.json -> layout/generated/v2/preview
+// Defaults: layout/- FINAL/keyboard_layout_v2.json -> layout/generated/v2/preview
 import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 
-const klePath = process.argv[2] || 'layout/iterations/keyboard_layout_v2.json';
+const klePath = process.argv[2] || 'layout/- FINAL/keyboard_layout_v2.json';
 const outStem = process.argv[3] || 'layout/generated/v2/keymap';
 const raw = JSON.parse(fs.readFileSync(klePath, 'utf8'));
 

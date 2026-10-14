@@ -3,7 +3,7 @@
 Custom split columnar mechanical keyboard (44 keys + 2 encoders, nice!nano x2).
 Roadmap: `KEYBOARD_PROJECT_ROADMAP.md`.
 **Current phase: PCB routing** (roadmap Phase 4). Layout geometry lives in
-`layout/ergogen yaml/config.yaml` (frozen snapshot: `layout/iterations/keyboard_layout_v7`);
+`layout/ergogen yaml/config.yaml` (frozen snapshot: `layout/- FINAL/keyboard_layout_v7`);
 each half has a placed+routed board file — see [Schematic](#schematic).
 
 ## Layout
@@ -11,14 +11,14 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | What | Where | Notes |
 |---|---|---|
 | Parametric source of truth | `layout/ergogen yaml/config.yaml` | Ergogen 4.2.1, 46 pts: 6×3 + 4 thumbs + encoder/side |
-| KLE sketch (derived) | `layout/iterations/keyboard_layout_v2.json` | Do not hand-edit; regenerate |
-| KLE sketch (archive) | `layout/iterations/keyboard_layout_v1.json` | Original row-staggered sketch |
+| KLE sketch (derived) | `layout/- FINAL/keyboard_layout_v2.json` | Do not hand-edit; regenerate |
+| KLE sketch (archive) | `layout/- FINAL/keyboard_layout_v1.json` | Original row-staggered sketch |
 | Layout decisions | `spec/layout.yaml` | Keymap, thumb roles, relocated keys |
 | Board outline | `layout/generated/v2/outlines/board.dxf` | PCB edge, no encoder hole — the EC11E needs copper under it |
 | Plate outline | `layout/generated/v2/outlines/plate.dxf` | Same contour + the 16mm encoder knock-through |
 | Generators | `layout/generators/` | `export_kle.py` (points → KLE), `render_preview.mjs` (KLE → labeled PNG) |
 | Ergogen outputs | `layout/generated/v2/` | Points, outlines, demo SVGs, keymap render |
-| Snapshots | `layout/iterations/` | v1–v4 KLE, v5–v6 Ergogen (frozen) |
+| Snapshots | `layout/- FINAL/` | v1–v4 KLE, v5–v6 Ergogen (frozen) |
 
 ## Schematic
 
@@ -131,7 +131,7 @@ antenna keepout.
 
 ## Previews
 
-- Paste `layout/iterations/keyboard_layout_v2.json` into keyboard-layout-editor.
+- Paste `layout/- FINAL/keyboard_layout_v2.json` into keyboard-layout-editor.
 - Paste `layout/ergogen yaml/config.yaml` into ergogen.xyz.
 - `layout/generated/v2/keymap.png` (+`.svg`) is a labeled render with the
   keymap baked in — no Ergogen PNG export exists, so this script draws it

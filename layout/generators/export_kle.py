@@ -3,7 +3,7 @@
 
 Layout-phase generator: Ergogen is the source of truth
 (`layout/ergogen yaml/config.yaml`), this script re-derives
-`layout/iterations/keyboard_layout_v2.json` from
+`layout/- FINAL/keyboard_layout_v2.json` from
 `layout/generated/v2/points/points.yaml` so the two can never drift apart.
 
 Usage (from repo root):
@@ -16,7 +16,7 @@ within 0.01u of the Ergogen coordinates.
 
 Do NOT hand-edit keyboard_layout_v2.json. Change the Ergogen config
 and/or spec/layout.yaml, regenerate Ergogen output, re-run this script.
-KLE v1 (layout/iterations/keyboard_layout_v1.json) is the archived
+KLE v1 (layout/- FINAL/keyboard_layout_v1.json) is the archived
 row-staggered starting sketch and is intentionally left untouched.
 """
 
@@ -26,7 +26,7 @@ import sys
 
 REPO = __file__.rsplit("/layout/generators/", 1)[0]
 PTS = REPO + "/layout/generated/v2/points/points.yaml"
-OUT = REPO + "/layout/iterations/keyboard_layout_v2.json"
+OUT = REPO + "/layout/- FINAL/keyboard_layout_v2.json"
 
 U = 19.0  # mm per KLE unit (MX pitch)
 # KLE x/y are the TOP-LEFT corner; Ergogen points are CENTERS.
