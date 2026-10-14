@@ -597,9 +597,10 @@ Two independent re-measurements plus a clean rebuild, all green:
 
 Firmware now builds in CI instead of never: `.github/workflows/build.yml`
 calls ZMK's reusable `build-user-config.yml`, matrixed over both halves in
-`build.yaml` (`nice_nano//zmk` + `hojicha44_left/right`; the `//zmk`
-board variant is mandatory since the Zephyr 4.1 move — bare
-`nice_nano_v2` resolves without ZMK compat and fails the gate). Layout mirrors the
+`build.yaml` (`nice_nano_v2` + `hojicha44_left/right`; the `//zmk`
+variant syntax does not resolve on the pinned v0.3 tree, so the classic
+name stands and `CONFIG_ZMK_BOARD_COMPAT=y` in the user conf satisfies
+the workflow's compat gate instead — verified side-effect free). Layout mirrors the
 unified template + in-tree Corne exactly — `config/` (west.yml pinned v0.3,
 keymap, conf), `boards/shields/hojicha44/` (shared dtsi, per-half overlays,
 Kconfig pair, metadata), root `zephyr/module.yml`. Roles: left central via
