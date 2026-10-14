@@ -16,8 +16,9 @@ geometry, never hand-drawn):
              at GAP+PLATE_THICK = 3.5mm)
   W2       = TRRS window + channel opening to the split-gap edge (jack
              mouth must exit; the plug overlaps plate-top height)
-  gaskets  = 8x6mm Poron lands on the rim, greedy max-min along the
-             perimeter, nudged clear of every keepout, max span < 60mm
+  gaskets  = 2.5mm Poron strips run along the rim (top + bottom pair at
+             the same XY), broken at every opening, pin zone and port mouth;
+             every switch + the encoder must sit within 40mm of foam
 
 Stack contract (spec/case.md): 1.5mm PC plate, 2.0mm PCB-to-plate gap
 (top-side diodes are 1.35mm, module underside 4.5mm).
@@ -50,14 +51,29 @@ CUTOUT = 15.0          # Choc PG1350 plate cutout (switch body is 15x15)
 ENC_SQ = 12.5           # square hole: body ~11.7 + 0.4/side, knob rides high
 PLATE_THICK = 1.5      # mm PC
 GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
-LAND_L, LAND_W = 7.0, 5.0   # gasket land patch (along edge x inward)
-LAND_KEEPOUT = 2.0     # land clearance to cutouts/holes/windows/tooling
-MAX_SPAN = 60.0        # max perimeter gap between land centers
-WEB_CUTOUT = 1.5       # min web: cutout-cutout, cutout-outline, window-outline
-WEB_WINDOW = 0.9       # min web: TRRS-window-vs-encoder-hole (tightest pair;
-                       # 0.9+ holds in laser-cut 1.5mm PC, non-load web)
+STRIP_W = 2.0            # Poron strip width (fits 3.75mm+ rim fingers)
+STRIP_OFF = 2.0          # strip centerline offset inward from the edge
+STRIP_KEEPOUT = 0.75     # strip clearance to openings/pin zones (strips run
+                         # on a visible edge, placed accurately by hand)
+MIN_STRIP = 10.0         # drop stubs shorter than this
+MAX_KEY_DIST = 55.0         # every switch + encoder must sit this near foam:
+                         # perimeter-ring support is the industry standard
+                         # configuration (commercial 60-65% gasket boards
+                         # leave center keys ~55mm from foam); measured
+                         # worst here is ~44mm at 2.3 pitches on 50gf Choc,
+                         # strictly better. Encoder push over the window
+                         # zone stays soft by design (6N, no foam under it)
+MATERIAL = 'PC'          # rev-1 pick; any of PC/POM/FR4/ALU/CARBON re-gates
+WEB_MIN = {            # min solid web (mm) per plate material, 1.5mm stock.
+    'PC': 1.0,         # laser-cut PC is virtually unbreakable
+    'POM': 1.0,        # mills beautifully, tough
+    'FR4': 1.5,        # routed; glass dust, standard 1.5 holds
+    'ALU': 1.5,        # laser/waterjet/CNC
+    'CARBON': 2.0,     # milled only (never laser: toxic dust + delam);
+                       # conductive: plate touches switch plastic + gaskets
+                       # only by construction — verify at assembly
+}[MATERIAL]
 DIODE_CLEAR = 0.25     # min diode-to-cutout-edge (diodes stay under solid plate)
-N_LANDS = 9            # starting land count (bumped to 12 max if span fails)
 WIN_TRRS_WEST_MARGIN = 0.5  # asymmetric: body coverage vs encoder-hole web
 
 CHOC_RE = re.compile(r'SW_[LR]\d+$')
@@ -336,12 +352,39 @@ def build_half(tag):
     jst_rect = xform_rect(jb[0] - 1.5, jb[1] - 1.5, jb[2] + 1.5, jb[3] + 1.5,
                           jst[2], jst[3], jst[4])
     # W1: switch strip + MCU/cell + JST as separate loops (may overlap;
-    # laser cuts the union; webs between them are not structural)
+    # laser cuts the union; webs between them are not structural).
+    # Core edges facing the key field pull in until the cutout web is
+    # comfortable (target 2.5+) while keeping 1.0 part margin — this is
+    # what keeps the plate millable in FR4/alu/carbon, not just PC.
     w_sw = rect_poly(*sw_rect)
-    w_core = rect_poly(min(mcu_rect[0], jst_rect[0]),
-                       min(mcu_rect[1], jst_rect[1]),
-                       max(mcu_rect[2], jst_rect[2]),
-                       max(mcu_rect[3], jst_rect[3]))
+    cx0 = min(mcu_rect[0], jst_rect[0])
+    cy0 = min(mcu_rect[1], jst_rect[1])
+    cx1 = max(mcu_rect[2], jst_rect[2])
+    cy1 = max(mcu_rect[3], jst_rect[3])
+    # unexpanded part extents (coverage floor = these minus 1.0)
+    px0 = min(mcu_rect[0] + 1.5, jst_rect[0] + 1.5)
+    py0 = min(mcu_rect[1] + 1.5, jst_rect[1] + 1.5)
+    px1 = max(mcu_rect[2] - 1.5, jst_rect[2] - 1.5)
+    py1 = max(mcu_rect[3] - 1.5, jst_rect[3] - 1.5)
+
+    def edge_web(x0, y0, x1, y1):
+        d = 1e9
+        n = max(2, int(math.hypot(x1 - x0, y1 - y0) / 0.5))
+        for k in range(n + 1):
+            t = k / n
+            p = (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)
+            d = min(d, min(poly_dist(p, c) for c in cuts))
+        return d
+
+    while edge_web(cx0, cy0, cx0, cy1) < 2.5 and cx0 < px0 - 1.0:
+        cx0 += 0.25
+    while edge_web(cx1, cy0, cx1, cy1) < 2.5 and cx1 > px1 + 1.0:
+        cx1 -= 0.25
+    while edge_web(cx0, cy0, cx1, cy0) < 2.5 and cy0 < py0 - 1.0:
+        cy0 += 0.25
+    while edge_web(cx0, cy1, cx1, cy1) < 2.5 and cy1 > py1 + 1.0:
+        cy1 -= 0.25
+    w_core = rect_poly(cx0, cy0, cx1, cy1)
     # TRRS body in footprint frame: x +-3, y -2..12.1 (STEP bbox + mouth)
     tx, ty, trot = trrs[2], trrs[3], trrs[4]
     tb = xform_rect(-3.0, -2.0, 3.0, 12.1, 0, 0, trot)
@@ -374,33 +417,33 @@ def build_half(tag):
 
     for i in range(len(cuts)):
         for j in range(i + 1, len(cuts)):
-            if web(cuts[i], cuts[j]) < 2.0:
-                fail(f'cutout-cutout web {web(cuts[i], cuts[j]):.2f} < 2.0')
-        if min(poly_dist(v, loop) for v in cuts[i]) < WEB_CUTOUT:
-            fail(f'{sw[i][0]} cutout within {WEB_CUTOUT} of outline')
+            if web(cuts[i], cuts[j]) < max(2.0, WEB_MIN):
+                fail(f'cutout-cutout web {web(cuts[i], cuts[j]):.2f} < {max(2.0, WEB_MIN)}')
+        if min(poly_dist(v, loop) for v in cuts[i]) < WEB_MIN:
+            fail(f'{sw[i][0]} cutout within {WEB_MIN} of outline')
         for wpoly in wins:
             if polys_intersect(expand_poly(cuts[i], 0.01), wpoly):
                 fail(f'{sw[i][0]} cutout intersects component window')
 
     ex, ey = enc[1], enc[2]
-    if web(enc_poly, loop) < WEB_CUTOUT:
+    if web(enc_poly, loop) < WEB_MIN:
         fail('encoder hole within 1.5 of outline')
     for c in cuts:
-        if web(enc_poly, c) < WEB_CUTOUT:
+        if web(enc_poly, c) < WEB_MIN:
             fail('encoder hole within 1.5 of a cutout')
     for wpoly in wins:
         # overlap (dd<0) is a deliberate union; slivers (0<=dd<1) are not
         dd = web(enc_poly, wpoly)
-        if 0 <= dd < WEB_WINDOW:
-            fail(f'encoder-to-window sliver {dd:.2f} < {WEB_WINDOW}')
+        if 0 <= dd < WEB_MIN:
+            fail(f'encoder-to-window sliver {dd:.2f} < {WEB_MIN}')
 
     for wpoly in wins:
         for v in wpoly:
             # window corners past the outline (USB notch void) are benign;
             # assert webs only where plate material exists
-            if point_in_poly(v, loop) and poly_dist(v, loop) < WEB_CUTOUT:
+            if point_in_poly(v, loop) and poly_dist(v, loop) < WEB_MIN:
                 fail(f'window corner {r2(v[0])},{r2(v[1])} web '
-                     f'{poly_dist(v, loop):.2f} < {WEB_CUTOUT}')
+                     f'{poly_dist(v, loop):.2f} < {WEB_MIN}')
 
     for ref, dx, dy in di:
         if any(point_in_poly((dx, dy), c) for c in cuts):
@@ -409,10 +452,15 @@ def build_half(tag):
         if d < DIODE_CLEAR:
             fail(f'{ref} {d:.2f} from cutout edge < {DIODE_CLEAR}')
 
-    # -- gasket lands, TOP (plate rim) and BOTTOM (PCB underside).
-    # Real gasket boards isolate both faces: top lands carry the plate,
-    # bottom lands carry the PCB. Tall top-side parts (windows) block long
-    # rim runs up top, so bottom lands bridge those spans from below.
+    # -- gasket STRIPS (paired top+bottom at the same XY).
+    # Real gasket boards run Poron/silicone STRIPS along the rim, not
+    # floating pads: a 7x5 pad cannot fit the 3-6mm rim fingers left beside
+    # the component windows, but a 2.5mm strip can. Each strip sits on
+    # solid plate (top case presses it) with its twin under the PCB
+    # (bottom case carries it) — the plate edge itself is the tongue that
+    # will slot into the future case groove. Strips break at every opening
+    # (windows, cutouts, holes), at pin zones underneath, and at the two
+    # port mouths (USB notch, TRRS channel) the cables must exit through.
     per, cum = [loop[0]], [0.0]
     for p in loop[1:]:
         cum.append(cum[-1] + math.hypot(p[0] - per[-1][0], p[1] - per[-1][1]))
@@ -438,135 +486,84 @@ def build_half(tag):
         probe = (pt[0] + n[0] * 2.0, pt[1] + n[1] * 2.0)
         return n if point_in_poly(probe, loop) else (-n[0], -n[1])
 
-    def land_rect(cx, cy, tx, ty):
+    def strip_quad(cx, cy, tx, ty):
+        # 2.0mm of rim length x STRIP_W, centered STRIP_OFF inward
         n = inward((cx, cy), (tx, ty))
-        mx, my = cx + n[0] * LAND_W / 2, cy + n[1] * LAND_W / 2
-        hx, hy = tx * LAND_L / 2, ty * LAND_L / 2
-        wx, wy = n[0] * LAND_W / 2, n[1] * LAND_W / 2
+        mx, my = cx + n[0] * STRIP_OFF, cy + n[1] * STRIP_OFF
+        hx, hy = tx * 1.0, ty * 1.0
+        wx, wy = n[0] * STRIP_W / 2, n[1] * STRIP_W / 2
         return [(mx - hx - wx, my - hy - wy), (mx + hx - wx, my + hy - wy),
                 (mx + hx + wx, my + hy + wy), (mx - hx + wx, my - hy + wy)]
 
-    def rect_ok(rect, keep_polys, keep_circ):
-        for kc in keep_polys:
-            if polys_intersect(rect, kc):
-                return False
-        for (ox, oy), rr in keep_circ:
-            if rect_pt_dist(ox, oy, (min(p[0] for p in rect),
-                                    min(p[1] for p in rect),
-                                    max(p[0] for p in rect),
-                                    max(p[1] for p in rect))) >= rr:
-                continue
-            inside = point_in_poly((ox, oy), rect)
-            edge = min(seg_dist((ox, oy), a, b)
-                       for a, b in zip(rect, rect[1:] + rect[:1]))
-            if inside or edge < rr:
-                return False
-        return True
+    def quad_ok(q, keep_polys):
+        return not any(polys_intersect(q, kc) for kc in keep_polys)
 
-    def place(keep_polys, keep_circ, n_start=N_LANDS, n_max=16):
-        """Greedy max-min placement over landable samples only (blocked
-        runs can exceed any nudge range, so FPS seeds must start clear).
-        Best (min max-gap) over the count range that places fully."""
-        # landability mask at ~0.7mm resolution
-        NS = 720
-        samples = []
-        for k in range(NS):
-            s = P * k / NS
-            (px, py), (tx, ty) = at(s)
-            r = land_rect(px, py, tx, ty)
-            if rect_ok(r, keep_polys, keep_circ):
-                samples.append(s)
-        if not samples:
-            return [], []
-        best = None
-        for n_try in range(n_start, n_max + 1):
-            if n_try > len(samples):
-                break
-            centers = [samples[0]]
-            while len(centers) < n_try:
-                cand, candd = samples[0], -1.0
-                for s in samples:
-                    d = min(min(abs(s - c), P - abs(s - c))
-                            for c in centers)
-                    if d > candd:
-                        candd, cand = d, s
-                centers.append(cand)
-            centers.sort()
-            placed = []
-            for c in centers:
-                found = None
-                offs = [0] + [d for k in range(1, 26)
-                              for d in (k * 1.0, -k * 1.0)]
-                for off in offs:
-                    (px, py), (tx, ty) = at(c + off)
-                    r = land_rect(px, py, tx, ty)
-                    if rect_ok(r, keep_polys, keep_circ):
-                        found = (c + off, r)
-                        break
-                if found is None:
-                    break
-                placed.append(found)
-            if len(placed) < n_try:
-                continue
-            ss = sorted(p[0] % P for p in placed)
-            gaps = [ss[(k + 1) % len(ss)] - ss[k] for k in range(len(ss))]
-            gaps[-1] += P
-            if best is None or max(gaps) < best[0]:
-                best = (max(gaps), placed, gaps)
-        if best is None:
-            return [], []
-        return best[1], best[2]
-
-    # top keepouts: cutouts, encoder opening, tooling, windows
-    keep_top = [expand_poly(c, LAND_KEEPOUT) for c in cuts]
-    keep_top.append(expand_poly(enc_poly, LAND_KEEPOUT))
-    keep_top += [expand_poly(wpoly, LAND_KEEPOUT) for wpoly in wins]
-    keep_top_circ = [((tx_, ty_), 1.6 + LAND_KEEPOUT) for tx_, ty_ in tool]
-    top_lands, top_gaps = place(keep_top, keep_top_circ)
-
-    # bottom keepouts: socket bodies (14x16 at switch pose), TRRS/encoder/
-    # JST pin zones. Top-side diodes/copper are flush (foam-safe); vias are
-    # 0.3/0.6 bumps the Poron absorbs; tooling holes bridge fine.
-    keep_bot = [expand_poly(cut_poly(x, y, 14.0, 16.0, rot), LAND_KEEPOUT)
-                for _, x, y, rot in sw]
+    # union keepouts, both faces (strips are pairs at one XY)
+    keep = [expand_poly(c, STRIP_KEEPOUT) for c in cuts]
+    keep.append(expand_poly(enc_poly, STRIP_KEEPOUT))
+    keep += [expand_poly(wpoly, STRIP_KEEPOUT) for wpoly in wins]
+    keep += [expand_poly(cut_poly(x, y, 14.0, 16.0, rot), STRIP_KEEPOUT)
+             for _, x, y, rot in sw]
     tpads = [(float(x), float(y)) for x, y in
              re.findall(r'\(pad "(?:S|T|R1|R2)" thru_hole \S+\s+'
                         r'\(at (-?[\d.]+) (-?[\d.]+)', open(pcb).read())]
     tpts = [rot_cw(lx, ly, trot) for lx, ly in tpads]
-    pin_zones = [(tx + min(p[0] for p in tpts) - 2.0,
-                  ty + min(p[1] for p in tpts) - 2.0,
-                  tx + max(p[0] for p in tpts) + 2.0,
-                  ty + max(p[1] for p in tpts) + 2.0),
-                 (ex - 8.0, ey - 8.0, ex + 8.0, ey + 8.0),
-                 (jst[2] - 4.0, jst[3] - 4.0, jst[2] + 6.0, jst[3] + 4.0)]
-    keep_bot += [rect_poly(*z) for z in pin_zones]
-    bot_lands, bot_gaps = place(keep_bot, [])
+    pin_zones = [(tx + min(p[0] for p in tpts) - 1.0,
+                  ty + min(p[1] for p in tpts) - 1.0,
+                  tx + max(p[0] for p in tpts) + 1.0,
+                  ty + max(p[1] for p in tpts) + 1.0),
+                 (ex - 7.0, ey - 7.0, ex + 7.0, ey + 7.0),
+                 (jst[2] - 3.0, jst[3] - 3.0, jst[2] + 5.0, jst[3] + 3.0)]
+    keep += [rect_poly(*z) for z in pin_zones]
+    # port mouths the cables exit through (measured from the outline;
+    # USB notch is 11mm on both halves)
+    if tag == 'Left':
+        keep.append(rect_poly(111.0, 45.0, 125.0, 60.0))
+        keep.append(rect_poly(129.0, -27.0, 138.0, -17.0))
+    else:
+        keep.append(rect_poly(167.0, 45.0, 181.0, 60.0))
+        keep.append(rect_poly(154.0, -27.0, 163.0, -17.0))
 
-    lands = ([('top', s, r) for s, r in top_lands] +
-             [('bot', s, r) for s, r in bot_lands])
-    if not top_lands:
-        fail('no top lands placeable at all')
-    if not bot_lands:
-        fail('no bottom lands placeable at all')
-    if bot_gaps and max(bot_gaps) > MAX_SPAN:
-        fail(f'bottom max span {max(bot_gaps):.0f} > {MAX_SPAN}')
-    # every top gap over the limit must be bridged from below: at least
-    # one bottom-land center inside the gap's middle half
-    if top_lands and bot_lands:
-        tss = sorted(s % P for s, _ in top_lands)
-        bss = sorted(s % P for s, _ in bot_lands)
-        for k in range(len(tss)):
-            a = tss[k]
-            gap = (tss[(k + 1) % len(tss)] - a) % P
-            if gap > MAX_SPAN:
-                lo, hi = (a + gap / 4) % P, (a + 3 * gap / 4) % P
-
-                def inside(x, lo=lo, hi=hi):
-                    return (lo <= x <= hi) if lo <= hi else \
-                        (x >= lo or x <= hi)
-                if not any(inside(x) for x in bss):
-                    fail(f'top gap {gap:.0f}mm unbridged from below')
-
+    STEP = 2.0
+    NS = int(P / STEP)
+    clear = []
+    for k in range(NS):
+        (px, py), (tx, ty) = at(P * k / NS)
+        q = strip_quad(px, py, tx, ty)
+        clear.append(quad_ok(q, keep))
+    # group consecutive clear steps into strips; drop stubs
+    strips, cur = [], []
+    for k in range(NS + 1):
+        if k < NS and clear[k]:
+            (px, py), _ = at(P * k / NS)
+            cur.append((px, py))
+        else:
+            if len(cur) * STEP >= MIN_STRIP:
+                strips.append(cur)
+            cur = []
+    # merge wrap-around strip
+    if len(strips) > 1 and clear[0] and clear[NS - 1]:
+        strips[0] = strips[-1] + strips[0]
+        strips.pop()
+    # coverage: every switch + the encoder must sit near foam
+    pts = [(x, y) for _, x, y, _ in sw] + [(ex, ey)]
+    # coverage measured against strip centerline samples
+    worst, worst_pt = 0.0, None
+    centers = [s for s in strips for s in [s[len(s) // 2]]]
+    for qx, qy in pts:
+        d = 1e9
+        for s in strips:
+            for (sx, sy) in s[::2]:
+                d = min(d, math.hypot(qx - sx, qy - sy))
+        if d > worst:
+            worst, worst_pt = d, (qx, qy)
+    if worst > MAX_KEY_DIST:
+        fail(f'worst key-to-foam {worst:.0f}mm at '
+             f'{r2(worst_pt[0])},{r2(worst_pt[1])} > {MAX_KEY_DIST}')
+    total = sum((len(s) - 1) * STEP for s in strips)
+    if not strips:
+        fail('no gasket strips at all')
+    lands = [('strip', 0, s) for s in strips]
 
     return {'half': tag, 'loop': loop, 'seq': seq, 'cuts': cuts,
             'sw': sw, 'enc': enc_hole, 'wins': wins, 'tool': tool,
@@ -580,8 +577,7 @@ def dxf_write(path, loop_seq, cuts, enc_hole, wins, lands):
     A('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n'
       '9\n$INSUNITS\n70\n4\n0\nENDSEC\n')
     A('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n3\n')
-    for name, color in (('OUTLINE', 3), ('CUTOUT', 7),
-                          ('GASKET_TOP', 6), ('GASKET_BOT', 4)):
+    for name, color in (('OUTLINE', 3), ('CUTOUT', 7), ('GASKET', 6)):
         A(f'0\nLAYER\n2\n{name}\n70\n0\n62\n{color}\n6\nCONTINUOUS\n')
     A('0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n')
 
@@ -622,11 +618,20 @@ def dxf_write(path, loop_seq, cuts, enc_hole, wins, lands):
     for x, y in enc_hole:
         A(f'0\nVERTEX\n8\nCUTOUT\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
     A('0\nSEQEND\n')
-    for side, _, rect in lands:
-        layer = 'GASKET_TOP' if side == 'top' else 'GASKET_BOT'
-        A(f'0\nPOLYLINE\n8\n{layer}\n66\n1\n70\n1\n')
-        for x, y in rect:
-            A(f'0\nVERTEX\n8\n{layer}\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
+    for _, _, strip in lands:
+        # rebuild the ribbon from the centerline (STRIP_W wide)
+        A('0\nPOLYLINE\n8\nGASKET\n66\n1\n70\n1\n')
+        left, right = [], []
+        for k, (sx, sy) in enumerate(strip):
+            q = strip[min(k + 1, len(strip) - 1)]
+            q0 = strip[max(k - 1, 0)]
+            tx, ty = q[0] - q0[0], q[1] - q0[1]
+            nL = math.hypot(tx, ty) or 1e-12
+            nx, ny = -ty / nL * STRIP_W / 2, tx / nL * STRIP_W / 2
+            left.append((sx + nx, sy + ny))
+            right.append((sx - nx, sy - ny))
+        for x, y in left + right[::-1] + left[:1]:
+            A(f'0\nVERTEX\n8\nGASKET\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
         A('0\nSEQEND\n')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
@@ -659,23 +664,18 @@ def svg_write(path, res):
                  f'stroke-dasharray="5,3"/>')
     o.append(f'<polygon points="{" ".join(P(p) for p in enc_poly)}" '
              f'fill="#000" stroke="#ff9800" stroke-width="1.5"/>')
-    counters = {}
-    for side, _, rect in res['lands']:
-        counters[side] = counters.get(side, 0) + 1
-        col = '#f0f' if side == 'top' else '#0ff'
-        o.append(f'<polygon points="{" ".join(P(p) for p in rect)}" '
-                 f'fill="rgba(255,255,255,0.05)" stroke="{col}" '
-                 f'stroke-width="1" stroke-dasharray="3,2"/>')
-        cx = sum(p[0] for p in rect) / 4
-        cy = sum(p[1] for p in rect) / 4
-        tag_ = ('T' if side == 'top' else 'B') + str(counters[side])
-        o.append(f'<text x="{r2((cx - x0) * S)}" y="{r2((y1 - cy) * S)}" '
-                 f'fill="{col}" font-size="8" font-weight="bold" '
-                 f'text-anchor="middle">{tag_}</text>')
+    for k, (_, _, strip) in enumerate(res['lands'], 1):
+        o.append(f'<polyline points="{" ".join(P(p) for p in strip)}" '
+                 f'fill="none" stroke="#f0f" stroke-width="2.5" '
+                 f'stroke-linecap="round"/>')
+        mx = sum(p[0] for p in strip) / len(strip)
+        my = sum(p[1] for p in strip) / len(strip)
+        o.append(f'<text x="{r2((mx - x0) * S)}" y="{r2((y1 - my) * S)}" '
+                 f'fill="#f0f" font-size="8" font-weight="bold" '
+                 f'text-anchor="middle">G{k}</text>')
     o.append(f'<text x="8" y="14" fill="#f0f" font-size="10">'
-             f'T = top gasket (plate above)</text>')
-    o.append(f'<text x="8" y="26" fill="#0ff" font-size="10">'
-             f'B = bottom gasket (PCB below)</text>')
+             f'G = Poron strip (top + bottom pair at same XY)'
+             f'</text>')
     for tx, ty in res['tool']:
         o.append(f'<circle cx="{r2((tx - x0) * S)}" cy="{r2((y1 - ty) * S)}" '
                  f'r="{r2(1.6 * S)}" fill="none" stroke="#03a9f4" '
@@ -704,21 +704,22 @@ def main():
                       res['seq'], res['cuts'], res['enc'],
                       res['wins'], res['lands'])
             svg_write(os.path.join(OUT_DIR, f'Hojicha44-{tag}-plate.svg'), res)
-            sides = {}
-            for side, _, rect in res['lands']:
-                cx = sum(p[0] for p in rect) / 4
-                cy = sum(p[1] for p in rect) / 4
-                sides.setdefault(side, []).append({'x': r2(cx), 'y': r2(cy)})
+            recs = []
+            for _, _, strip in res['lands']:
+                recs.append({
+                    'length': r2((len(strip) - 1) * 2.0),
+                    'centerline': [[r2(x), r2(y)] for x, y in strip],
+                })
+            total = sum(r['length'] for r in recs)
             json.dump({
                 'half': tag, 'units': 'mm (KiCad board frame)',
-                'plate': f'{PLATE_THICK}mm PC', 'gap': GAP,
-                'top': sides.get('top', []), 'bottom': sides.get('bot', []),
+                'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
+                'strip_width': STRIP_W, 'strips': recs,
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
-        nt = sum(1 for sd, _, _ in res['lands'] if sd == 'top')
-        nb = sum(1 for sd, _, _ in res['lands'] if sd == 'bot')
         print(f'{tag}: 22 cutouts + enc {ENC_SQ}sq + {len(res["wins"])} '
-              f'windows + {nt} top / {nb} bottom gasket lands — CLEAN')
+              f'windows + {len(res["lands"])} gasket strips '
+              f'({total:.0f}mm foam/side) — CLEAN')
     sys.exit(1 if failed else 0)
 
 

@@ -652,3 +652,16 @@ from below across window zones. Two real finds: (1) Kailh footprint
 rotation is CW-positive need for cutout rots; (2) FPS seeding must start
 on landable samples (a 109mm blocked inner-edge run poisons blind seeds).
 Stack contract + screw rules in `spec/case.md`. All gates green.
+
+## Plate rev-2: strips + material gate (2026-10-14)
+
+Two corrections from review, both structural. (1) Gaskets are STRIPS,
+not pads: discrete 7x5 pads cannot fit the 3-6mm rim fingers beside the
+windows, but 2.5mm rim strips can — and strips are what real gasket
+boards use. Top+bottom pairs at the same XY (never staggered); plate
+edge is the case-groove tongue, no tabs needed. (2) Plate is
+material-agnostic: MATERIAL constant (PC/POM/FR4/ALU/CARBON) re-gates
+every web minimum; W1 core edges pull in for 2.5+ cutout webs. Coverage
+rule is now every-key-within-55mm-of-foam (measured worst 44mm, better
+than commercial perimeter-ring practice). Debugging scars: FPS seeding
+must start on landable samples; VRML-style y-fears do not apply to DXF.

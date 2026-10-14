@@ -4,41 +4,49 @@ Source of truth for plate geometry: `plate/gen_plate.py`
 (derives from the placed PCB; never hand-edit CAD).
 Preview: `plate/Hojicha44-{Left,Right}-plate.svg`
 Laser file: `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm)
-Gasket map: `plate/Hojicha44-{Left,Right}-lands.json` (board frame)
+Gasket map: `plate/Hojicha44-{Left,Right}-lands.json` (strip centerlines)
+
+## Plate materials (pick one, re-run the generator to re-gate)
+
+| Material | Fab | Notes |
+|---|---|---|
+| PC 1.5mm (default) | laser | softest feel, virtually unbreakable, cheapest prototype |
+| POM 1.5mm | mill/laser | machines beautifully, slightly firmer than PC |
+| FR4 1.6mm | route | stiff, cheap; glass dust when routing |
+| ALU 1.5mm | laser/waterjet/CNC | balanced feel, best sound; isolate from copper |
+| CARBON 1.5mm | mill ONLY (never laser: toxic dust + delamination) | stiffest; **conductive** — plate touches switch plastic + gaskets only by construction, verify at assembly |
+
+`MATERIAL` in the generator re-gates every web minimum
+(PC/POM 1.0, FR4/ALU 1.5, CARBON 2.0). Current maps: Left 3 strips
+(382mm foam/side), Right 4 strips (402mm/side).
 
 ## Stack (top to bottom, per half)
 
 | Layer | Spec |
 |---|---|
 | Top case | future design; cavity = plate outline + ≥0.5 clearance |
-| Top gaskets | Poron strips/pads per lands JSON (`top`), 7×5mm contact |
-| Plate | 1.5mm PC, outline = PCB outline (USB notch included) |
+| Top gaskets | Poron strips per lands JSON, 2.5mm wide |
+| Plate | 1.5mm (material above), outline = PCB outline (USB notch included) |
 | Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
 | PCB | 1.6mm, rev-1 release |
-| Bottom gaskets | Poron per lands JSON (`bottom`), thick enough to clear socket bodies (~2.5–3mm) |
+| Bottom gaskets | Poron strips, same XY as top (pairs), thick enough to clear socket bodies (~2.5–3mm) |
 | Bottom case | future design |
-
-## Plate openings (both halves)
-
-- 22× 15×15mm Choc cutouts at switch centers/rotations (friction fit).
-- 12.5×12.5mm square encoder hole (instance rot 0, body axis-aligned).
-  The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
-  the hole. A 17mm round hole was rejected: it merges into the neighbour
-  key cutout (18.2mm pitch vs 15 + 17).
-- W1 windows: slide-switch strip + MCU/cell/USB core (tall top-side parts).
-- W2 window + channel to the split-gap edge: TRRS mouth must exit; the
-  plug overlaps plate-top height, so no solid edge allowed there.
-- NO plate screws, NO tooling holes in the plate (pure gasket float;
-  assembly aligns on the switches themselves).
 
 ## Gasket rules (enforced by the generator)
 
-- Lands 7×5mm, ≥2.0mm clear of every cutout/hole/window/tooling.
-- Max unsupported span 60mm on the bottom map always; any top span over
-  60mm must be bridged by a bottom land in its middle half (tall parts
-  block long rim runs up top — that is what the bottom map is for).
-- Current maps: Left 10 top / 16 bottom, Right 16 top / 16 bottom.
+- Strips run the rim, 2.5mm wide centered 2.0mm in from the edge, top +
+  bottom pair at the same XY — never staggered, never floating pads.
+- Strips break at every opening (cutouts, encoder, windows), every pin
+  zone underneath, and both port mouths (USB notch, TRRS channel) so
+  cables exit clean.
+- Every switch + the encoder sits within 55mm of foam (measured worst
+  ~44mm at 2.3 pitches on 50gf Choc — better than the ~55mm typical of
+  commercial perimeter-ring gasket boards). Encoder push over the window
+  zone stays soft by design (6N, no foam under it).
+- The plate edge IS the mounting tongue: it slots into the future case
+  groove with the strips. No tabs, no plate screws, no tooling holes in
+  the plate (pure gasket float; assembly aligns on the switches).
 - Case screws must NEVER touch the plate: clamp the case halves around
-  it or pass through oversized plate reliefs (none in rev-1 — clamp).
-- USB/TRRS port openings in the case walls per the notch/mouth positions
-  in `spec/electronics.yaml`; antenna end keeps the 3mm plastic-only rule.
+  it. USB/TRRS port openings in the case walls per the notch/mouth
+  positions in `spec/electronics.yaml`; antenna end keeps the 3mm
+  plastic-only rule.

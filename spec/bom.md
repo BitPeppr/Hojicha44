@@ -40,8 +40,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | Switch plate, 1.5mm PC, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); 22× 15×15 Choc cutouts, 12.5² encoder hole, component windows; NO screws/holes beyond openings |
-| ~26 | Poron gasket pads, 7×5mm (cut from strip/sheet) | counts: Left 10 top + 16 bottom, Right 16 + 16; positions in `plate/Hojicha44-{Left,Right}-lands.json`; top 2–3mm + bottom ~3mm (clear socket bodies); stack contract in `spec/case.md` |
+| 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.5² encoder hole, component windows; NO screws/holes beyond openings |
+| ~1m | Poron gasket strip, 2.5mm wide | per half (Left 382mm + Right 402mm per face, top+bottom pairs at same XY); positions in `plate/Hojicha44-{Left,Right}-lands.json`; top 2–3mm + bottom ~3mm (clear socket bodies); stack contract in `spec/case.md` |
 
 ## Cell — locked to orderable stock (was TBD)
 
