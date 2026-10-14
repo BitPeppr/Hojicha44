@@ -665,3 +665,14 @@ every web minimum; W1 core edges pull in for 2.5+ cutout webs. Coverage
 rule is now every-key-within-55mm-of-foam (measured worst 44mm, better
 than commercial perimeter-ring practice). Debugging scars: FPS seeding
 must start on landable samples; VRML-style y-fears do not apply to DXF.
+
+## Plate rev-3: tab-and-jacket suspension (2026-10-15)
+
+Review correctly called rim strips the wrong philosophy: strips couple
+the full rim to the case, while tabs on silicone jackets (Satisfaction75
+style) suspend the assembly on 8 soft mounts per half. Plate grows
+10x5mm tongues (2mm root fillets, chamfered tips) spliced into the
+outline as one dense polyline; jackets are case-side (10.5x2mm slot).
+Uniformity now comes from identical mounts at even spacing (measured
+worst key-to-tab 46-47mm), not foam proximity. Outline differs from PCB
+by the tabs only; ports, windows, and gates unchanged, all green.

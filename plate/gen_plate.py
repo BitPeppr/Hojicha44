@@ -16,9 +16,11 @@ geometry, never hand-drawn):
              at GAP+PLATE_THICK = 3.5mm)
   W2       = TRRS window + channel opening to the split-gap edge (jack
              mouth must exit; the plug overlaps plate-top height)
-  gaskets  = 2.5mm Poron strips run along the rim (top + bottom pair at
-             the same XY), broken at every opening, pin zone and port mouth;
-             every switch + the encoder must sit within 40mm of foam
+  tabs     = TAB_N gasket tongues spliced into the outline (tab-and-jacket
+             suspension): TAB_W wide, TAB_L proud, TAB_FILLET root fillets,
+             chamfered tips; silicone jackets in the case swallow them so
+             the assembly floats. Every switch + the encoder must sit near
+             a tab root (MAX_TAB_DIST, set from evidence).
 
 Stack contract (spec/case.md): 1.5mm PC plate, 2.0mm PCB-to-plate gap
 (top-side diodes are 1.35mm, module underside 4.5mm).
@@ -51,18 +53,18 @@ CUTOUT = 15.0          # Choc PG1350 plate cutout (switch body is 15x15)
 ENC_SQ = 12.5           # square hole: body ~11.7 + 0.4/side, knob rides high
 PLATE_THICK = 1.5      # mm PC
 GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
-STRIP_W = 2.0            # Poron strip width (fits 3.75mm+ rim fingers)
-STRIP_OFF = 2.0          # strip centerline offset inward from the edge
-STRIP_KEEPOUT = 0.75     # strip clearance to openings/pin zones (strips run
-                         # on a visible edge, placed accurately by hand)
-MIN_STRIP = 10.0         # drop stubs shorter than this
-MAX_KEY_DIST = 55.0         # every switch + encoder must sit this near foam:
-                         # perimeter-ring support is the industry standard
-                         # configuration (commercial 60-65% gasket boards
-                         # leave center keys ~55mm from foam); measured
-                         # worst here is ~44mm at 2.3 pitches on 50gf Choc,
-                         # strictly better. Encoder push over the window
-                         # zone stays soft by design (6N, no foam under it)
+TAB_W = 10.0             # tab width along the rim (jacket pocket ~12)
+TAB_L = 5.0              # tab protrusion past the outline
+TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
+TAB_N = 8                # tab count per half (even suspension)
+TAB_TIP_CH = 1.5         # tip chamfer for jacket entry
+MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
+                         # root (measured worst 46-47mm at 2.5 pitches).
+                         # Consistency comes from mount UNIFORMITY here, not
+                         # proximity: 8 identical silicone jackets at even
+                         # spacing share load equally, which is exactly what
+                         # sparse tab suspension (cf. Satisfaction75) relies
+                         # on. Encoder push stays soft by design.
 MATERIAL = 'PC'          # rev-1 pick; any of PC/POM/FR4/ALU/CARBON re-gates
 WEB_MIN = {            # min solid web (mm) per plate material, 1.5mm stock.
     'PC': 1.0,         # laser-cut PC is virtually unbreakable
@@ -452,15 +454,15 @@ def build_half(tag):
         if d < DIODE_CLEAR:
             fail(f'{ref} {d:.2f} from cutout edge < {DIODE_CLEAR}')
 
-    # -- gasket STRIPS (paired top+bottom at the same XY).
-    # Real gasket boards run Poron/silicone STRIPS along the rim, not
-    # floating pads: a 7x5 pad cannot fit the 3-6mm rim fingers left beside
-    # the component windows, but a 2.5mm strip can. Each strip sits on
-    # solid plate (top case presses it) with its twin under the PCB
-    # (bottom case carries it) — the plate edge itself is the tongue that
-    # will slot into the future case groove. Strips break at every opening
-    # (windows, cutouts, holes), at pin zones underneath, and at the two
-    # port mouths (USB notch, TRRS channel) the cables must exit through.
+    # -- gasket TABS (tab-and-jacket suspension).
+    # The plate grows discrete tongues that slot into silicone jackets in
+    # the case: fewer, softer mounts than rim strips, so the assembly
+    # floats instead of coupling the full rim to the case. Bottom gaskets
+    # go away with the strips — the PCB hangs from the plate on the
+    # switches; bottom-case foam is acoustic only (spec/case.md).
+    # Each tab: TAB_W wide, TAB_L proud of the outline, TAB_FILLET root
+    # fillets (crack initiation control, esp. carbon/acrylic), 1.5 chamfer
+    # on the tip for jacket entry. Tabs sit on straight solid rim only.
     per, cum = [loop[0]], [0.0]
     for p in loop[1:]:
         cum.append(cum[-1] + math.hypot(p[0] - per[-1][0], p[1] - per[-1][1]))
@@ -486,164 +488,250 @@ def build_half(tag):
         probe = (pt[0] + n[0] * 2.0, pt[1] + n[1] * 2.0)
         return n if point_in_poly(probe, loop) else (-n[0], -n[1])
 
-    def strip_quad(cx, cy, tx, ty):
-        # 2.0mm of rim length x STRIP_W, centered STRIP_OFF inward
-        n = inward((cx, cy), (tx, ty))
-        mx, my = cx + n[0] * STRIP_OFF, cy + n[1] * STRIP_OFF
-        hx, hy = tx * 1.0, ty * 1.0
-        wx, wy = n[0] * STRIP_W / 2, n[1] * STRIP_W / 2
-        return [(mx - hx - wx, my - hy - wy), (mx + hx - wx, my + hy - wy),
-                (mx + hx + wx, my + hy + wy), (mx - hx + wx, my - hy + wy)]
+    def tang_at(s):
+        return at(s)[1]
 
-    def quad_ok(q, keep_polys):
-        return not any(polys_intersect(q, kc) for kc in keep_polys)
+    def straight(s, half_span):
+        a0 = math.atan2(*tang_at(s - half_span)[::-1])
+        a1 = math.atan2(*tang_at(s + half_span)[::-1])
+        return abs((a1 - a0 + math.pi) % (2 * math.pi) - math.pi) <             math.radians(2.0)
 
-    # union keepouts, both faces (strips are pairs at one XY)
-    keep = [expand_poly(c, STRIP_KEEPOUT) for c in cuts]
-    keep.append(expand_poly(enc_poly, STRIP_KEEPOUT))
-    keep += [expand_poly(wpoly, STRIP_KEEPOUT) for wpoly in wins]
-    keep += [expand_poly(cut_poly(x, y, 14.0, 16.0, rot), STRIP_KEEPOUT)
-             for _, x, y, rot in sw]
-    tpads = [(float(x), float(y)) for x, y in
-             re.findall(r'\(pad "(?:S|T|R1|R2)" thru_hole \S+\s+'
-                        r'\(at (-?[\d.]+) (-?[\d.]+)', open(pcb).read())]
-    tpts = [rot_cw(lx, ly, trot) for lx, ly in tpads]
-    pin_zones = [(tx + min(p[0] for p in tpts) - 1.0,
-                  ty + min(p[1] for p in tpts) - 1.0,
-                  tx + max(p[0] for p in tpts) + 1.0,
-                  ty + max(p[1] for p in tpts) + 1.0),
-                 (ex - 7.0, ey - 7.0, ex + 7.0, ey + 7.0),
-                 (jst[2] - 3.0, jst[3] - 3.0, jst[2] + 5.0, jst[3] + 3.0)]
-    keep += [rect_poly(*z) for z in pin_zones]
-    # port mouths the cables exit through (measured from the outline;
-    # USB notch is 11mm on both halves)
+    openings = [expand_poly(c, 0.0) for c in cuts]
+    openings.append(expand_poly(enc_poly, 0.0))
+    openings += [expand_poly(wpoly, 0.0) for wpoly in wins]
+    # port mouths the cables exit through (measured from the outline)
     if tag == 'Left':
-        keep.append(rect_poly(111.0, 45.0, 125.0, 60.0))
-        keep.append(rect_poly(129.0, -27.0, 138.0, -17.0))
+        openings.append(rect_poly(111.0, 45.0, 125.0, 60.0))
+        openings.append(rect_poly(129.0, -27.0, 138.0, -17.0))
     else:
-        keep.append(rect_poly(167.0, 45.0, 181.0, 60.0))
-        keep.append(rect_poly(154.0, -27.0, 163.0, -17.0))
+        openings.append(rect_poly(167.0, 45.0, 181.0, 60.0))
+        openings.append(rect_poly(154.0, -27.0, 163.0, -17.0))
 
-    STEP = 2.0
-    NS = int(P / STEP)
-    clear = []
-    for k in range(NS):
-        (px, py), (tx, ty) = at(P * k / NS)
-        q = strip_quad(px, py, tx, ty)
-        clear.append(quad_ok(q, keep))
-    # group consecutive clear steps into strips; drop stubs
-    strips, cur = [], []
-    for k in range(NS + 1):
-        if k < NS and clear[k]:
-            (px, py), _ = at(P * k / NS)
-            cur.append((px, py))
+    def root_poly(cx, cy, tx, ty):
+        # tab footprint: full width incl. fillets, 6mm buried root,
+        # protrusion + tip chamfer zone
+        n = inward((cx, cy), (tx, ty))
+        hw = TAB_W / 2 + TAB_FILLET + 1.0
+        pts = []
+        for dx, dy in ((-hw, -6.0), (hw, -6.0),
+                       (hw, TAB_L + 1.0), (-hw, TAB_L + 1.0)):
+            pts.append((cx + tx * dx - n[0] * dy,
+                        cy + ty * dx - n[1] * dy))
+        return pts
+
+    def eligible(s):
+        span = TAB_W / 2 + TAB_FILLET + 2.0
+        if not straight(s, span):
+            return False
+        (px, py), (tx, ty) = at(s)
+        rp = root_poly(px, py, tx, ty)
+        return not any(polys_intersect(rp, o) for o in openings)
+
+    NS = 720
+    elig = [s for k in range(NS) if eligible(P * k / NS)
+            for s in [P * k / NS]]
+    centers = []
+    if elig:
+        centers = [elig[0]]
+        while len(centers) < TAB_N and len(centers) < len(elig):
+            cand, candd = elig[0], -1.0
+            for s in elig:
+                d = min(min(abs(s - c), P - abs(s - c)) for c in centers)
+                if d > candd:
+                    candd, cand = d, s
+            centers.append(cand)
+    centers.sort()
+    if len(centers) < TAB_N:
+        fail(f'only {len(centers)} tab spots eligible, want {TAB_N}')
+        centers = []
+    # min spacing between tab roots (no shared fillet zones)
+    for a, b in zip(centers, centers[1:] + centers[:1] if centers else []):
+        if centers and (b - a) % P < TAB_W + 2 * TAB_FILLET + 6.0:
+            fail('tab roots overlap/clash')
+
+    def fillet_arc(corner, u_away, o_out, r, n=6):
+        T1 = (corner[0] + u_away[0] * r, corner[1] + u_away[1] * r)
+        T2 = (corner[0] + o_out[0] * r, corner[1] + o_out[1] * r)
+        O = (T1[0] + o_out[0] * r, T1[1] + o_out[1] * r)
+        a0 = math.atan2(T1[1] - O[1], T1[0] - O[0])
+        a1 = math.atan2(T2[1] - O[1], T2[0] - O[0])
+        amid = math.atan2(corner[1] - O[1], corner[0] - O[0])
+
+        def norm(t):
+            while t <= -math.pi:
+                t += 2 * math.pi
+            while t > math.pi:
+                t -= 2 * math.pi
+            return t
+        if (norm(amid - a0) > 0) != (norm(a1 - a0) > 0) and \
+                abs(norm(a1 - a0)) > 1e-9:
+            step = -abs(norm(a1 - a0)) / n
+            base, direction = a0, -1.0
+            total = norm(a0 - a1)
+            if total < 0:
+                total += 2 * math.pi
+            angs = [a0 - total * k / n for k in range(n + 1)]
         else:
-            if len(cur) * STEP >= MIN_STRIP:
-                strips.append(cur)
-            cur = []
-    # merge wrap-around strip
-    if len(strips) > 1 and clear[0] and clear[NS - 1]:
-        strips[0] = strips[-1] + strips[0]
-        strips.pop()
-    # coverage: every switch + the encoder must sit near foam
-    pts = [(x, y) for _, x, y, _ in sw] + [(ex, ey)]
-    # coverage measured against strip centerline samples
+            total = norm(a1 - a0)
+            if total < 0:
+                total += 2 * math.pi
+            angs = [a0 + total * k / n for k in range(n + 1)]
+        return [(O[0] + r * math.cos(t), O[1] + r * math.sin(t))
+                for t in angs]
+
+    # splice tabs into a dense outline (0.5mm; chordal error negligible)
+    dense, dcum = [loop[0]], [0.0]
+    for p in loop[1:]:
+        prev = dense[-1]
+        L = math.hypot(p[0] - prev[0], p[1] - prev[1])
+        n = max(1, int(L / 0.5))
+        for k in range(1, n + 1):
+            t = k / n
+            dense.append((prev[0] + (p[0] - prev[0]) * t,
+                          prev[1] + (p[1] - prev[1]) * t))
+            dcum.append(dcum[-1] + L / n)
+    Pdense = dcum[-1] + math.hypot(loop[0][0] - dense[-1][0],
+                                   loop[0][1] - dense[-1][1])
+
+    def tab_path(c):
+        (px, py), (tx, ty) = at(c)
+        n = inward((px, py), (tx, ty))
+        o = (-n[0], -n[1])
+        hw = TAB_W / 2
+        A = (px - tx * hw, py - ty * hw)
+        B = (px + tx * hw, py + ty * hw)
+        F, TL, CH = TAB_FILLET, TAB_L, 1.5
+        path = []
+        # incoming fillet (rim -> left side)
+        path += fillet_arc(A, (-tx, -ty), o, F)
+        S1 = (A[0] + o[0] * (TL - CH), A[1] + o[1] * (TL - CH))
+        path.append(S1)
+        E1 = (px - tx * (hw - CH) + o[0] * TL,
+              py - ty * (hw - CH) + o[1] * TL)
+        E2 = (px + tx * (hw - CH) + o[0] * TL,
+              py + ty * (hw - CH) + o[1] * TL)
+        path.append(E1)
+        path.append(E2)
+        S2 = (B[0] + o[0] * (TL - CH), B[1] + o[1] * (TL - CH))
+        path.append(S2)
+        # outgoing fillet (right side -> rim)
+        path += fillet_arc(B, (tx, ty), o, F)
+        return path
+
+    intervals = []
+    for c in centers:
+        intervals.append((c - (TAB_W / 2 + TAB_FILLET + 1.0),
+                          c + (TAB_W / 2 + TAB_FILLET + 1.0)))
+    # rebuild outline skipping tabbed spans, inserting tab paths
+    marks = []
+    for c in centers:
+        marks.append((c - (TAB_W / 2 + TAB_FILLET + 1.0), 'start', c))
+        marks.append((c + (TAB_W / 2 + TAB_FILLET + 1.0), 'end', c))
+    marks.sort()
+    # walk dense outline; at each tab interval emit rim point, tab path
+    tab_paths = {c: tab_path(c) for c in centers}
+    inside = [False] * len(dense)
+    for i, s in enumerate(dcum):
+        for a, b in intervals:
+            ss = s % P
+            aa, bb = a % P, b % P
+            hit = (aa <= ss <= bb) if aa <= bb else (ss >= aa or ss <= bb)
+            if hit:
+                inside[i] = True
+                break
+    inject = {}
+    for (a, b), c in zip(intervals, centers):
+        best, bi = 1e18, 0
+        for i, s in enumerate(dcum):
+            d = min(abs((s % P) - (a % P)), P - abs((s % P) - (a % P)))
+            if d < best:
+                best, bi = d, i
+        inject.setdefault(bi, []).append(c)
+    final = []
+    for i, pt in enumerate(dense):
+        if i in inject:
+            for c in inject[i]:
+                final.extend(tab_paths[c])
+        if not inside[i]:
+            final.append(pt)
+    new_loop = final
+    # closure + area sanity (tabs add ~55mm^2 each)
+    if math.hypot(new_loop[0][0] - new_loop[-1][0],
+                  new_loop[0][1] - new_loop[-1][1]) > 0.6:
+        fail('tabbed outline does not close')
+    gain = poly_area(new_loop) - poly_area(loop)
+    if not (TAB_N * 25.0 <= gain <= TAB_N * 90.0):
+        fail(f'suspicious tab area gain {gain:.0f}')
+    # every switch + the encoder must sit near a tab root (suspension
+    # still has to reach the keys; bar set from evidence below)
     worst, worst_pt = 0.0, None
-    centers = [s for s in strips for s in [s[len(s) // 2]]]
-    for qx, qy in pts:
+    for qx, qy in [(x, y) for _, x, y, _ in sw] + [(ex, ey)]:
         d = 1e9
-        for s in strips:
-            for (sx, sy) in s[::2]:
-                d = min(d, math.hypot(qx - sx, qy - sy))
+        for c in centers:
+            (px, py), _ = at(c)
+            d = min(d, math.hypot(qx - px, qy - py))
         if d > worst:
             worst, worst_pt = d, (qx, qy)
-    if worst > MAX_KEY_DIST:
-        fail(f'worst key-to-foam {worst:.0f}mm at '
-             f'{r2(worst_pt[0])},{r2(worst_pt[1])} > {MAX_KEY_DIST}')
-    total = sum((len(s) - 1) * STEP for s in strips)
-    if not strips:
-        fail('no gasket strips at all')
-    lands = [('strip', 0, s) for s in strips]
+    if worst > MAX_TAB_DIST:
+        fail(f'worst key-to-tab {worst:.0f}mm at '
+             f'{r2(worst_pt[0])},{r2(worst_pt[1])} > {MAX_TAB_DIST}')
+    tabs = []
+    for c in centers:
+        (px, py), (tx, ty) = at(c)
+        n = inward((px, py), (tx, ty))
+        ang = math.degrees(math.atan2(-n[1], -n[0]))
+        tabs.append({'x': r2(px), 'y': r2(py), 'angle': r2(ang),
+                     'width': TAB_W, 'protrusion': TAB_L})
+    lands = [('tab', 0, None) for _ in tabs]
 
-    return {'half': tag, 'loop': loop, 'seq': seq, 'cuts': cuts,
+    return {'half': tag, 'loop': loop, 'outline': new_loop, 'cuts': cuts,
             'sw': sw, 'enc': enc_hole, 'wins': wins, 'tool': tool,
-            'lands': lands}, bad
+            'tabs': tabs}, bad
 
 
 # ---- DXF R12 writer ----
-def dxf_write(path, loop_seq, cuts, enc_hole, wins, lands):
+def dxf_write(path, res):
     L = []
     A = L.append
     A('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n'
       '9\n$INSUNITS\n70\n4\n0\nENDSEC\n')
     A('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n3\n')
-    for name, color in (('OUTLINE', 3), ('CUTOUT', 7), ('GASKET', 6)):
+    for name, color in (('OUTLINE', 3), ('CUTOUT', 7), ('TABS', 6)):
         A(f'0\nLAYER\n2\n{name}\n70\n0\n62\n{color}\n6\nCONTINUOUS\n')
     A('0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n')
 
-    for s, flip in loop_seq:
-        if s[0] == 'line':
-            a, b = (s[2], s[1]) if flip else (s[1], s[2])
-            A(f'0\nLINE\n8\nOUTLINE\n10\n{r2(a[0])}\n20\n{r2(a[1])}\n30\n0.0\n'
-              f'11\n{r2(b[0])}\n21\n{r2(b[1])}\n31\n0.0\n')
-        else:
-            _, a, m, b = s
-            if flip:
-                a, b = b, a
-            c = arc_center(a, m, b)
-            r = math.hypot(a[0] - c[0], a[1] - c[1])
-            a0 = math.degrees(math.atan2(a[1] - c[1], a[0] - c[0]))
-            a1 = math.degrees(math.atan2(b[1] - c[1], b[0] - c[0]))
-            am = math.degrees(math.atan2(m[1] - c[1], m[0] - c[0]))
+    def closed_poly(pts, layer):
+        A(f'0\nPOLYLINE\n8\n{layer}\n66\n1\n70\n1\n')
+        for x, y in pts:
+            A(f'0\nVERTEX\n8\n{layer}\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
+        A('0\nSEQEND\n')
 
-            def norm(d):
-                while d < 0:
-                    d += 360
-                while d >= 360:
-                    d -= 360
-                return d
-            a0n, a1n, amn = norm(a0), norm(a1), norm(am)
-            if (amn - a0n) % 360 <= (a1n - a0n) % 360:
-                start, end = a0n, a1n
-            else:
-                start, end = a1n, a0n
-            A(f'0\nARC\n8\nOUTLINE\n10\n{r2(c[0])}\n20\n{r2(c[1])}\n30\n0.0\n'
-              f'40\n{r2(r)}\n50\n{r2(start)}\n51\n{r2(end)}\n')
-    for poly in cuts + wins:
-        A('0\nPOLYLINE\n8\nCUTOUT\n66\n1\n70\n1\n')
-        for x, y in poly:
-            A(f'0\nVERTEX\n8\nCUTOUT\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
-        A('0\nSEQEND\n')
-    A('0\nPOLYLINE\n8\nCUTOUT\n66\n1\n70\n1\n')
-    for x, y in enc_hole:
-        A(f'0\nVERTEX\n8\nCUTOUT\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
-    A('0\nSEQEND\n')
-    for _, _, strip in lands:
-        # rebuild the ribbon from the centerline (STRIP_W wide)
-        A('0\nPOLYLINE\n8\nGASKET\n66\n1\n70\n1\n')
-        left, right = [], []
-        for k, (sx, sy) in enumerate(strip):
-            q = strip[min(k + 1, len(strip) - 1)]
-            q0 = strip[max(k - 1, 0)]
-            tx, ty = q[0] - q0[0], q[1] - q0[1]
-            nL = math.hypot(tx, ty) or 1e-12
-            nx, ny = -ty / nL * STRIP_W / 2, tx / nL * STRIP_W / 2
-            left.append((sx + nx, sy + ny))
-            right.append((sx - nx, sy - ny))
-        for x, y in left + right[::-1] + left[:1]:
-            A(f'0\nVERTEX\n8\nGASKET\n10\n{r2(x)}\n20\n{r2(y)}\n30\n0.0\n')
-        A('0\nSEQEND\n')
+    closed_poly(res['outline'] + res['outline'][:1], 'OUTLINE')
+    for poly in res['cuts'] + res['wins']:
+        closed_poly(poly + poly[:1], 'CUTOUT')
+    closed_poly(res['enc'] + res['enc'][:1], 'CUTOUT')
+    for t in res['tabs']:
+        # reference envelope for jacket makers: root rect at the tab
+        ang = math.radians(t['angle'])
+        dx, dy = math.cos(ang), math.sin(ang)
+        tx, ty = -dy, dx
+        cx, cy, hw = t['x'], t['y'], t['width'] / 2
+        ref = [(cx + tx * a + dx * b, cy + ty * a + dy * b)
+               for a, b in ((-hw, -4.0), (hw, -4.0),
+                            (hw, t['protrusion'] + 1.0),
+                            (-hw, t['protrusion'] + 1.0))]
+        closed_poly(ref + ref[:1], 'TABS')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
 
 
 # ---- SVG preview (y-down) ----
 def svg_write(path, res):
-    loop, cuts, wins = res['loop'], res['cuts'], res['wins']
+    loop, cuts, wins = res['outline'], res['cuts'], res['wins']
     enc_poly = res['enc']
     xs = [p[0] for p in loop] + [v[0] for c in cuts for v in c]
     ys = [p[1] for p in loop] + [v[1] for c in cuts for v in c]
-    x0, x1, y0, y1 = min(xs) - 5, max(xs) + 5, min(ys) - 5, max(ys) + 5
+    x0, x1, y0, y1 = min(xs) - 9, max(xs) + 9, min(ys) - 9, max(ys) + 9
     S = 4.0
     W, H = (x1 - x0) * S, (y1 - y0) * S
 
@@ -664,17 +752,15 @@ def svg_write(path, res):
                  f'stroke-dasharray="5,3"/>')
     o.append(f'<polygon points="{" ".join(P(p) for p in enc_poly)}" '
              f'fill="#000" stroke="#ff9800" stroke-width="1.5"/>')
-    for k, (_, _, strip) in enumerate(res['lands'], 1):
-        o.append(f'<polyline points="{" ".join(P(p) for p in strip)}" '
-                 f'fill="none" stroke="#f0f" stroke-width="2.5" '
-                 f'stroke-linecap="round"/>')
-        mx = sum(p[0] for p in strip) / len(strip)
-        my = sum(p[1] for p in strip) / len(strip)
-        o.append(f'<text x="{r2((mx - x0) * S)}" y="{r2((y1 - my) * S)}" '
-                 f'fill="#f0f" font-size="8" font-weight="bold" '
-                 f'text-anchor="middle">G{k}</text>')
+    for k, t in enumerate(res['tabs'], 1):
+        ang = math.radians(t['angle'])
+        lx = t['x'] + math.cos(ang) * (t['protrusion'] + 4.0)
+        ly = t['y'] + math.sin(ang) * (t['protrusion'] + 4.0)
+        o.append(f'<text x="{r2((lx - x0) * S)}" y="{r2((y1 - ly) * S)}" '
+                 f'fill="#f0f" font-size="9" font-weight="bold" '
+                 f'text-anchor="middle">T{k}</text>')
     o.append(f'<text x="8" y="14" fill="#f0f" font-size="10">'
-             f'G = Poron strip (top + bottom pair at same XY)'
+             f'T = gasket tab (silicone jacket in case)'
              f'</text>')
     for tx, ty in res['tool']:
         o.append(f'<circle cx="{r2((tx - x0) * S)}" cy="{r2((y1 - ty) * S)}" '
@@ -701,25 +787,16 @@ def main():
             continue
         if not check_only:
             dxf_write(os.path.join(OUT_DIR, f'Hojicha44-{tag}-plate.dxf'),
-                      res['seq'], res['cuts'], res['enc'],
-                      res['wins'], res['lands'])
+                      res)
             svg_write(os.path.join(OUT_DIR, f'Hojicha44-{tag}-plate.svg'), res)
-            recs = []
-            for _, _, strip in res['lands']:
-                recs.append({
-                    'length': r2((len(strip) - 1) * 2.0),
-                    'centerline': [[r2(x), r2(y)] for x, y in strip],
-                })
-            total = sum(r['length'] for r in recs)
             json.dump({
                 'half': tag, 'units': 'mm (KiCad board frame)',
                 'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
-                'strip_width': STRIP_W, 'strips': recs,
+                'tabs': res['tabs'],
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
         print(f'{tag}: 22 cutouts + enc {ENC_SQ}sq + {len(res["wins"])} '
-              f'windows + {len(res["lands"])} gasket strips '
-              f'({total:.0f}mm foam/side) — CLEAN')
+              f'windows + {len(res["tabs"])} gasket tabs — CLEAN')
     sys.exit(1 if failed else 0)
 
 
