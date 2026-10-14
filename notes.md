@@ -619,3 +619,11 @@ corrected along the way: `CONFIG_ZMK_BOARD_COMPAT=y` does not exist in
 v0.3 (fatal Kconfig warning) — the pin, not the marker, was the fix.
 Artifacts: `hojicha44-firmwares` (2x UF2, ~300KB). Run with `--erase`
 on first flash (UICR NFC). Keymap content still DRAFT by decision.
+
+## Firmware in hand (2026-10-14)
+
+Both UF2s downloaded from the green CI run into `out/firmware/`
+(`hojicha44_left` 435KB central, `hojicha44_right` 359KB peripheral —
+size split consistent with roles; UF2 magic verified). First flash with
+`--erase` (UICR NFC), then BLE-pair halves before expecting keys.
+Keymap remains DRAFT content on a compiling base.
