@@ -55,7 +55,7 @@ try {
 // 2. Ergogen TRRS comment matches measured geometry
 {
   const cfg = fs.readFileSync(
-    path.join(REPO, "layout", "ergogen yaml", "config.yaml"),
+    path.join(REPO, "layout", "ergogen", "config.yaml"),
     "utf8"
   );
   if (/3\.46mm PROUD/.test(cfg) || /13\.50mm/.test(cfg)) {

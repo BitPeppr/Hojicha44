@@ -2,7 +2,7 @@
 """Derive the KLE sketch from the Ergogen layout output.
 
 Layout-phase generator: Ergogen is the source of truth
-(`layout/ergogen yaml/config.yaml`), this script re-derives
+(`layout/ergogen/config.yaml`), this script re-derives
 `layout/- FINAL/keyboard_layout_v2.json` from
 `layout/generated/v2/points/points.yaml` so the two can never drift apart.
 

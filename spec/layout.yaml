@@ -1,5 +1,5 @@
 # Layout-phase specification (frozen v2 baseline).
-# Source of truth for geometry is layout/ergogen yaml/config.yaml;
+# Source of truth for geometry is layout/ergogen/config.yaml;
 # this file records the keymap and decisions around it.
 # Statuses: fixed | provisional | candidate | measured | undecided.
 
@@ -87,7 +87,7 @@ non-key anchors:  # PCB-phase mechanical envelope (status: fixed; see config)
 split_width:
   mirror_distance: 4.5kx + 16
       # status: fixed — user-approved widening
-    # Single line in `layout/ergogen yaml/config.yaml` under `mirror:`.
+    # Single line in `layout/ergogen/config.yaml` under `mirror:`.
     # Revert by deleting the "+ 16" — that restores the frozen baseline.
     # Snapshots of both widths: layout/- FINAL/keyboard_layout_v8.yaml
     # (4.5kx) and keyboard_layout_v8_exp_split.yaml (4.5kx + 16).

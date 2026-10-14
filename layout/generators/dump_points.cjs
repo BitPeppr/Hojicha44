@@ -15,7 +15,7 @@ const path = require("path");
 const yaml = require("js-yaml");
 
 const REPO = path.resolve(__dirname, "..", "..");
-const SRC = path.join(REPO, "layout", "ergogen yaml");
+const SRC = path.join(REPO, "layout", "ergogen");
 const OUT = path.join(REPO, "layout", "generated", "v2");
 
 const ergogen = require(path.join(REPO, "node_modules", "ergogen", "src", "ergogen"));
