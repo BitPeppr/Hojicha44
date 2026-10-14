@@ -68,7 +68,7 @@ which is the cutout source — not the PCB print.
 - [ ] Plate clearance: top-side diodes stand ~1.35mm in the inter-key gaps.
   Any plate above the PCB needs relief pockets over the diodes or ≥1.5mm
   standoffs — a flat plate will rest on diodes. Validate on the build.
-- [ ] Plate fit (rev-1 plate in `out/plate/`): 1:1 print over the real PCB —
+- [ ] Plate fit (rev-1 plate in `plate/`): 1:1 print over the real PCB —
   every 15×15 cutout frames its switch footprint, the 12.5² hole frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
   outline matches edge-for-edge including the USB notch. Seat one real

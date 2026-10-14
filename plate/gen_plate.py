@@ -23,14 +23,14 @@ Stack contract (spec/case.md): 1.5mm PC plate, 2.0mm PCB-to-plate gap
 (top-side diodes are 1.35mm, module underside 4.5mm).
 
 Usage:
-  python3 plate/gen_plate.py          # writes out/plate/
+  python3 plate/gen_plate.py          # writes plate/
   python3 plate/gen_plate.py --check  # verify only
 
 Outputs (gitignored scratch, like out/fit):
-  out/plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
+  plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
       OUTLINE/CUTOUT/GASKET[reference-only])
-  out/plate/Hojicha44-{Left,Right}-plate.svg   (preview, lands hatched)
-  out/plate/Hojicha44-{Left,Right}-lands.json  (gasket map for case design)
+  plate/Hojicha44-{Left,Right}-plate.svg   (preview, lands hatched)
+  plate/Hojicha44-{Left,Right}-lands.json  (gasket map for case design)
 
 Exit 0 only if every gate below passes.
 """
@@ -42,7 +42,7 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
-OUT_DIR = os.path.join(REPO, "out", "plate")
+OUT_DIR = os.path.join(REPO, "plate")
 STOCK_FP = ("/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints")
 
 # ---- rev-1 decisions (change here, everything downstream follows) ----

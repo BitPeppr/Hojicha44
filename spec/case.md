@@ -2,9 +2,9 @@
 
 Source of truth for plate geometry: `plate/gen_plate.py`
 (derives from the placed PCB; never hand-edit CAD).
-Preview: `out/plate/Hojicha44-{Left,Right}-plate.svg`
-Laser file: `out/plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm)
-Gasket map: `out/plate/Hojicha44-{Left,Right}-lands.json` (board frame)
+Preview: `plate/Hojicha44-{Left,Right}-plate.svg`
+Laser file: `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm)
+Gasket map: `plate/Hojicha44-{Left,Right}-lands.json` (board frame)
 
 ## Stack (top to bottom, per half)
 
