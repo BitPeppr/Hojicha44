@@ -257,7 +257,7 @@ def krot(erg_r):
 
 
 def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
-          ref_on_fab=False, strip_silk=False):
+          ref_on_fab=False, strip_silk=False, cathode_tick=False):
     """Embed a .kicad_mod as a board instance.
 
     Keeps all local geometry; sets the instance position, reference/value,
@@ -266,6 +266,11 @@ def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
     Fab instead (dense matrix: silk refs sit on neighbour silk/pads);
     strip_silk drops F.SilkS graphics (SOD-123: the cathode bar sits 0.2mm
     from the pad and trips angle-dependent DRC noise; Fab keeps polarity).
+    cathode_tick re-adds a minimal cathode tick for stripped SOD-123s:
+    1.0mm bar just outside pad 1 (cathode) at 0.29mm local clearance, so
+    on-board polarity stays readable after placement (independent review
+    F1). Local geometry rotates with the footprint, so the clearance is
+    rotation-proof; DRC re-verifies every placed rotation.
     """
     s = re.sub(r'\(footprint "[^"]*"', f'(footprint "{libref}"', src, count=1)
     s = re.sub(r'(\(layer "F\.Cu"\)\n)',
@@ -318,6 +323,11 @@ def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
         i = k + 1
     s = "".join(out)
     s = re.sub(r'uuid "[^"]*"', lambda m: f'uuid "{U()}"', s)
+    if cathode_tick:
+        s = (s.rstrip()[:-1].rstrip() +
+             f'\n\t(fp_line (start -2.45 -0.5) (end -2.45 0.5)'
+             f' (stroke (width 0.12) (type solid)) (layer "F.SilkS")'
+             f' (uuid "{U()}"))\n)')
     return s
 
 
@@ -961,7 +971,8 @@ def build_board(tag, pts):
     for kind, lib, name, ref, value, x, y, rot, hide, fab, strip, pn in placements:
         src = fp_source(lib, name)
         body.append(embed(src, f"{lib}:{name}", ref, value, x, y, rot, pn,
-                          hide_ref=hide, ref_on_fab=fab, strip_silk=strip))
+                          hide_ref=hide, ref_on_fab=fab, strip_silk=strip,
+                          cathode_tick=(kind == "DIODE")))
 
     # antenna keepout marking + JST pin-1 "+" (placement review aids; the
     # copper-pour keepout is enforced at routing — no pours exist yet).

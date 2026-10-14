@@ -36,8 +36,8 @@ Left and right halves are electrically identical except TRRS pins 1/2.
 
 | pin | Arduino | nRF | net | function |
 |---|---|---|---|---|
-| 1 | D1 | P0.06 | /TRRS_R1 | TRRS tip |
-| 2 | D0 | P0.08 | /TRRS_T | TRRS ring1 |
+| 1 | D1 | P0.06 | /TRRS_R1 | TRRS ring1 |
+| 2 | D0 | P0.08 | /TRRS_T | TRRS tip |
 | 3 | GND | — | GND | GND |
 | 4 | GND | — | GND | GND |
 | 5 | D2 | P0.17 | /COL2_R | COL2 |

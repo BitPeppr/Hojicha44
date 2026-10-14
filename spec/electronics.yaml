@@ -272,6 +272,9 @@ pcb:
   design_rules: 0.25mm track / 0.2mm clearance / 0.8-0.4mm via (defaults set
     in both .kicad_pro; the KiCad template's 0-width/0-drill presets are
     corrected by the generator — using them silently breaks DRC)
+  ground: >-
+    routed 0.25mm GND chains, no pours on this 2-layer rev; pour only if
+    BLE range disappoints (first-article gate).
   switch_orientation: as vendored, NOT flipped — switch on top (F.Cu cutout),
     hotswap socket soldered beneath (B.Cu pads), diodes SMD on the front.
     Confirmed by part geometry (switch pins and socket pads not co-planar).

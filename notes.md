@@ -551,3 +551,30 @@ Read-only on generators/boards/schematics; touched only spec/README/notes/fix.
   spec/bom) — fine at the 100mA default; 500mA charge-boost jumper stays
   OPEN. Mill-Max 2.11mm sockets confirmed too short for the 301230.
 - Halves are ~150x115mm: over 100x100 value pricing, noted in bom.md.
+
+## Independent PCB review response (2026-10-14)
+
+- **13.50mm mouth-to-mouth rebuttal — 22.40mm stands.** Footprint math from
+  the current files gives plastic faces L x=134.55 / R x=156.95 = 22.40mm
+  (J_L1 (122.45,-22) rot 90, J_R1 (169.05,-22) rot 270, CW-positive, mouth
+  local +Y face 12.1; board edges 135.539/155.961 = 20.42 edge-to-edge,
+  mouths recessed 0.99). No footprint feature (holes/pads/silk/centers)
+  yields 13.5. The review likely carried the old stale layout note; the
+  22.40 set stands, no action.
+- **Review staleness, already handled — no action.** The review's component
+  table repeats the old 500mA switch rating (spec now 300mA switching) and
+  scopes itself to router r10 boards (current tree routes r13 with the VBAT
+  notch keepout) — both already handled, no action.
+- **Disposition:** F2 documented (no-pour decision in spec/electronics.yaml),
+  F3 convention documented (KiCad CPL, do-not-flip in spec/first-article.md),
+  F6 checklist complete (all eight items already present, no additions), F8
+  wording fixed (zmk/gpio-map.md right-half functions swapped to match nets),
+  F4 flex already deferred (no change), F7 west/keymap still excluded scope.
+
+## Independent review F1 — diode cathode tick (2026-10-14)
+
+On-board polarity gate now met in copper-adjacent silk, not just Fab: every
+SOD-123 gets a 1.0mm F.SilkS tick just outside pad 1 (cathode) at 0.29mm
+local clearance (generator-owned, rotates with the footprint, so all five
+per-half rotations inherit it). DRC shows 0 new silk violations at every
+rotation; silk audit still symmetric. 22 ticks per half, verified in-file.

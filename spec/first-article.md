@@ -24,6 +24,8 @@ which is the cutout source — not the PCB print.
   the jack height; plastic mouth-to-mouth **22.40mm** with each mouth
   **0.99mm recessed** behind its edge (silk tops at 21.40mm, 0.49mm
   recessed — NOT protruding). 90-degree plugs fit easily in this gap.
+  Measure the boot diameter of the chosen 90° cable; straight plugs are
+  prohibited (two noses would meet head-on across the 22.40mm mouth gap).
 - [ ] Fab limits confirmed with the chosen fab BEFORE ordering: 2-layer
   1.6mm, 0.25mm track / 0.2mm clearance / 0.8-0.4mm via accepted; rev-2
   flex slots (typically >=1mm) quoted separately.
@@ -62,5 +64,8 @@ which is the cutout source — not the PCB print.
   the gasket case, each half links and types at the intended desk distance
   (no dropouts); note the measured range. If range disappoints, try the
   301228 fallback before re-spinning.
+
+- [ ] CPL: `pos.csv`/`pos-smt.csv` use KiCad convention (negated Y, board
+  origin) — JLCPCB/PCBWay ingest KiCad CPL natively, do not flip axes.
 
 Pass all → Gerbers. Fail anything → file an issue with the measured value.
