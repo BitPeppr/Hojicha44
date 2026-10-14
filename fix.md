@@ -404,7 +404,9 @@ current statements.
 
 **Measured.** `silk_edge_clearance` warnings for J_L1 / J_R1 silk at (126.9,
 -18.65), (126.9, -25.35), against the Edge.Cuts segment near (136.49, -8.31).
-The PJ-320A mouth sits 3.46 mm proud of the edge by design.
+The PJ-320A mouth sits 3.46 mm proud of the edge by design. (→ §9:
+superseded — mouths measured recessed 0.99/silk 0.49, 0
+`silk_edge_clearance` in current DRC.)
 
 **Fix.** Trim the TRRS body silk to within the outline, or keep the silk inside
 and accept the warning with a note. The mouth protrusion is intentional
@@ -629,7 +631,7 @@ The table in §1 is stale as written; per-ID current state (evidence: fresh
 `gen_schematic.py` / `gen_pcb.py` / `audit_silk.py` runs, both DRC reports):
 
 - **P0-4 routing: DONE.** Deterministic 2-layer router (`gen_route.py`
-  r10): Left 408 / Right 586 copper items, `unconnected_items` 0 both
+  r13): Left 446 / Right 590 copper items, `unconnected_items` 0 both
   halves. DRC shows only waiver W1 (28× mismatch/half).
 - **P0-5 battery: locked to orderable stock**, DMM outstanding. Primary
   kriscables 301230 110mAh + JST PH 2.0mm (verified listing: 3×12×30,

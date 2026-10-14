@@ -394,10 +394,11 @@ short local) → COL rails (matrix chained, thumb+MCU tapped) → ROW rails →
 stubs (ENC/TRRS/VBAT) → GND chain. Single pass, no rip-up (bounded retry
 oscillated: stubs↔rails ripped each other).
 
-Final: Left 54 fp / 48 nets / 111 edge segs / 408 copper items, Right
-54 / 48 / 117 / 586. `unconnected_items` = 0 both halves. DRC shows ONLY
-the documented waivers (W1 28× `lib_footprint_mismatch`, W2 2× Choc silk on
-Right) — 0 non-waived, `gen_pcb.py` exits 0, rerun-stable (dedupe keeps 0/0).
+Final: Left 54 fp / 48 nets / 111 edge segs / 446 copper items, Right
+54 / 48 / 117 / 590 (router r13). `unconnected_items` = 0 both halves.
+DRC shows ONLY the documented waiver W1 (28× `lib_footprint_mismatch`) —
+0 non-waived (W2 retired by the Choc silk trim: 0 silk items either half),
+`gen_pcb.py` exits 0, rerun-stable (dedupe keeps 0/0).
 `gen_schematic.py` (ERC 0 errors) and `audit_silk.py` (symmetric OK) green.
 
 Bugs found by routing and fixed (all proven on the failing coordinates):
@@ -578,3 +579,16 @@ SOD-123 gets a 1.0mm F.SilkS tick just outside pad 1 (cathode) at 0.29mm
 local clearance (generator-owned, rotates with the footprint, so all five
 per-half rotations inherit it). DRC shows 0 new silk violations at every
 rotation; silk audit still symmetric. 22 ticks per half, verified in-file.
+
+## Adversarial re-audit (2026-10-14, post-r13)
+
+Two independent re-measurements plus a clean rebuild, all green:
+- Antenna keepout: min copper-edge 5.25 (L) / 5.175 (R), no intrusions.
+- Notch power: L window clear (nearest 8.5+), R window min 14.26 at a JST
+  pad; no power vias within 4mm of the old via spots.
+- Diode ticks 22/half; same-side clearance min 0.50. One XY-overlap noted
+  (D_R02 tick over SW_R03.2 B.Cu pad) is opposite-side F.SilkS-vs-B.Cu
+  across 1.6mm FR4 — DRC-silent, not a fab short.
+- Global track-to-edge min 0.29 (L) / 0.33 (R); pad landings 12/12;
+  single outline loops; docs-vs-reality sweep clean except the r10
+  counts and P1-8 marker fixed above.
