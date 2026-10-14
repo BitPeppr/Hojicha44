@@ -31,7 +31,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 1 | Knob, 6mm bore, ≤13mm dia (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | clears the 16mm plate cutout; set-screw clamps anywhere on the 20mm shaft — first-article: spin + push clearance vs plate |
 | 1 | XKB PJ-320A TRRS 3.5mm | bring-up/debug link only; 90° cable required |
 | 1 | JST S2B-PH-K-S + PHR-2 housing + 2× SPH-002T-P0.5S crimps | battery connector set, side-entry |
-| 1 | Würth WS-SLTV 450301014042 | slide SPDT, pad 1 (middle) = common, 500mA/12VDC |
+| 1 | Würth WS-SLTV 450301014042 | slide SPDT, pad 1 (middle) = common, 300mA switching (fine at 100mA default; leave charge-boost open) |
 | 1 | 301230 LiPo cell (see below) | with protection PCM + JST-PH 2.0mm pigtail |
 
 ## Cell — locked to orderable stock (was TBD)
@@ -67,3 +67,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 
 3× fiducials + 2× 3.2mm NPTH tooling holes per half, placed by the
 generator. Gasket mounting uses no PCB holes.
+
+## Fab note
+
+Each half is ~150×115mm — over the 100×100mm value tier at JLCPCB/PCBWay,
+so price both tiers (and panel-by-2 quotes) before ordering.

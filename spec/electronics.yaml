@@ -46,7 +46,7 @@ power:
     procedure exactly.
   # status: fixed — first-article DMM check (pack+ to RAW with switch ON)
   # still wanted, but the topology is officially blessed, not a guess.
-  charger: nice!nano onboard (100mA, 500mA with charge-boost jumper)
+  charger: nice!nano onboard (100mA default; 500mA charge-boost jumper stays OPEN)
       # status: fixed
     # 130mAh charges in ~1.3h at 100mA.
     # CHARGE GATE: the power switch sits between pack+ and MCU RAW, so the
@@ -57,7 +57,7 @@ power:
       # 450301014042.pdf, front view 2-1-3, schematic marks 1 as COM) confirms
       # pin 1 (middle) = COMMON, pins 2/3 = throws. Schematic wires pack+ to
       # pin 1 and the rail to pin 2 (pin 3 NC); check_pwr_footprint() guards
-      # the middle-pad layout against library drift. 500mA/12VDC covers BLE
+      # the middle-pad layout against library drift. 300mA switching covers BLE
       # peaks (~20mA) with margin; edge-accessible actuator for the case slot.
       # First-article check left: which slider end joins 1-2 vs 1-3 (ON
       # position) — either way it behaves as on/off, just swapped.

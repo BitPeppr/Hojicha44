@@ -31,7 +31,7 @@ GRID = 0.25
 MARGIN = 0.15  # quantization slop: segments between free cell centres still
 # graze pad corners (r5 at 0.10 left 0.025mm grazes: ROW2/COL4 on F vs diode
 # pad2). Carve uses the same margin so THT pin escape stays open.
-ROUTER_VERSION = 10  # bump when routing behavior changes: stale generator
+ROUTER_VERSION = 13  # bump when routing behavior changes: stale generator
 # copper from older revisions is dropped (it would dangle/short); GUI-added
 # copper is preserved only within the same revision.
 W = {"s": 0.25, "p": 0.5}
@@ -131,6 +131,16 @@ class Board:
         xs = [p[0] for l in self.loops for p in l]
         ys = [p[1] for l in self.loops for p in l]
         self.bbox = (min(xs), min(ys), max(xs), max(ys))
+        # USB-notch bite floor for the power-class keepout below: highest
+        # outline midpoint strictly inside the 11mm bite (border walls at
+        # +-5.5 excluded via +-4.5, same math as check_board).
+        ux, _, _ = pts["usb" if tag == "L" else "mirror_usb"]
+        mids = [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+                for loop in self.loops
+                for a, b in zip(loop, loop[1:] + loop[:1])]
+        win = [y for x, y in mids if abs(x - ux) <= 4.5]
+        assert win, f"{tag}: no outline inside the notch window"
+        self.notch = (ux, max(win))
 
     def inside(self, x, y):
         return G.inside_outline(self.loops, x, y)
@@ -171,6 +181,18 @@ class Grid:
         kx, ky = board.keep
         kr = KEEP_R + w / 2 + MARGIN
         self._disc(kx, ky, kr)
+        # USB-notch power keepout: the 0.5mm battery rail may not hug the
+        # notch floor where the USB plug bumps it — copper edge must stay
+        # >=0.5mm off the bite (the DRC edge rule is only 0.2). Block the
+        # floor band [floor-0.5, floor+2.0] on power grids; with 0.25mm
+        # cells the last free centre is floor-0.75, i.e. copper edge exactly
+        # floor-0.5. The band stops at floor+2 so the rail can still swing
+        # north around the bite (a full-height wall forced it south through
+        # the MCU pin field and grazed a GND exit on L). Own pads carve
+        # later per net, so the RAW endpoint stays reachable.
+        if cls == "p":
+            ux, floor = board.notch
+            self._rect(ux - 7, floor - 0.5, ux + 7, floor + 2.0)
         # pads: exact per-class clearance (signal 0.2 / power 0.25)
         cl = CLR[cls]
         for (x, y, hw, hh, ang, drill, net, ref, layers, num) in board.pads:
@@ -215,6 +237,17 @@ class Grid:
                 if math.hypot(self.gx0 + i * GRID - cx,
                                self.gy0 + j * GRID - cy) < r:
                     self.blocked[j * self.nx + i] = 1
+
+    def _rect(self, x0, y0, x1, y1):
+        # Block cell centres inside [x0, x1] x [y0, y1] (inclusive bounds —
+        # the notch-floor math depends on the exact y0 cell flipping).
+        i0 = max(0, int(math.ceil((x0 - self.gx0) / GRID)))
+        i1 = min(self.nx - 1, int(math.floor((x1 - self.gx0) / GRID)))
+        j0 = max(0, int(math.ceil((y0 - self.gy0) / GRID)))
+        j1 = min(self.ny - 1, int(math.floor((y1 - self.gy0) / GRID)))
+        for j in range(j0, j1 + 1):
+            for i in range(i0, i1 + 1):
+                self.blocked[j * self.nx + i] = 1
 
     def _rot_rect(self, cx, cy, hw, hh, ang):
         # ang is CW-positive like KiCad; test corners via inverse transform
@@ -273,12 +306,17 @@ POP_CAP = 300000
 
 
 def astar2(gF, gB, s_xy, s_layers, t_xy, t_layers, ownF, ownB,
-           keep, via_r, via_cost=4.0, holes=()):
+           otherF, otherB, keep, via_r, via_cost=4.0, holes=()):
     """Dual-layer A*. Layers: 0=F.Cu, 1=B.Cu. Via transitions cost extra.
 
-    ownF/ownB: [(x,y,hw,hh,ang)] carved free. keep=(kx,ky): no via within
-    5mm+via_r of it. holes=[(x,y,r)]: no via within r+via_drill/2+0.25.
-    Returns ([(layer, [(x,y),...])], [(x,y),...]) runs+vias.
+    ownF/ownB: [(x,y,hw,hh,ang)] carved free. otherF/otherB: other-net pads
+    re-blocked AFTER the carve — carving full own clearance otherwise frees
+    the overlap sliver with a neighbour's clearance zone and A* happily
+    routes through it (r12: GND exit through COL2's zone, 0.065 graze).
+    Start/goal cells are still forced free, so pins stay escapable; only
+    the shared slivers become walls, steering exits to truly free sides.
+    keep=(kx,ky): no via within 5mm+via_r of it. holes=[(x,y,r)]: no via
+    within r+via_drill/2+0.25. Returns runs+vias.
     """
     import heapq
     import math as _m
@@ -287,6 +325,10 @@ def astar2(gF, gB, s_xy, s_layers, t_xy, t_layers, ownF, ownB,
         F.free_rect(x, y, hw, hh, ang)
     for (x, y, hw, hh, ang) in ownB:
         B.free_rect(x, y, hw, hh, ang)
+    for (x, y, hw, hh, ang) in otherF:
+        F._rot_rect(x, y, hw, hh, ang)
+    for (x, y, hw, hh, ang) in otherB:
+        B._rot_rect(x, y, hw, hh, ang)
     G = (F, B)
     s = (F.cell(*s_xy), B.cell(*s_xy))
     t = (F.cell(*t_xy), B.cell(*t_xy))
@@ -497,6 +539,17 @@ def plan(tag, pts, placements, nets, pin_net):
                 out.append((x, y, hw + grow, hh + grow, ang))
         return out
 
+    def other_pads(net, layer):
+        # Other-net pads, same inflation the base grid used: re-blocked
+        # after the own carve so shared clearance slivers become walls.
+        out = []
+        cls = pclass(net)
+        grow = CLR[cls] + W[cls] / 2 + MARGIN
+        for (x, y, hw, hh, ang, drill, n, ref, layers, num) in board.pads:
+            if n is not None and n != net and (layer in layers or "*.Cu" in layers):
+                out.append((x, y, hw + grow, hh + grow, ang))
+        return out
+
     def elayers(ref, num):
         for (x, y, hw, hh, ang, drill, n, r, layers, nm) in board.pads:
             if r == ref and nm == str(num):
@@ -527,6 +580,8 @@ def plan(tag, pts, placements, nets, pin_net):
                 gF, gB, (pa[0], pa[1]), pa[2], (pb[0], pb[1]), pb[2],
                 own_pads(net, "F.Cu", inflate=True),
                 own_pads(net, "B.Cu", inflate=True),
+                other_pads(net, "F.Cu"),
+                other_pads(net, "B.Cu"),
                 board.keep, VIA[cls][0] / 2, 4.0,
                 holes=[(x, y, r) for (x, y, r) in board.holes])
         except RuntimeError as e:

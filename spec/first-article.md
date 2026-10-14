@@ -14,7 +14,9 @@ which is the cutout source — not the PCB print.
 - [ ] Module footprint: place a real nice!nano on the print, pin-1/USB end
   to the notch edge. All 24 pads must sit on printed copper.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.
-- [ ] USB notch measures **11mm wide**; plug seats with the shell clearing.
+- [ ] USB notch measures **11mm wide**; dry-fit the actual USB cable — with
+  4.5mm sockets the plug sits above the PCB so 11mm is normally enough. If
+  the housing hits the shoulders beside the notch, widen it to ~14mm.
 - [ ] Encoder shaft hole over the anchor; 13mm knob clears the 16mm plate
   cutout on paper (spin circle).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.

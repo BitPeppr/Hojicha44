@@ -529,3 +529,25 @@ Read-only on generators/boards/schematics; touched only spec/README/notes/fix.
   label; fab-limits pre-order confirm. `spec/first-article.md`: BLE
   range-with-battery-and-case test; fit sheet reworded to Edge.Cuts + silk
   + fab + F.Cu pads with plate DXF as the 16mm cutout source.
+
+## VBAT notch clearance + mask/rating corrections (2026-10-14)
+
+- **Battery rail off the notch.** VBAT_SW_L hugged the USB-notch floor
+  (copper edge 0.25mm off it, via at (111.75,47.5)) where the plug bumps.
+  Fix: power-class notch keepout in the router (bite band floor-0.5 to
+  floor+2, own pads carve so RAW stays reachable) plus re-blocking
+  other-net clearance after the own carve (shared THT slivers become
+  walls instead of graze paths — this also fixed a GND-vs-COL2 graze the
+  reroute exposed). Router r13: segment-to-segment measurement over the
+  whole outline gives min VBAT copper-edge 2.518mm (at the RAW pad itself,
+  DRC-clean); the notch zone is empty of power copper for 40mm around
+  (L runs wide west-south, 185mm total, 20mV drop at 100mA — negligible;
+  R runs 19mm direct), no power vias within 4mm of the old spot, DRC
+  still clean.
+- **Mask expansion 0.05mm** (`solder_mask_to_copper_clearance`, was 0) so
+  normal mask shift can't leave mask on SOD-123 pads. No reroute (mask
+  only); DRC re-verified.
+- **WS-SLTV rating corrected to 300mA switching** (was 500mA/12VDC in
+  spec/bom) — fine at the 100mA default; 500mA charge-boost jumper stays
+  OPEN. Mill-Max 2.11mm sockets confirmed too short for the 301230.
+- Halves are ~150x115mm: over 100x100 value pricing, noted in bom.md.
