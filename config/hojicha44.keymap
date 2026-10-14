@@ -19,7 +19,7 @@
                 &kp Q &kp W &kp E &kp R &kp T &kp GRAVE
                 &kp A &kp S &kp D &kp F &kp G &kp LBKT
                 &kp Z &kp X &kp C &kp V &kp B &kp TAB
-                &kp LCTRL &kp LGUI &kp MO(1) &kp SPACE &none &none
+                &kp LCTRL &kp LGUI &mo 1 &kp SPACE &none &none
             >;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
