@@ -1,0 +1,9 @@
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  firmware_build:
+    name: Build the ZMK firmware
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    with:
+      archive_name: hojicha44-firmwares
+    secrets: inherit

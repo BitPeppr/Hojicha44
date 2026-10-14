@@ -1,0 +1,10 @@
+# Hojicha44 CI build matrix: one firmware per half (left = central).
+# Board name is the ZMK upstream nice!nano v2. Shared keymap
+# (zmk/hojicha44.keymap) serves both shields, Corne-style.
+---
+
+include:
+  - board: nice_nano_v2
+    shield: hojicha44_left
+  - board: nice_nano_v2
+    shield: hojicha44_right

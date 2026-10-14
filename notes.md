@@ -461,7 +461,7 @@ keymap content.
    clears the 16mm cutout, set-screw takes the 20mm shaft; spin/push
    clearance is a first-article item.
 7. **Firmware correctness (encoder steps + push path) — fixed in-tree,
-    first-article tests open.** `zmk/hojicha44.dtsi`: `left_encoder`
+    first-article tests open.** `boards/shields/hojicha44/hojicha44.dtsi`: `left_encoder`
     `steps` 30 → **15** (EC11E15244G1 = 30 detents / 15 pulses; ZMK
     `steps` counts pulses per revolution per
     `zmk.dev/docs/hardware-integration/encoders`); `triggers-per-rotation`
@@ -472,7 +472,7 @@ keymap content.
     `zephyr,code = <INPUT_KEY_MUTE>`. ZMK keymaps consume kscan events,
     so the push reaches the keymap via a new `zmk,kscan-gpio-direct` node
     (`input-keys = <&enc_sw_btn>`) plus a `zmk,kscan-sideband-behaviors`
-    node in `zmk/hojicha44.keymap` binding press → `&kp C_MUTE`
+    node in `config/hojicha44.keymap` binding press → `&kp C_MUTE`
     (assumed, joins the C_VOL_UP/DN cluster; matrix transform, the 24
     bindings cells, and both overlays untouched). `zmk/gpio-map.md`
     checked: pin-continuity tables only, no push binding described — no
@@ -592,3 +592,16 @@ Two independent re-measurements plus a clean rebuild, all green:
 - Global track-to-edge min 0.29 (L) / 0.33 (R); pad landings 12/12;
   single outline loops; docs-vs-reality sweep clean except the r10
   counts and P1-8 marker fixed above.
+
+## ZMK CI (2026-10-14)
+
+Firmware now builds in CI instead of never: `.github/workflows/build.yml`
+calls ZMK's reusable `build-user-config.yml`, matrixed over both halves in
+`build.yaml` (`nice_nano_v2` + `hojicha44_left/right`). Layout mirrors the
+unified template + in-tree Corne exactly — `config/` (west.yml pinned v0.3,
+keymap, conf), `boards/shields/hojicha44/` (shared dtsi, per-half overlays,
+Kconfig pair, metadata), root `zephyr/module.yml`. Roles: left central via
+`Kconfig.defconfig` default (overridable); right overlay carries the
+`col-offset = <6>` so one 6-column transform + one 24-cell keymap serves
+both halves (no 12-column transform needed). Keymap content itself is still
+DRAFT (legends/layers open); CI proves compilation. Push to origin to run.

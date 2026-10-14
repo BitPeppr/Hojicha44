@@ -39,6 +39,13 @@
     };
 };
 
+/* Right half reports its physical 6 columns at logical offset 6, so both
+ * halves share one 6-column transform and one 24-cell keymap (Corne-style
+ * col-offset; no 12-column transform needed). */
+&default_transform {
+    col-offset = <6>;
+};
+
 &left_encoder {
     status = "okay";
 };

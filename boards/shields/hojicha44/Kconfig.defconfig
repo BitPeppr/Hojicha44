@@ -1,0 +1,18 @@
+if SHIELD_HOJICHA44_LEFT
+
+config ZMK_KEYBOARD_NAME
+    default "Hojicha44"
+
+# Left half is the central by convention; peripheral (right) is the
+# default. Still overridable from the user config either way.
+config ZMK_SPLIT_ROLE_CENTRAL
+    default y
+
+endif
+
+if SHIELD_HOJICHA44_LEFT || SHIELD_HOJICHA44_RIGHT
+
+config ZMK_SPLIT
+    default y
+
+endif

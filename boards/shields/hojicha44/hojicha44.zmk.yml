@@ -1,0 +1,12 @@
+file_format: "1"
+id: hojicha44
+name: Hojicha44
+type: shield
+url: https://github.com/BitPeppr/Hojicha44
+requires: [nice_nano_v2]
+features:
+  - keys
+  - encoder
+siblings:
+  - hojicha44_left
+  - hojicha44_right
