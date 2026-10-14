@@ -74,11 +74,15 @@ non-key anchors:  # PCB-phase mechanical envelope (status: fixed; see config)
   jst:    JST-PH socket, south of the battery (`_jst`, 9x9 zone)
   pwrsw:  WS-SLTV slide switch on the north edge, west of the USB notch;
     outline `_pwrsw` (13x5), case slot over the actuator
-  trrs:   PJ-320A at the inner (gap-facing) edge; outline `_trrs` (17x7)
-    centred on the `trrs` anchor, so the mouth (rect east edge) sits 3.46mm
-    PROUD of the board edge, inside the split gap, for plug access.
-    # Measured on the live config: board edge x=135.54, mouth x=139.00.
-    # The jack is THT with its pin row inboard, so only the barrel overhangs.
+  trrs: >-
+    PJ-320A at the inner (gap-facing) edge, outline `_trrs` (17x7) centred
+    on the `trrs` anchor. Measured on placed boards with J_L1 at
+    (122.45,-22) rot 90 and J_R1 at (169.05,-22) rot 270 (CW-positive) —
+    plastic mouths at L 134.55 and R 156.95 for 22.40mm mouth-to-mouth,
+    each 0.99mm RECESSED behind its board edge (edges L 135.54 and R
+    155.96 for 20.42mm edge-to-edge). Silk tops at 21.40mm, still 0.49mm
+    recessed. Supersedes the stale 3.46mm-proud and 139.00 claim. The jack
+    is THT with its pin row inboard and the barrel stays behind the edge.
 
 split_width:
   mirror_distance: 4.5kx + 16
@@ -90,11 +94,14 @@ split_width:
     # Left-half key geometry is bit-identical in both; only the right half
     # translates. Frozen v7 left-half key positions unchanged.
   inner_gap_at_encoder: 18.50mm between the two board edges  # status: measured
-  inner_gap_at_trrs: 20.42mm board-edge to board-edge; the two TRRS mouths
-    stand 3.46mm proud each, leaving 13.50mm mouth-to-mouth. Two plugs need
-    ~6mm engagement per side (12mm), so this engages with ~1.5mm of slack.
-    # PCB GATE: confirm the molded plug BOOTS (wider than the barrel) also
-    # clear within 13.50mm. If they foul, use thinner boots or option (a).
+  inner_gap_at_trrs: >-
+    20.42mm board-edge to board-edge at y=-22; plastic TRRS mouths at
+    22.40mm mouth-to-mouth, each 0.99mm recessed (silk tops at 21.40mm,
+    0.49mm recessed). 90-degree plugs need about 8mm of the 22.40mm gap
+    and fit easily; a molded straight pair needs about 24mm and is
+    marginal. Status measured.
+    # PCB GATE — confirm the molded plug BOOTS (wider than the barrel)
+    # also clear within 22.40mm. If they foul, use thinner boots or option (a).
   trrs_resolution: the +16mm widening RESOLVED the frozen-width problem — at
     4.5kx the mouths faced each other across ~4.4mm and no plug could seat.
     # The widening was chosen because it fixes TRRS without moving any key.

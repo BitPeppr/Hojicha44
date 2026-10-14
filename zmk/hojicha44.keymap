@@ -32,4 +32,23 @@
             >;
         };
     };
+
+    /* ASSUMED pending first-article: EC11 push -> C_MUTE. Mute joins the
+     * existing C_VOL_UP/C_VOL_DN media cluster from sensor-bindings.
+     * Sideband keeps the 24-cell matrix bindings/transform untouched: the
+     * direct kscan in hojicha44.dtsi emits row 0 / column 0 for the single
+     * push key. Binding source: zmk.dev/docs/config/kscan (sideband
+     * section) + app/dts/bindings/kscan/zmk,kscan-sideband-behaviors.yaml
+     * in zmkfirmware/zmk. First-article: press on EACH half must send Mute
+     * (both halves define the push on D16). */
+    enc_push_sideband: sideband_enc_push {
+        compatible = "zmk,kscan-sideband-behaviors";
+        kscan = <&enc_push_kscan>;
+        auto-enable;
+        push_mute: push_0 {
+            row = <0>;
+            column = <0>;
+            bindings = <&kp C_MUTE>;
+        };
+    };
 };

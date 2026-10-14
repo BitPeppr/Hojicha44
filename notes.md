@@ -445,8 +445,8 @@ keymap content.
    cable joins tip-to-tip and ring1-to-ring1. Prose now says exactly that.
 4. **Physical checks — procedure written, execution needs parts.**
    `spec/first-article.md` is the executable gate (1:1 prints at
-   `out/fit/`, calibrated to the 19.05mm pitch; DMM/continuity/caliper
-   steps with expected values; TRRS power-off assembly order). Still
+   `out/fit/`, calibrated to the 19.00mm column pitch; DMM/continuity/caliper
+   steps with expected values; TRRS power-off + USB-unplug assembly order). Still
    genuinely open until run against real hardware.
 5. **Battery — locked to orderable stock.** Primary: kriscables 301230
    110mAh + JST PH 2.0mm (€18.90, SKU `Li-Po Battery 110mah-1` — order 2;
@@ -459,6 +459,25 @@ keymap content.
    Knob: kriscables anodized aluminium EC11 (13×13mm, 6mm bore, €4.90) —
    clears the 16mm cutout, set-screw takes the 20mm shaft; spin/push
    clearance is a first-article item.
+7. **Firmware correctness (encoder steps + push path) — fixed in-tree,
+    first-article tests open.** `zmk/hojicha44.dtsi`: `left_encoder`
+    `steps` 30 → **15** (EC11E15244G1 = 30 detents / 15 pulses; ZMK
+    `steps` counts pulses per revolution per
+    `zmk.dev/docs/hardware-integration/encoders`); `triggers-per-rotation`
+    stays 30 untouched. `enc_sw` rebuilt: the old parent-level `sw-gpios`
+    with `ACTIVE_HIGH` matched neither binding — Zephyr `gpio-keys` takes
+    one child node per button with `gpios`, and the switch closes to GND
+    so it is now `GPIO_ACTIVE_LOW | GPIO_PULL_UP` with
+    `zephyr,code = <INPUT_KEY_MUTE>`. ZMK keymaps consume kscan events,
+    so the push reaches the keymap via a new `zmk,kscan-gpio-direct` node
+    (`input-keys = <&enc_sw_btn>`) plus a `zmk,kscan-sideband-behaviors`
+    node in `zmk/hojicha44.keymap` binding press → `&kp C_MUTE`
+    (assumed, joins the C_VOL_UP/DN cluster; matrix transform, the 24
+    bindings cells, and both overlays untouched). `zmk/gpio-map.md`
+    checked: pin-continuity tables only, no push binding described — no
+    change. `west build` still needs a toolchain. Remaining first-article
+    tests: CW/CCW revolution event counts (feel + counts vs `steps = 15`
+    / `triggers-per-rotation = 30`), and push-to-Mute press on EACH half.
 
 ## Release hardening (2026-10-14)
 
@@ -479,3 +498,34 @@ keymap content.
 - **ZMK `left_encoder` is shared-node naming, not a bug.** Defined once in
   the dtsi, enabled per overlay, consumed by `sensors` — renaming per half
   would break the reference. Comment added at the definition.
+
+## Doc reconciliation vs measured geometry (2026-10-14)
+
+Read-only on generators/boards/schematics; touched only spec/README/notes/fix.
+
+- **Key pitch 19.00mm.** 12 column-adjacent pairs in
+  `Hojicha44-Left.kicad_pcb` measure 19.00mm exactly (SW_L00-L06-L12,
+  L01-L07-L13, L02-L08-L14, L03-L09-L15, L04-L10-L16, L05-L11-L17).
+  `spec/electronics.yaml` pitch + pitch_note and
+  `spec/first-article.md` calibration changed 19.05 → 19.00; the nominal
+  MX 19.05 comment reworded honestly (boards use 19.00 as-measured).
+- **TRRS mouths recessed, 22.40mm.** Footprint
+  `TRRS-PJ-320A.kicad_mod` mouth side is +Y (sleeve text y=11.4, silk top
+  12.6); plastic face at local y=12.1 (rear -2 + 14.1 body). With J_L1 at
+  (122.45,-22) rot 90 and J_R1 at (169.05,-22) rot 270 (CW-positive):
+  plastic mouths L 134.55 / R 156.95 = 22.40mm mouth-to-mouth; edges at
+  y=-22 L 135.54 / R 155.96 = 20.42mm edge-to-edge; each mouth 0.99mm
+  recessed (silk tops 21.40mm, 0.49mm recessed). `spec/layout.yaml`
+  13.50mm-proud claim replaced; `spec/electronics.yaml`, `spec/first-article.md`,
+  and `README.md` now agree on 22.40/20.42/recessed. Safety rule corrected
+  in README + first-article: unplug USB from BOTH halves before any TRRS
+  insert/remove (switch OFF alone insufficient).
+- **Flex cuts deferred-to-rev-2.** Both outlines are a verified single
+  Edge.Cuts loop with no slots; gasket build works without. Spec stanza
+  marked deferred, no geometry change.
+- **Docs-only parts.** `spec/bom.md`: diode example MPN Diodes Inc
+  1N4148W-7-F SOD-123 (DigiKey/Mouser listings + diodes.com page) or
+  equivalent; PG1350 = family, builder picks feel (kit); charge-ON case
+  label; fab-limits pre-order confirm. `spec/first-article.md`: BLE
+  range-with-battery-and-case test; fit sheet reworded to Edge.Cuts + silk
+  + fab + F.Cu pads with plate DXF as the 16mm cutout source.

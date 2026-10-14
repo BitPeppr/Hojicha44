@@ -2,9 +2,12 @@
 
 Do these in order, both halves where marked ×2. Nothing here can be proven
 in software — this is the release gate for the physical items. Prints:
-`out/fit/Hojicha44-{Left,Right}-fit.pdf` (Edge.Cuts + silk + fab, 1:1 —
-print at 100% / actual size, then calibrate: adjacent key centres must
-measure **19.05mm**; if not, the print scaled and nothing below counts).
+`out/fit/Hojicha44-{Left,Right}-fit.pdf` (Edge.Cuts + silk + fab + F.Cu
+pads, 1:1 — print at 100% / actual size, then calibrate: column-adjacent
+key centres must measure **19.00mm**; if not, the print scaled and nothing
+below counts). The fit sheet shows the PCB only; the 16mm encoder
+knock-through lives in the plate DXF (`layout/generated/v2/outlines/plate.dxf`),
+which is the cutout source — not the PCB print.
 
 ## 1. Paper fit test (before ordering anything)
 
@@ -15,6 +18,13 @@ measure **19.05mm**; if not, the print scaled and nothing below counts).
 - [ ] Encoder shaft hole over the anchor; 13mm knob clears the 16mm plate
   cutout on paper (spin circle).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
+- [ ] TRRS gap on print/caliper: board-edge to board-edge **20.42mm** at
+  the jack height; plastic mouth-to-mouth **22.40mm** with each mouth
+  **0.99mm recessed** behind its edge (silk tops at 21.40mm, 0.49mm
+  recessed — NOT protruding). 90-degree plugs fit easily in this gap.
+- [ ] Fab limits confirmed with the chosen fab BEFORE ordering: 2-layer
+  1.6mm, 0.25mm track / 0.2mm clearance / 0.8-0.4mm via accepted; rev-2
+  flex slots (typically >=1mm) quoted separately.
 
 ## 2. Bare-board DMM (before soldering modules)
 
@@ -28,8 +38,11 @@ measure **19.05mm**; if not, the print scaled and nothing below counts).
 ## 3. Assembly order (both halves)
 
 - [ ] Diodes → sockets → TRRS → JST → switch → encoder. Modules last.
-- [ ] TRRS cable mated with **both halves OFF**, then switch on
-  (sleeve-GND mates at an angle; live mating glitches TX/RX).
+- [ ] TRRS cable mated with **both halves OFF *and* USB unplugged from
+  both** (switch OFF alone is insufficient — USB still powers the
+  controller), then switch on. Sleeve-GND mates at an angle; live mating
+  glitches TX/RX and can brown-out the charger MOSFETs. Reverse on
+  teardown: switches OFF, cable out, then USB.
 - [ ] Antenna end: 5mm copper-free respected, no case material within 3mm.
 
 ## 4. Power-on
@@ -43,5 +56,9 @@ measure **19.05mm**; if not, the print scaled and nothing below counts).
   the plate through full rotation.
 - [ ] Stack height: 4.5–5.0mm rows swallow the 3mm cell + PCM with
   clearance; JST sits beside the cell, not under the stack.
+- [ ] BLE range with battery and case: with cells fitted and halves in
+  the gasket case, each half links and types at the intended desk distance
+  (no dropouts); note the measured range. If range disappoints, try the
+  301228 fallback before re-spinning.
 
 Pass all → Gerbers. Fail anything → file an issue with the measured value.

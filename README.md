@@ -70,7 +70,9 @@ it is not on `PATH` by default. The generator finds it automatically.
 ## Build notes (things that will bite you at assembly)
 
 **TRRS cable — buy a 90° right-angle one.** The two jack mouths face each other across
-~22mm of mouth-to-mouth clearance. A molded *straight* plug protrudes ~12mm
+22.40mm of mouth-to-mouth clearance (plastic faces; 20.42mm board-edge to
+board-edge, each mouth 0.99mm recessed behind its edge — silk tops at
+21.40mm, still recessed). A molded *straight* plug protrudes ~12mm
 past the jack face, so the pair needs ~24mm and **is a tight fit at best**. A
 90° plug protrudes only ~2–4mm axially because the boot exits perpendicular, so
 the current gap is ample. 90° is the community standard for splits anyway (less
@@ -78,8 +80,9 @@ port torque). Size the cable port-to-port **+2–5cm minimum** — both cables e
 upward and arch over the gap.
 
 **Always power-cycle in this order:** plug/unplug the TRRS with **both halves
-switched OFF**, then switch on. Sleeve-GND mates at an angle during insertion, so
-connecting live can glitch TX/RX.
+switched OFF *and* USB unplugged from both**, then switch on. Switch OFF alone
+is insufficient — USB still powers the controller. Sleeve-GND mates at an angle
+during insertion, so connecting live can glitch TX/RX.
 
 **Don't treat TRRS as a daily link.** splitkb's own nice!nano FAQ is blunt:
 *"Do not use a cable between the halves… shorting connections when unplugging

@@ -668,3 +668,23 @@ The table in §1 is stale as written; per-ID current state (evidence: fresh
 Still genuinely open (need parts/toolchain): first-article procedure
 (`spec/first-article.md` + 1:1 prints in `out/fit/`), `west build`,
 keymap content.
+
+### §9 addendum (2026-10-14 — doc reconciliation vs measured geometry, no geometry touched)
+
+- **Pitch 19.00mm.** 12 column-adjacent pairs in Left board at 19.00mm
+  exactly. Docs changed 19.05 → 19.00 (`spec/electronics.yaml` pitch +
+  pitch_note, `spec/first-article.md` calibration, `notes.md` review item);
+  MX-nominal comment reworded honestly.
+- **TRRS 22.40mm recessed.** J_L1 (122.45,-22) rot 90 / J_R1 (169.05,-22)
+  rot 270 (CW-positive); plastic faces L 134.55 / R 156.95 = 22.40mm
+  mouth-to-mouth; edges L 135.54 / R 155.96 = 20.42mm; 0.99mm recessed each
+  (silk 21.40mm / 0.49mm recessed). `spec/layout.yaml` 13.50mm-proud
+  replaced; electronics/first-article/README now agree. Safety rule added:
+  unplug USB from BOTH halves before TRRS insert/remove.
+- **Flex cuts deferred-to-rev-2.** Single-loop outline verified, no slots;
+  gasket works without. Spec only.
+- **Docs-only.** `spec/bom.md`: Diodes Inc 1N4148W-7-F example (DigiKey +
+  Mouser + diodes.com) or equivalent; PG1350 family/kit-feel note;
+  charge-ON case label; fab-limits confirm. `spec/first-article.md`: BLE
+  range-with-battery-and-case test; fit sheet = Edge.Cuts + silk + fab +
+  F.Cu pads, plate DXF is the 16mm cutout source.

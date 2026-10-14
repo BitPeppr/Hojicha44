@@ -17,13 +17,13 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 
 | Qty | Part | Notes |
 |---|---|---|
-| 22 | 1N4148W, SOD-123 | matrix diodes, front side |
+| 22 | 1N4148W, SOD-123 (example MPN: Diodes Incorporated 1N4148W-7-F, SOD-123 — listed at DigiKey `1N4148W-7-F` and Mouser `1N4148W-7-F`, manufacturer page `diodes.com/part/view/1N4148W`; or equivalent) | matrix diodes, front side |
 
 ## Hand assembly (through-hole / modules / mechanical)
 
 | Qty | Part | Notes |
 |---|---|---|
-| 22 | Kailh PG1350 (Choc v1) switches | top side, seat into sockets |
+| 22 | Kailh PG1350 (Choc v1) switches | top side, seat into sockets — PG1350 names the family/series; builder chooses the exact feel/variant as a kit part (e.g. linear/tactile/clicky) — any PG1350 Choc v1 fits |
 | 22 | Kailh Choc v1 hotswap sockets | SMD bottom (pads part of footprint) |
 | 1 | nice!nano v2 module | socketed, USB end to board notch |
 | 2 | machine-pin SIP strips 2×12, 2.54mm pitch, 4.5–5.0mm stack | socket rows 15.24mm apart; Mill-Max 315 2.11mm banned (needs 3.5mm min for the cell) |
@@ -52,6 +52,16 @@ other part is identified by exact `MPN` text — no guessed vendor links.
   first plug-in (reverse polarity kills board and cell).
 - First-article DMM checks (both halves): RAW↔B+ short, GND↔B− short,
   RAW↔VCC open; charge-ON orange LED.
+- Charge-ON labeling: mark the case at each half "charge only when ON"
+  (switch upstream of RAW — OFF does nothing); first-article verifies the
+  orange LED lights with switch ON and stays dark with OFF.
+
+## Fab limits — confirm with the chosen fab BEFORE ordering
+
+- Confirm minima/cost for this 2-layer 1.6mm stackup: 0.25mm track /
+  0.2mm clearance / 0.8-0.4mm via, plus routed-slot rules for rev-2 flex
+  cuts (typically >=1mm). Do not order until the fab accepts the
+  Gerber/drill pack against these limits.
 
 ## Not parts (fab features)
 

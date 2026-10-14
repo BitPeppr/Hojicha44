@@ -67,7 +67,9 @@ matrix_per_half:
   rows: 4                          # R0-R2 fingers, R3 thumbs
   cols: 6                          # C0-C5 finger columns; thumbs on C0-C3
   used: 22                         # 18 + 4 thumbs; R3C4-C5 NC (spare)
-  pitch: 19.05                     # true MX pitch, matches layout units
+  pitch: 19.00                     # measured column pitch in placed boards
+    # (12 column-adjacent pairs at 19.00mm exactly); nominal MX is 19.05
+    # but the layout/boards use 19.00 — documented as-measured, not as-nominal
   diode_direction: COL2ROW         # status: fixed
   diode_part: 1N4148W SOD-123      # status: fixed
   diode_symbol: Diode:1N4001 with Value 1N4148W
@@ -79,7 +81,7 @@ switch:
   socket: Choc v1 hotswap socket, SMD bottom (part of footprint)  # status: fixed
   symbol: Switch:SW_Push  # 2-pin passive is electrically correct for Choc
   footprint: Hojicha44:SW_Hotswap_Kailh_Choc_V1_1.00u  # vendored, see sources
-  pitch_note: 19.05mm retained (not Choc-native 18x17); small cap gaps accepted
+  pitch_note: 19.00mm as-measured (not Choc-native 18x17, not nominal MX 19.05); small cap gaps accepted
   keycaps: Choc v1 only (MBK/MCC/CFX); MX stems do not fit  # status: fixed
 
 encoder_per_half:
@@ -117,10 +119,14 @@ split_connector:
       # only TX/RX/GND. 4-pole jack kept for cable compatibility.
     sleeve: GND
   plug_type: 90-degree right-angle TRRS cable REQUIRED  # status: fixed
-    # Clearance, measured from placed boards: mouths sit ~22.4mm apart face
-    # to face (20.42mm board-edge to board-edge; each mouth ~1mm inside its
-    # edge — the 12.1mm footprint body is shorter than the 17mm _trrs zone
-    # first assumed, so centring the body put the mouths further back).
+    # Clearance, measured from placed boards (KiCad CW-positive rot;
+    # J_L1 at (122.45,-22) rot 90, J_R1 at (169.05,-22) rot 270):
+    # plastic mouth faces (local y=12.1 = rear -2 + 14.1 body) at L 134.55 /
+    # R 156.95 = 22.40mm mouth-to-mouth; board edges at y=-22 are L 135.54 /
+    # R 155.96 = 20.42mm edge-to-edge; each plastic mouth sits 0.99mm
+    # RECESSED behind (inboard of) its edge — NOT protruding. Silk top
+    # (local y=12.6) sits 0.5mm proud of the plastic: 21.40mm silk-to-silk,
+    # still 0.49mm recessed. Supersedes the stale 13.50mm-proud claim.
     #   required mouth-to-mouth = (plug_length - insertion_depth) x 2
     # PJ-320A body is 14.1 x 5 x 6mm, terminals on 3.0/4.0mm pitch, so the
     # barrel cavity is ~10mm deep (NOT the 6mm first assumed).
@@ -131,11 +137,13 @@ split_connector:
     # the community standard for splits anyway (it also cuts port torque), so
     # this costs nothing. Both cables exit upward and arch over the gap —
     # size the cable port-to-port + 2-5cm minimum, never shorter.
-  hotplug: plug TRRS before switching either half ON
+  hotplug: plug TRRS before switching either half ON, with USB unplugged from both
       # status: fixed
     # Sleeve-GND mates at an angle on insertion; powering both halves first
-    # can glitch TX/RX and brown-out the charger MOSFETs. Order: cable, then
-    # power switches ON; reverse on teardown.
+    # can glitch TX/RX and brown-out the charger MOSFETs. Switch OFF alone
+    # is INSUFFICIENT — USB still powers the controller — so unplug USB
+    # from BOTH halves before any TRRS insert/remove. Order: USB out, both
+    # switches OFF, cable, then power switches ON; reverse on teardown.
     # CAVEAT — splitkb's own nice!nano FAQ says do NOT cable two nice!nanos:
     # "Do not use a cable between the halves. This poses multiple risks, from
     # shorting connections when unplugging while the battery is still on, to
@@ -270,10 +278,11 @@ pcb:
 
 mechanical:
   mounting: gasket, no PCB holes  # status: fixed — case clamps PCB edge
-  flex_cuts: per-key routed slots, added at PCB layout
-      # status: planned
-    # FAB GATE: confirm min slot width / cost with the fab (typically >=1mm
-    # routed) before drawing them; slots too tight = fab rejection.
+  flex_cuts: per-key routed slots — DEFERRED to rev 2 (not in this outline)
+      # status: deferred-to-rev-2 — verified single Edge.Cuts loop per half
+    # with no slots; no geometry change. Gasket build works without flex
+    # cuts. FAB GATE (rev 2): confirm min slot width / cost with the fab
+    # (typically >=1mm routed) before drawing them.
   antenna_keepout: >-
     no case material within 3mm; antenna end points at an open board edge
     # PCB-phase rule: module USB end = north board edge (USB notch + plug

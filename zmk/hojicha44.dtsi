@@ -13,6 +13,7 @@
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 
 / {
     chosen {
@@ -53,10 +54,39 @@
         >;
     };
 
-    enc_sw: button_enc_sw {
+    enc_sw: buttons_enc_sw {
         compatible = "gpio-keys";
-        /* EC11 push is a dedicated GPIO (D16 = P0.10), not matrixed. */
-        sw-gpios = <&gpio0 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        /* EC11 push is a dedicated GPIO (D16 = P0.10), not matrixed.
+         * Shape per the Zephyr gpio-keys binding: one child node per
+         * button carrying `gpios` (+ optional `label`/`zephyr,code`) —
+         * a parent-level `sw-gpios` property does not exist.
+         * S1 closes to GND, so ACTIVE_LOW with pull-up.
+         * ZMK-docs discrepancy note: ZMK keymaps consume *kscan* events,
+         * not Zephyr input events (zmk.dev/docs/features/encoders says a
+         * push is "typically" part of the keyboard matrix). This node only
+         * corrects the pin description; the keymap path is the direct
+         * kscan below, consumed by the sideband in hojicha44.keymap.
+         * Binding source: docs.zephyrproject.org/latest/build/dts/api/
+         * bindings/input/gpio-keys.html */
+        enc_sw_btn: button_enc_sw {
+            label = "ENC push";
+            gpios = <&gpio0 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_KEY_MUTE>;
+        };
+    };
+
+    enc_push_kscan: kscan_enc_push {
+        /* ZMK-supported keymap path for the dedicated-GPIO push: direct
+         * kscan over the gpio-key above (`input-keys` takes gpio-key
+         * phandles; the single key emits row 0 / column 0 events).
+         * Consumed by the sideband in hojicha44.keymap; the chosen kscan
+         * stays kscan0, so the 24-cell matrix path is untouched.
+         * Binding source: zmk.dev/docs/config/kscan (Direct GPIO driver)
+         * + app/module/drivers/kscan/kscan_gpio_direct.c in zmkfirmware/zmk
+         * (`input-keys`, events at row 0 / column index). */
+        compatible = "zmk,kscan-gpio-direct";
+        wakeup-source;
+        input-keys = <&enc_sw_btn>;
     };
 
     left_encoder: encoder_left {
@@ -66,7 +96,10 @@
         compatible = "alps,ec11";
         a-gpios = <&gpio1 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A0 */
         b-gpios = <&gpio0  2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A1 */
-        steps = <30>;             /* 30 detents — confirm feel on first article */
+        steps = <15>;             /* EC11E15244G1: 30 detents but 15 PULSES/rev;
+                                   ZMK `steps` counts pulses per revolution —
+                                   confirm CW/CCW event counts over one full
+                                   revolution on first article */
         status = "disabled";      /* enabled per half-overlay */
     };
 
