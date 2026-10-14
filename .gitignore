@@ -15,6 +15,8 @@ layout/generated/
 
 # versioned release evidence stays tracked (roadmap Phase 7/12)
 !generated/release/**
+!pcb/- FINAL/**
+pcb/- FINAL/.DS_Store
 
 # regenerable render exports (kicad-cli sch export ...)
 pcb/kicad/export/
