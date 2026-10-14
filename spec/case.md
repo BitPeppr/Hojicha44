@@ -1,6 +1,6 @@
 # Hojicha44 — case interface (plate + gasket contract, rev-1)
 
-Source of truth for plate geometry: `layout/generators/gen_plate.py`
+Source of truth for plate geometry: `plate/gen_plate.py`
 (derives from the placed PCB; never hand-edit CAD).
 Preview: `out/plate/Hojicha44-{Left,Right}-plate.svg`
 Laser file: `out/plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm)

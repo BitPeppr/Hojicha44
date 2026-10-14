@@ -643,7 +643,7 @@ iso explained by previously missing links, not missing copper.
 
 ## Plate + gaskets rev-1 (2026-10-14)
 
-`layout/generators/gen_plate.py` derives the plate from placed PCB data:
+`plate/gen_plate.py` derives the plate from placed PCB data:
 outline = Edge.Cuts loop, 22x 15x15 cutouts, 12.5sq encoder hole (a 17mm
 round would merge into the neighbour key cutout at 18.2mm pitch; knob
 rides high), W1 (switch+MCU+JST) + W2 (TRRS+channel) windows, 7x5 Poron

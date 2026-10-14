@@ -23,8 +23,8 @@ Stack contract (spec/case.md): 1.5mm PC plate, 2.0mm PCB-to-plate gap
 (top-side diodes are 1.35mm, module underside 4.5mm).
 
 Usage:
-  python3 layout/generators/gen_plate.py          # writes out/plate/
-  python3 layout/generators/gen_plate.py --check  # verify only
+  python3 plate/gen_plate.py          # writes out/plate/
+  python3 plate/gen_plate.py --check  # verify only
 
 Outputs (gitignored scratch, like out/fit):
   out/plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
@@ -40,7 +40,7 @@ import os
 import re
 import sys
 
-REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 OUT_DIR = os.path.join(REPO, "out", "plate")
 STOCK_FP = ("/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints")
