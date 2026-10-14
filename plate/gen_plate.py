@@ -659,11 +659,23 @@ def svg_write(path, res):
                  f'stroke-dasharray="5,3"/>')
     o.append(f'<polygon points="{" ".join(P(p) for p in enc_poly)}" '
              f'fill="#000" stroke="#ff9800" stroke-width="1.5"/>')
+    counters = {}
     for side, _, rect in res['lands']:
+        counters[side] = counters.get(side, 0) + 1
         col = '#f0f' if side == 'top' else '#0ff'
         o.append(f'<polygon points="{" ".join(P(p) for p in rect)}" '
                  f'fill="rgba(255,255,255,0.05)" stroke="{col}" '
                  f'stroke-width="1" stroke-dasharray="3,2"/>')
+        cx = sum(p[0] for p in rect) / 4
+        cy = sum(p[1] for p in rect) / 4
+        tag_ = ('T' if side == 'top' else 'B') + str(counters[side])
+        o.append(f'<text x="{r2((cx - x0) * S)}" y="{r2((y1 - cy) * S)}" '
+                 f'fill="{col}" font-size="8" font-weight="bold" '
+                 f'text-anchor="middle">{tag_}</text>')
+    o.append(f'<text x="8" y="14" fill="#f0f" font-size="10">'
+             f'T = top gasket (plate above)</text>')
+    o.append(f'<text x="8" y="26" fill="#0ff" font-size="10">'
+             f'B = bottom gasket (PCB below)</text>')
     for tx, ty in res['tool']:
         o.append(f'<circle cx="{r2((tx - x0) * S)}" cy="{r2((y1 - ty) * S)}" '
                  f'r="{r2(1.6 * S)}" fill="none" stroke="#03a9f4" '
