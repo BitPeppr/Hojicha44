@@ -71,4 +71,16 @@ generator. Gasket mounting uses no PCB holes.
 ## Fab note
 
 Each half is ~150×115mm — over the 100×100mm value tier at JLCPCB/PCBWay,
-so price both tiers (and panel-by-2 quotes) before ordering.
+so price both tiers (and panel-by-2 quotes) before ordering. Design-vs-fab
+limits, checked 2026-10-14 against JLCPCB's published 1–2 layer
+capabilities (PCBWay comparable — recheck its page if you use them):
+0.25mm tracks (min 0.10), 0.2mm clearance (min 0.10), 0.3/0.6mm signal
+vias + 0.5/1.0mm power vias (min drill 0.15, annular ≥0.15; ours 0.15/0.25),
+150×115mm halves (2-layer max 670×600), 1.6mm/0.3 drill = 5.3:1 aspect
+(max 8:1). Order **tab-routed, not V-scored**: V-cut wants 0.3mm
+copper-to-edge and our measured minimum is 0.29.
+
+Stack budget (cell under module, per half): 4.5mm sockets − 3.0 cell −
+~0.5 PCM − ~0.2 tape ≈ 0.8mm spare (1.3 with 5.0mm rows). Mill-Max 2.11mm
+goes negative — banned, as specified. Confirm PCM/tape thickness and wire
+dressing on the first cell; JST lives beside the cell, never under it.

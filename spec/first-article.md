@@ -36,8 +36,9 @@ which is the cutout source — not the PCB print.
   reverse polarity kills board and cell.
 - [ ] ×2Pack+ to RAW with switch ON (<1Ω); switch OFF open. Record which
   slider end is ON (either is fine, just label it).
-- [ ] On a real nice!nano (not yet soldered): RAW↔B+ short, GND↔B− short,
-  RAW↔VCC open (OL). Power must enter via RAW; B+/B− holes stay open.
+- [ ] On a real nice!nano (not yet soldered), meter on continuity beep:
+  RAW↔B+ short (<1Ω), GND↔B− short (<1Ω), RAW↔VCC open (OL, no beep).
+  Power must enter via RAW; B+/B− holes stay open.
 
 ## 3. Assembly order (both halves)
 
