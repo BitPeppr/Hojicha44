@@ -1172,4 +1172,9 @@
 		(uuid "e8699d0c-211e-4d38-b4f4-f41a81ba04d1")
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/Hojicha44.3dshapes/SW_Hotswap_Kailh_Choc_V1.wrl"
+		(at (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz 0 0 0))
+	)
 )

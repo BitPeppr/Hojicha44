@@ -627,3 +627,16 @@ Both UF2s downloaded from the green CI run into `out/firmware/`
 size split consistent with roles; UF2 magic verified). First flash with
 `--erase` (UICR NFC), then BLE-pair halves before expecting keys.
 Keymap remains DRAFT content on a compiling base.
+
+## 3D models linked (2026-10-14)
+
+Footprint audit vs independents, all correct: Choc socket pads byte-identical
+to kiswitch `SW_Hotswap_Kailh_Choc_V1`; TRRS pads identical to Keebio
+`TRRS-PJ-320A` (ours renames 1-4 to S/T/R1/R2, documented waiver);
+MCU = standard Pro Micro geometry + canonical Arduino->nRF map
+(D1=P0.06 … A3=P0.31, RAW=24); SOD-123/JST/switch/encoder are stock.
+Vendored into `pcb/kicad/Hojicha44.3dshapes/` (kiswitch WRL MIT+CC-BY-SA,
+Keebio STEP MIT, hand-drawn nano envelope WRL) and linked from the three
+local `.pretty` footprints, so regen carries them. nice!nano has no public
+STEP — envelope box only. Renders now show sockets/TRRS/nano; bare-bottom
+iso explained by previously missing links, not missing copper.

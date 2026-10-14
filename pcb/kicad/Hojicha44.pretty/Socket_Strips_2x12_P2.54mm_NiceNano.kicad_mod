@@ -338,4 +338,9 @@
 		(uuid "bace34ed-1d15-4b1a-9e53-c20af7c24dcd")
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/Hojicha44.3dshapes/nice-nano-envelope.wrl"
+		(at (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz 0 0 0))
+	)
 )

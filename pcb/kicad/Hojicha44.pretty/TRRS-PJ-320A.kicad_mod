@@ -210,4 +210,9 @@
 		(uuid "df38b87d-8f7f-4d21-b157-bc53e95f446f")
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/Hojicha44.3dshapes/PJ-320A.step"
+		(at (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz -90 0 180))
+	)
 )
