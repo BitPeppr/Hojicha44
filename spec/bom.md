@@ -30,6 +30,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 1 | Alps EC11E15244G1 | vertical, 30 detents / 15 pulses, knob ~10mm proud (trim shaft fallback) |
 | 1 | Knob, 6mm bore, ≤13mm dia (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | clears the 16mm plate cutout; set-screw clamps anywhere on the 20mm shaft — first-article: spin + push clearance vs plate |
 | 1 | XKB PJ-320A TRRS 3.5mm | bring-up/debug link only; 90° cable required |
+| 1 | TRRS cable, 4-pole CTIA, right-angle 3.5mm both ends, short | mouths face each other across a 22.40mm gap — straight plugs collide head-on; measure the boot, must clear the recessed mouths (0.99mm). No vendor link guessed; any CTIA right-angle cable meeting the fit check in §1 does |
+| 1 | Kapton (polyimide) tape, ≥10mm wide | cell sandwich: pouch face + nano underside before the cell goes in |
 | 1 | JST S2B-PH-K-S + PHR-2 housing + 2× SPH-002T-P0.5S crimps | battery connector set, side-entry |
 | 1 | Würth WS-SLTV 450301014042 | slide SPDT, pad 1 (middle) = common, 300mA switching (fine at 100mA default; leave charge-boost open) |
 | 1 | 301230 LiPo cell (see below) | with protection PCM + JST-PH 2.0mm pigtail |
@@ -78,7 +80,10 @@ capabilities (PCBWay comparable — recheck its page if you use them):
 vias + 0.5/1.0mm power vias (min drill 0.15, annular ≥0.15; ours 0.15/0.25),
 150×115mm halves (2-layer max 670×600), 1.6mm/0.3 drill = 5.3:1 aspect
 (max 8:1). Order **tab-routed, not V-scored**: V-cut wants 0.3mm
-copper-to-edge and our measured minimum is 0.29.
+copper-to-edge and our measured minimum is 0.29. The outline is concave,
+so put this in the fab order comment verbatim: `CONCAVE OUTLINE —
+TAB-ROUTE ONLY, NO V-CUT / V-SCORE` — otherwise the outline is rejected
+or broken at depaneling.
 
 Stack budget (cell under module, per half): 4.5mm sockets − 3.0 cell −
 ~0.5 PCM − ~0.2 tape ≈ 0.8mm spare (1.3 with 5.0mm rows). Mill-Max 2.11mm
