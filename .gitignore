@@ -13,6 +13,9 @@ layout/generated/
 *-erc.rpt
 *-drc.rpt
 
+# versioned release evidence stays tracked (roadmap Phase 7/12)
+!generated/release/**
+
 # regenerable render exports (kicad-cli sch export ...)
 pcb/kicad/export/
 

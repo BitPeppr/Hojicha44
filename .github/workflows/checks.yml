@@ -1,0 +1,19 @@
+name: Static repo checks
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  static_checks:
+    name: Spec/gate static checks (no KiCad)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm test

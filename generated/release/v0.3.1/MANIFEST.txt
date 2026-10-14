@@ -1,0 +1,43 @@
+Hojicha44 release manifest
+spec version: 0.3.1
+git commit: e1371e61c414c30abfa0ada18a34c28924f7aa20
+git tag: pcb-baseline-r10-15-ge1371e6-dirty
+router: gen_route.py r13
+kicad-cli: 10.0.6
+ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)
+DRC: 0 non-waived (exact W1 set of 28/half asserted); unconnected NOT waived; PTH/NPTH-in-courtyard = error
+
+[Left] 16 files
+  130bfdd2f410  Hojicha44-Left-B_Cu.gbl
+  4ab989d60946  Hojicha44-Left-B_Mask.gbs
+  912bba02b53e  Hojicha44-Left-B_Paste.gbp
+  70092b4f2e19  Hojicha44-Left-B_Silkscreen.gbo
+  0eff4ac60bf0  Hojicha44-Left-Edge_Cuts.gm1
+  08bc812953b5  Hojicha44-Left-F_Cu.gtl
+  660e92f19c02  Hojicha44-Left-F_Mask.gts
+  afa7df2b9e6c  Hojicha44-Left-F_Paste.gtp
+  60d22b3672a3  Hojicha44-Left-F_Silkscreen.gto
+  82a832394f66  Hojicha44-Left-drc.rpt
+  2117c1591727  Hojicha44-Left-erc.rpt
+  a7f6132c412a  Hojicha44-Left-job.gbrjob
+  4c2e53c8ec0a  Hojicha44-Left.drl
+  9688cbb777f0  bom.csv
+  bd807069be10  pos-smt.csv
+  d8114ff6f2db  pos.csv
+[Right] 16 files
+  2dccdd4e74ec  Hojicha44-Right-B_Cu.gbl
+  3dae3bd78a94  Hojicha44-Right-B_Mask.gbs
+  3db8d3f3ead2  Hojicha44-Right-B_Paste.gbp
+  e1bc43d7cb46  Hojicha44-Right-B_Silkscreen.gbo
+  e05d04487d34  Hojicha44-Right-Edge_Cuts.gm1
+  15c77b27e274  Hojicha44-Right-F_Cu.gtl
+  86aabeaf070f  Hojicha44-Right-F_Mask.gts
+  75e1ec464cb7  Hojicha44-Right-F_Paste.gtp
+  824f6c544fbf  Hojicha44-Right-F_Silkscreen.gto
+  5bf5b668ef09  Hojicha44-Right-drc.rpt
+  593778a6c085  Hojicha44-Right-erc.rpt
+  02efa32d7de2  Hojicha44-Right-job.gbrjob
+  66db049aa03d  Hojicha44-Right.drl
+  f34d2926ee1c  bom.csv
+  64ec3dfb72a5  pos-smt.csv
+  58dd745c8ead  pos.csv

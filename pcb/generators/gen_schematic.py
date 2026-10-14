@@ -83,7 +83,6 @@ NEED = [
     ("Switch.kicad_sym", "SW_Push", ["1", "2"]),
     ("Switch.kicad_sym", "SW_SPDT", ["1", "2", "3"]),
     ("Diode.kicad_sym", "1N4001", ["1", "2"]),
-    ("Diode.kicad_sym", "1N4001", ["1", "2"]),
     ("Device.kicad_sym", "RotaryEncoder_Switch", ["A", "B", "C", "S1", "S2"]),
     ("Connector_Audio.kicad_sym", "AudioJack4", ["T", "R1", "R2", "S"]),
     ("Connector.kicad_sym", "Conn_01x02_Socket", ["1", "2"]),
@@ -1002,6 +1001,13 @@ def build_project_file(tag):
     pro["board"]["design_settings"]["track_widths"] = [0.25, 0.2]
     pro["board"]["design_settings"]["via_dimensions"] = [
         {"diameter": 0.8, "drill": 0.4}, {"diameter": 0.6, "drill": 0.3}]
+    # DRC severities enforced by the generator (not left to GUI state):
+    # PTH/NPTH inside courtyard = error so the tooling-hole gate stays armed
+    # (pick_tooling() in gen_pcb.py is courtyard-aware). missing_courtyard
+    # stays ignore: the vendored TRRS-PJ-320A has no courtyard by design.
+    rs = pro["board"]["design_settings"].setdefault("rule_severities", {})
+    rs["npth_inside_courtyard"] = "error"
+    rs["pth_inside_courtyard"] = "error"
     # Netclasses. The battery rail (JST -> slide switch -> nice!nano RAW) is
     # the only high-current net on the board — a 130mAh cell peaks well under
     # 30mA, but the wire is still the one that must not be necked down by a

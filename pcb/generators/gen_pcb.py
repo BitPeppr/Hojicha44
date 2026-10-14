@@ -1028,24 +1028,42 @@ def drc(tag):
         capture_output=True, text=True)
     tail = (r.stdout + r.stderr).strip().splitlines()
     print(f"  {tail[-1] if tail else 'drc done'}")
-    return check_drc_report(out)
+    return check_drc_report(out, tag)
 
 
-def check_drc_report(path):
+def check_drc_report(path, tag=None):
     """0 if clean (modulo waivers), 1 otherwise. Prints non-waived items."""
     import collections
+    if tag is None:
+        tag = "R" if "-Right-" in path or "Right" in path else "L"
+    # Waiver W1: exact expected lib_footprint_mismatch set per half.
+    # 28 = 22x D_SOD-123 (stripped silk + cathode tick) + 4x thumb Choc
+    # (rotated) + MCU socket (reversed column) + TRRS (renamed pads).
+    # A 29th mismatch (or a missing one) fails the build instead of passing
+    # silently under the old blanket skip.
+    w1_want = (
+        {("D_SOD-123", f"D_{tag}{i:02d}") for i in range(22)}
+        | {("SW_Hotswap_Kailh_Choc_V1_1.00u", f"SW_{tag}{i:02d}")
+           for i in (18, 19, 20, 21)}
+        | {("Socket_Strips_2x12_P2.54mm_NiceNano", f"U_{tag}1"),
+           ("TRRS-PJ-320A", f"J_{tag}1")}
+    )
     s = open(path).read()
     pats = re.findall(r"\[(.*?)\]: (.*?)\n((?:    .*\n)+)", s)
     counts = collections.Counter()
     bad = []
+    w1_got = set()
     for typ, desc, body in pats:
         counts[typ] += 1
         # unconnected_items: NOT waived — routing landed (r10), DRC is the
         # backstop and must stay armed. Any unconnected item fails the build.
         if typ == "lib_footprint_mismatch":
-            continue  # waiver W1: KiCad-version quirk — rotation alone
-            # triggers it (proven: identical footprint at rot 0 clean, at
-            # rot 90/180 flagged; stock template board flags it too).
+            txt = f"{desc}\n{body}"
+            for m in re.finditer(
+                    r"Footprint '([^']+)' does not match.*?Footprint (\S+)",
+                    txt, re.S):
+                w1_got.add((m.group(1), m.group(2)))
+            continue  # set asserted after the loop, not blanket-skipped
         if typ == "silk_over_copper":
             refs = set(re.findall(r"of (SW_[LR]\d+|SW_[LR]PWR1) on [BM]\.Cu", body))
             segs = set(re.findall(r"Segment of (SW_[LR]\d+|SW_[LR]PWR1) on [BM]\.Silk(?:screen|S)", body))
@@ -1060,6 +1078,14 @@ def check_drc_report(path):
                             for p in pads) and pads):
                 continue
         bad.append((typ, desc, body))
+    if w1_got != w1_want:
+        print(f"  drc W1 mismatch {tag}: want {len(w1_want)}, got {len(w1_got)}")
+        for m in sorted(w1_want - w1_got)[:10]:
+            print(f"  !! W1 missing {m}")
+        for m in sorted(w1_got - w1_want)[:10]:
+            print(f"  !! W1 extra {m}")
+        bad.append(("lib_footprint_mismatch", "W1 set drift",
+                    f"want {sorted(w1_want)}\ngot {sorted(w1_got)}\n"))
     print(f"  drc: {dict(counts)}" +
           ("" if not bad else f" — {len(bad)} NON-WAIVED"))
     for typ, desc, body in bad[:10]:

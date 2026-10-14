@@ -246,7 +246,10 @@ schematic:
     self-documenting. GND is per-sheet; the halves share ground over the
     cable sleeve only.
   erc: >-
-    nets: RST, VCC3V3, A3, A2, D10)
+    0 errors; warnings limited to the 5 documented single-pin spares (RST,
+    VCC3V3, A3, A2, D10 per half, as isolated_pin_label). Spares stay labeled
+    (future use + UICR) — no_connect markers deliberately not applied.
+    Enforced by check_erc_report() via SPARE_LABELS in gen_schematic.py.
   audit: generator union-find checks 22 named nets / 82 named pins per sheet
     (+23 anon switch-diode / battery series segments + 2 NCs per sheet)
   guards: per sheet — 22x D_SOD-123 (stock DO-41 must never leak), exactly
