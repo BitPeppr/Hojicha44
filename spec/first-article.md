@@ -17,8 +17,10 @@ which is the cutout source — not the PCB print.
 - [ ] USB notch measures **11mm wide**; dry-fit the actual USB cable — with
   4.5mm sockets the plug sits above the PCB so 11mm is normally enough. If
   the housing hits the shoulders beside the notch, widen it to ~14mm.
-- [ ] Encoder shaft hole over the anchor; 13mm knob clears the 16mm plate
-  cutout on paper (spin circle).
+- [ ] Encoder shaft hole over the anchor; 12.5mm square plate hole clears
+  the EC11E body (11mm class) at 0.4/side — the 13mm knob RIDES HIGH on
+  the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft
+  engagement + spin clearance above the plate, not through it).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
 - [ ] TRRS gap on print/caliper: board-edge to board-edge **20.42mm** at
   the jack height; plastic mouth-to-mouth **22.40mm** with each mouth
@@ -66,6 +68,11 @@ which is the cutout source — not the PCB print.
 - [ ] Plate clearance: top-side diodes stand ~1.35mm in the inter-key gaps.
   Any plate above the PCB needs relief pockets over the diodes or ≥1.5mm
   standoffs — a flat plate will rest on diodes. Validate on the build.
+- [ ] Plate fit (rev-1 plate in `out/plate/`): 1:1 print over the real PCB —
+  every 15×15 cutout frames its switch footprint, the 12.5² hole frames
+  the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
+  outline matches edge-for-edge including the USB notch. Seat one real
+  Choc switch per region (corner/edge/thumb): clips engage, no rock.
 
 ## 4. Power-on
 

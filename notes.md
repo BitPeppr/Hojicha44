@@ -640,3 +640,15 @@ Keebio STEP MIT, hand-drawn nano envelope WRL) and linked from the three
 local `.pretty` footprints, so regen carries them. nice!nano has no public
 STEP — envelope box only. Renders now show sockets/TRRS/nano; bare-bottom
 iso explained by previously missing links, not missing copper.
+
+## Plate + gaskets rev-1 (2026-10-14)
+
+`layout/generators/gen_plate.py` derives the plate from placed PCB data:
+outline = Edge.Cuts loop, 22x 15x15 cutouts, 12.5sq encoder hole (a 17mm
+round would merge into the neighbour key cutout at 18.2mm pitch; knob
+rides high), W1 (switch+MCU+JST) + W2 (TRRS+channel) windows, 7x5 Poron
+lands top+bottom (Left 10/16, Right 16/16) with 60mm span rule bridged
+from below across window zones. Two real finds: (1) Kailh footprint
+rotation is CW-positive need for cutout rots; (2) FPS seeding must start
+on landable samples (a 109mm blocked inner-edge run poisons blind seeds).
+Stack contract + screw rules in `spec/case.md`. All gates green.

@@ -36,6 +36,13 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 1 | Würth WS-SLTV 450301014042 | slide SPDT, pad 1 (middle) = common, 300mA switching (fine at 100mA default; leave charge-boost open) |
 | 1 | 301230 LiPo cell (see below) | with protection PCM + JST-PH 2.0mm pigtail |
 
+## Case (rev-1 plate + gaskets, per half ×2)
+
+| Qty | Part | Notes |
+|---|---|---|
+| 1 | Switch plate, 1.5mm PC, laser-cut | `out/plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); 22× 15×15 Choc cutouts, 12.5² encoder hole, component windows; NO screws/holes beyond openings |
+| ~26 | Poron gasket pads, 7×5mm (cut from strip/sheet) | counts: Left 10 top + 16 bottom, Right 16 + 16; positions in `out/plate/Hojicha44-{Left,Right}-lands.json`; top 2–3mm + bottom ~3mm (clear socket bodies); stack contract in `spec/case.md` |
+
 ## Cell — locked to orderable stock (was TBD)
 
 - Primary: kriscables 301230 110mAh + JST PH 2.0mm (€18.90, SKU
