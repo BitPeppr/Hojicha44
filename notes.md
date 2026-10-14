@@ -607,3 +607,15 @@ Kconfig pair, metadata), root `zephyr/module.yml`. Roles: left central via
 `col-offset = <6>` so one 6-column transform + one 24-cell keymap serves
 both halves (no 12-column transform needed). Keymap content itself is still
 DRAFT (legends/layers open); CI proves compilation. Push to origin to run.
+
+## ZMK CI green (2026-10-14)
+
+First green run after four red ones, each a real find: `RC(00)` ->
+comma form (C preprocessor), `&kp MO(1)` -> `&mo 1` (undefined token),
+`nice_nano//zmk` rejected on the pinned v0.3 tree (variant syntax is
+main-only) -> classic `nice_nano_v2`, and the @main workflow pinned to
+v0.3 to match (its compat diagnostic predates the tree). One blind alley
+corrected along the way: `CONFIG_ZMK_BOARD_COMPAT=y` does not exist in
+v0.3 (fatal Kconfig warning) — the pin, not the marker, was the fix.
+Artifacts: `hojicha44-firmwares` (2x UF2, ~300KB). Run with `--erase`
+on first flash (UICR NFC). Keymap content still DRAFT by decision.
