@@ -6,8 +6,8 @@ dumps 21 junk layers), copies the gitignored ERC/DRC reports into the
 versioned tree, and writes MANIFEST.txt (spec version, git commit, tool
 versions, router rev, sha256 per file, gate status).
 
-  python3 scripts/make_release.py            # writes generated/release/vX.Y.Z/
-  python3 scripts/make_release.py --check    # verify only, no kicad-cli runs
+  python3 pcb/make_release.py            # writes generated/release/vX.Y.Z/
+  python3 pcb/make_release.py --check    # verify only, no kicad-cli runs
 
 Outputs stay tracked under generated/release/ (NOT gitignored — only
 layout/generated/, *-erc.rpt, *-drc.rpt, pcb/kicad/export/, out/ are).
