@@ -499,10 +499,13 @@ def build_half(tag):
     def tang_at(s):
         return at(s)[1]
 
-    def straight(s, half_span):
+    def straight(s, half_span, tol_deg=4.0):
+        # tabs are not precision datums; 4deg over the root span still
+        # fillets cleanly (fillets are computed from local tangents)
         a0 = math.atan2(*tang_at(s - half_span)[::-1])
         a1 = math.atan2(*tang_at(s + half_span)[::-1])
-        return abs((a1 - a0 + math.pi) % (2 * math.pi) - math.pi) <             math.radians(2.0)
+        return abs((a1 - a0 + math.pi) % (2 * math.pi) - math.pi) < \
+            math.radians(tol_deg)
 
     openings = [expand_poly(c, 0.0) for c in cuts]
     openings.append(expand_poly(enc_poly, 0.0))
@@ -515,25 +518,68 @@ def build_half(tag):
         openings.append(rect_poly(167.0, 45.0, 181.0, 60.0))
         openings.append(rect_poly(154.0, -27.0, 163.0, -17.0))
 
-    def root_poly(cx, cy, tx, ty):
-        # tab footprint: full width incl. fillets, 6mm buried root,
-        # protrusion + tip chamfer zone
-        n = inward((cx, cy), (tx, ty))
-        hw = TAB_W / 2 + TAB_FILLET + 1.0
-        pts = []
-        for dx, dy in ((-hw, -6.0), (hw, -6.0),
-                       (hw, TAB_L + 1.0), (-hw, TAB_L + 1.0)):
-            pts.append((cx + tx * dx - n[0] * dy,
-                        cy + ty * dx - n[1] * dy))
-        return pts
+    def fillet_arc(corner, u_away, o_out, r, n=6):
+        # 90° concave fillet joining the rim (direction u_away from the
+        # corner) to the tab side (direction o_out). Sweeps from the rim
+        # tangent point to the side tangent point THROUGH the corner side;
+        # the long way around would draw a near-full loop in the plate.
+        T1 = (corner[0] + u_away[0] * r, corner[1] + u_away[1] * r)
+        T2 = (corner[0] + o_out[0] * r, corner[1] + o_out[1] * r)
+        O = (T1[0] + o_out[0] * r, T1[1] + o_out[1] * r)
+        a0 = math.atan2(T1[1] - O[1], T1[0] - O[0])
+        a1 = math.atan2(T2[1] - O[1], T2[0] - O[0])
+        amid = math.atan2(corner[1] - O[1], corner[0] - O[0])
+        ccw = (a1 - a0) % (2 * math.pi)
+        if (amid - a0) % (2 * math.pi) <= ccw:
+            angs = [a0 + ccw * k / n for k in range(n + 1)]
+        else:
+            cw = (a0 - a1) % (2 * math.pi)
+            angs = [a0 - cw * k / n for k in range(n + 1)]
+        return [(O[0] + r * math.cos(t), O[1] + r * math.sin(t))
+                for t in angs]
+
+    def tab_frame(px, py, tx, ty):
+        # the REAL tab outline (fillets + sides + chamfered tip) rigidly
+        # attached to its rim frame: eligibility is tested against this,
+        # not an inflated root box, so narrow-but-sufficient fingers
+        # (like the MCU-window east finger) stay eligible
+        n = inward((px, py), (tx, ty))
+        o = (-n[0], -n[1])
+        hw = TAB_W / 2
+        A = (px - tx * hw, py - ty * hw)
+        B = (px + tx * hw, py + ty * hw)
+        F, TL, CH = TAB_FILLET, TAB_L, 1.5
+        path = []
+        path += fillet_arc(A, (-tx, -ty), o, F)
+        S1 = (A[0] + o[0] * (TL - CH), A[1] + o[1] * (TL - CH))
+        path.append(S1)
+        E1 = (px - tx * (hw - CH) + o[0] * TL,
+              py - ty * (hw - CH) + o[1] * TL)
+        E2 = (px + tx * (hw - CH) + o[0] * TL,
+              py + ty * (hw - CH) + o[1] * TL)
+        path.append(E1)
+        path.append(E2)
+        S2 = (B[0] + o[0] * (TL - CH), B[1] + o[1] * (TL - CH))
+        path.append(S2)
+        path += fillet_arc(B, (tx, ty), o, F)[::-1]
+        return path
+
+    def web_poly(p, q):
+        d = min(poly_dist(v, q) for v in p)
+        return min(d, min(poly_dist(v, p) for v in q))
 
     def eligible(s):
         span = TAB_W / 2 + TAB_FILLET + 2.0
         if not straight(s, span):
             return False
         (px, py), (tx, ty) = at(s)
-        rp = root_poly(px, py, tx, ty)
-        return not any(polys_intersect(rp, o) for o in openings)
+        tp = tab_frame(px, py, tx, ty)
+        for o in openings:
+            if polys_intersect(tp, o):
+                return False
+            if web_poly(tp, o) < WEB_MIN:
+                return False
+        return True
 
     NS = 720
     elig = [s for k in range(NS) if eligible(P * k / NS)
@@ -557,26 +603,6 @@ def build_half(tag):
         if centers and (b - a) % P < TAB_W + 2 * TAB_FILLET + 6.0:
             fail('tab roots overlap/clash')
 
-    def fillet_arc(corner, u_away, o_out, r, n=6):
-        # 90° concave fillet joining the rim (direction u_away from the
-        # corner) to the tab side (direction o_out). Sweeps from the rim
-        # tangent point to the side tangent point THROUGH the corner side;
-        # the long way around would draw a near-full loop in the plate.
-        T1 = (corner[0] + u_away[0] * r, corner[1] + u_away[1] * r)
-        T2 = (corner[0] + o_out[0] * r, corner[1] + o_out[1] * r)
-        O = (T1[0] + o_out[0] * r, T1[1] + o_out[1] * r)
-        a0 = math.atan2(T1[1] - O[1], T1[0] - O[0])
-        a1 = math.atan2(T2[1] - O[1], T2[0] - O[0])
-        amid = math.atan2(corner[1] - O[1], corner[0] - O[0])
-        ccw = (a1 - a0) % (2 * math.pi)
-        if (amid - a0) % (2 * math.pi) <= ccw:
-            angs = [a0 + ccw * k / n for k in range(n + 1)]
-        else:
-            cw = (a0 - a1) % (2 * math.pi)
-            angs = [a0 - cw * k / n for k in range(n + 1)]
-        return [(O[0] + r * math.cos(t), O[1] + r * math.sin(t))
-                for t in angs]
-
     # splice tabs into a dense outline (0.5mm; chordal error negligible)
     dense, dcum = [loop[0]], [0.0]
     for p in loop[1:]:
@@ -592,31 +618,11 @@ def build_half(tag):
                                    loop[0][1] - dense[-1][1])
 
     def tab_path(c):
+        # single source of truth for tab geometry: the splice emits
+        # exactly what eligibility approved, so a passing gate means the
+        # outline contains the approved shape (and vice versa)
         (px, py), (tx, ty) = at(c)
-        n = inward((px, py), (tx, ty))
-        o = (-n[0], -n[1])
-        hw = TAB_W / 2
-        A = (px - tx * hw, py - ty * hw)
-        B = (px + tx * hw, py + ty * hw)
-        F, TL, CH = TAB_FILLET, TAB_L, 1.5
-        path = []
-        # incoming fillet (rim -> left side)
-        path += fillet_arc(A, (-tx, -ty), o, F)
-        S1 = (A[0] + o[0] * (TL - CH), A[1] + o[1] * (TL - CH))
-        path.append(S1)
-        E1 = (px - tx * (hw - CH) + o[0] * TL,
-              py - ty * (hw - CH) + o[1] * TL)
-        E2 = (px + tx * (hw - CH) + o[0] * TL,
-              py + ty * (hw - CH) + o[1] * TL)
-        path.append(E1)
-        path.append(E2)
-        S2 = (B[0] + o[0] * (TL - CH), B[1] + o[1] * (TL - CH))
-        path.append(S2)
-        # outgoing fillet (right side -> rim): traverse T2->T1, i.e. the
-        # reverse of the rim->side order used on the incoming side, or the
-        # path doubles back on itself into a spike
-        path += fillet_arc(B, (tx, ty), o, F)[::-1]
-        return path
+        return tab_frame(px, py, tx, ty)
 
     intervals = []
     for c in centers:
