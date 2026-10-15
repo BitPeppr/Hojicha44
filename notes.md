@@ -714,3 +714,14 @@ PCB renders the user compared against are y-flipped while the plate is
 north-up, which reads as a shift side by side. (A pads-vs-cutout check
 was tried and reverted on the spot: socket pads live on the far side
 and legitimately overhang the switch-body cutout.)
+
+## Plate rev-6: encoder hole on shaft center (2026-10-15)
+
+By-eye review caught a real 7.9mm error: the encoder hole was centered
+on the footprint instance origin (pad A), but the EC11 shaft sits at
+local +(7.5, 2.5) — gen_pcb.py places the instance at ergogen_point
+minus that offset, so the plate must add it back. Hole now at shaft
+(118,-8)/(173.5,-8), mirror-exact about 145.75 like everything else.
+(Side note verified along the way: the PCB was never asymmetric — MCU
+pad-span centers (118/173.5) and shaft centers both mirror at 145.75;
+only footprint origins differ, which carry no physical meaning.)

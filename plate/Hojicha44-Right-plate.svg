@@ -26,7 +26,7 @@
 <polygon points="141.6,93.93 191.6,93.93 191.6,73.93 141.6,73.93" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="68.0,271.33 153.2,271.33 153.2,87.73 68.0,87.73" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="32.6,391.93 104.8,391.93 104.8,359.93 32.6,359.93" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="55.6,354.93 105.6,354.93 105.6,304.93 55.6,304.93" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
+<polygon points="85.6,344.93 135.6,344.93 135.6,294.93 85.6,294.93" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
 <text x="674.6" y="301.53" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T1</text>
 <text x="517.73" y="50.06" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T2</text>
 <text x="209.1" y="22.94" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T3</text>

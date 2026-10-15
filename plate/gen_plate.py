@@ -410,7 +410,12 @@ def build_half(tag):
                            tx + tb[2] + tpad, ty + tb[3] + tpad)
     wins = [w_sw, w_core, w_trrs]
     assert enc[3] == 0, f'{tag}: encoder rotated {enc[3]}, hole assumes 0'
-    enc_poly = cut_poly(enc[1], enc[2], ENC_SQ, ENC_SQ, 0)
+    # stock footprint origin is pad A; the shaft (which must pass through
+    # the plate hole) sits at local +(7.5, 2.5) — gen_pcb.py places the
+    # instance at ergogen_point minus that offset, so add it back here.
+    # A hole at the raw instance origin would sit 7.9mm off-shaft.
+    _osx, _osy = rot_cw(7.5, 2.5, enc[3])
+    enc_poly = cut_poly(enc[1] + _osx, enc[2] + _osy, ENC_SQ, ENC_SQ, 0)
     enc_hole = enc_poly
 
     bad = []
@@ -435,7 +440,7 @@ def build_half(tag):
             if polys_intersect(expand_poly(cuts[i], 0.01), wpoly):
                 fail(f'{sw[i][0]} cutout intersects component window')
 
-    ex, ey = enc[1], enc[2]
+    ex, ey = enc[1] + _osx, enc[2] + _osy  # shaft center (see above)
     if web(enc_poly, loop) < WEB_MIN:
         fail('encoder hole within 1.5 of outline')
     for c in cuts:
