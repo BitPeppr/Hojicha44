@@ -1,0 +1,16 @@
+#VRML V2.0 utf8
+# Wuerth WS-SLTV slide SPDT ENVELOPE PLACEHOLDER (bounding box only).
+# Real dims per footprint name: 10 x 2.5 x 6.4 mm, centered at footprint
+# origin (courtyard/Fab symmetric about origin). KiCad reads VRML in
+# 0.1-inch units (1 unit = 2.54mm — calibrated by render). Body sits on
+# board top: z 0..6.4mm. THT pins + slider nub NOT modeled. Proves
+# keepout/stack envelope only — see Hojicha44.3dshapes/README.md.
+Transform {
+  translation 0 0 1.260
+  children [
+    Shape {
+      appearance Appearance { material Material { diffuseColor 0.15 0.15 0.18 } }
+      geometry Box { size 3.937 0.984 2.520 }
+    }
+  ]
+}

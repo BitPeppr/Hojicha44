@@ -21,3 +21,15 @@ KiCad reads VRML in 0.1-inch units (1 unit = 2.54mm) and maps VRML +y to
 footprint-local -y — both proven by staged render tests (10-unit cubes at
 known footprint origins, then a red envelope measured pixel-exact over the
 MCU pads). Hand-written WRL must use /2.54 dims and (lx,-ly) mapping.
+
+- `ROT_EC11E.step` — Alps EC11E rotary encoder body, from
+  ebastler/marbastlib (`3dmodels/ROT_EC11E.step`), CERN-OHL-P-2.0.
+  Paired in marbastlib as offset (-2.5,-7.5,0) + rotate (0,0,-90) on
+  THEIR pad frame; ours remaps to offset (15,0,0) + rotate (0,0,180)
+  via the verified 7-pad rigid correspondence (no mirror needed).
+  Render-verified on first use; re-verify after any footprint touch.
+- `ws-sltv-envelope.wrl` — hand-drawn bounding box for the Wuerth
+  WS-SLTV slide switch (10x2.5x6.4 per footprint name). The stock
+  footprint references a STEP that ships in NO KiCad bundle and exists
+  in NO upstream repo (footprint added without its model), so an
+  envelope is the only honest option short of drawing the part.

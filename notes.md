@@ -757,3 +757,17 @@ is the representative render variant — BOM leaves feel to the builder.
 Repo tree untouched (22 dummies live only in /tmp); outputs in
 `pcb/kicad/export/*-populated*.png`. Sockets confirmed B.Cu SMD with
 switches on top at matching (x, y, rot), thumbs splayed correctly.
+
+## Missing 3D models linked (2026-10-15)
+
+Two stock footprints referenced STEP files that exist NOWHERE (not in
+any KiCad bundle, not in any upstream repo — footprints added without
+their models): EC11 encoder + WS-SLTV slide switch, so renders silently
+omitted both bodies. EC11 solved with marbastlib ROT_EC11E.step,
+remapped offset (-2.5,-7.5)+rot-90 to (15,0)+rot180 via the verified
+7-pad rigid correspondence (no mirror); STEP-landmark check then proved
+the shaft lands at (118,-8) within 0.03mm (pixel forensics on shaded
+metal lies — trust geometry, not highlights). Switch solved with a
+hand-drawn 10x2.5x6.4 envelope (courtyard-centered origin verified).
+gen_pcb MODEL_OVERRIDES keeps stock geometry (W1 waiver set provably
+unaffected: model lines don't count). All gates green, release re-cut.

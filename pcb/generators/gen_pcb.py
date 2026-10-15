@@ -56,6 +56,26 @@ COLS = ["outer", "pinky", "ring", "middle", "index", "inner"]
 ROW_OF_R = {0: "top", 1: "home", 2: "bottom"}
 THUMBS = ["t_ctrl", "t_cmd", "t_l1", "t_space"]
 
+# 3D-model overrides, applied at embed: the footprint keeps its stock
+# geometry (pads/silk/courtyard untouched — DRC sees the same copper),
+# only the render/stack model pointer is re-homed to a vendored file.
+# Needed because the stock references dangle: neither file ships in any
+# KiCad bundle nor exists in any upstream repo (footprints added without
+# their models). ENC remap math: marbastlib pairs ROT_EC11E.step as
+# offset (-2.5,-7.5,0) + rotate (0,0,-90) on ITS pad frame; ours remaps
+# to offset (15,0,0) + rotate (0,0,180) via the verified 7-pad rigid
+# correspondence (no mirror needed). Render-verified on first use.
+MODEL_OVERRIDES = {
+    ("Rotary_Encoder",
+     "RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles"):
+        ("${KIPRJMOD}/Hojicha44.3dshapes/ROT_EC11E.step",
+         "(xyz 15 0 0)", "(xyz 0 0 180)"),
+    ("Button_Switch_THT",
+     "SW_Slide-03_Wuerth-WS-SLTV_10x2.5x6.4_P2.54mm"):
+        ("${KIPRJMOD}/Hojicha44.3dshapes/ws-sltv-envelope.wrl",
+         "(xyz 0 0 0)", "(xyz 0 0 0)"),
+}
+
 
 def U():
     return str(uuid.uuid4())
@@ -328,6 +348,20 @@ def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
              f'\n\t(fp_line (start -2.45 -0.5) (end -2.45 0.5)'
              f' (stroke (width 0.12) (type solid)) (layer "F.SilkS")'
              f' (uuid "{U()}"))\n)')
+    if ":" in libref:
+        _lib, _name = libref.split(":", 1)
+        if (_lib, _name) in MODEL_OVERRIDES:
+            _path, _off, _rot = MODEL_OVERRIDES[(_lib, _name)]
+            _new = (f'\t(model "{_path}"\n'
+                    f'\t\t(offset\n\t\t\t{_off}\n\t\t)\n'
+                    f'\t\t(scale\n\t\t\t(xyz 1 1 1)\n\t\t)\n'
+                    f'\t\t(rotate\n\t\t\t{_rot}\n\t\t)\n'
+                    f'\t)')
+            s, _n = re.subn(
+                r'\t\(model "[^"]*"\n'
+                r'(?:\t\t\(\w+\n\t\t\t\(xyz [^)]*\)\n\t\t\)\n)+'
+                r'\t\)', _new, s)
+            assert _n == 1, f"model override missed for {libref}"
     return s
 
 
@@ -1039,6 +1073,9 @@ def check_drc_report(path, tag=None):
     # Waiver W1: exact expected lib_footprint_mismatch set per half.
     # 28 = 22x D_SOD-123 (stripped silk + cathode tick) + 4x thumb Choc
     # (rotated) + MCU socket (reversed column) + TRRS (renamed pads).
+    # NOTE (verified 2026-10-15): (model ...) lines do NOT participate in
+    # the mismatch check — relinking the encoder/slide-switch bodies to
+    # vendored files left the set at exactly 28. Geometry only.
     # A 29th mismatch (or a missing one) fails the build instead of passing
     # silently under the old blanket skip.
     w1_want = (
