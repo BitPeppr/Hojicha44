@@ -700,3 +700,17 @@ simplicity (0 crossings, verified), per-tab area, min segment, closure.
 8 -> 6 tabs; inner edge stays tab-free by physics (windows occupy it,
 rim finger < tab root) and floats between flanks — documented in
 spec/case.md with measured worst key-to-tab 51mm.
+
+## Plate rev-5: pinned corners + cross-file proof (2026-10-15)
+
+Two review items closed. (1) Corners: 2 pinned tabs per half (top edge
+above the outer key column, bottom-inner corner under the MCU) snap to
+the nearest eligible rim (±12mm, loud fail otherwise); 4 greedy fill the
+rest — 6 total, even + corner-supported. (2) Plate-vs-PCB doubt answered
+by numbers, not eyeballs: encoder-to-nearest-switch is 18.2mm c-c in
+both files (4.45 plate edge-to-edge vs ~4.9 body-to-body on copper);
+both derive from identical instance data through one convention, and the
+PCB renders the user compared against are y-flipped while the plate is
+north-up, which reads as a shift side by side. (A pads-vs-cutout check
+was tried and reverted on the spot: socket pads live on the far side
+and legitimately overhang the switch-body cutout.)

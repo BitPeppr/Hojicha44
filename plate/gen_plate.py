@@ -462,6 +462,19 @@ def build_half(tag):
         if d < DIODE_CLEAR:
             fail(f'{ref} {d:.2f} from cutout edge < {DIODE_CLEAR}')
 
+    # NOTE (2026-10-15): a pads-vs-cutout containment check lived here
+    # and was reverted — socket solder pads sit on the FAR side of the PCB
+    # and legitimately extend past the 15mm plate cutout, which clears the
+    # SWITCH BODY. Plate and PCB provably share one frame instead: both
+    # derive cutouts/placements from the same parsed instance (x, y, rot)
+    # through the same clockwise-positive convention, whose correctness
+    # on real geometry was already measured end-to-end (TRRS mouth
+    # 22.40mm in spec matches placed boards to 0.01). Encoder to nearest
+    # switch is 18.2mm center-to-center in both files (4.45 plate
+    # edge-to-edge vs ~4.9 body-to-body on copper) — same spacing,
+    # different ink. (PCB renders are y-flipped vs this north-up plate,
+    # which makes identical layouts read as shifted side by side.)
+
     # -- gasket TABS (tab-and-jacket suspension).
     # The plate grows discrete tongues that slot into silicone jackets in
     # the case: fewer, softer mounts than rim strips, so the assembly
@@ -499,9 +512,10 @@ def build_half(tag):
     def tang_at(s):
         return at(s)[1]
 
-    def straight(s, half_span, tol_deg=4.0):
-        # tabs are not precision datums; 4deg over the root span still
-        # fillets cleanly (fillets are computed from local tangents)
+    def straight(s, half_span, tol_deg=6.0):
+        # tabs are not precision datums; 6deg over the root span still
+        # fillets cleanly (fillets are computed from local tangents) and
+        # the simplicity assert backstops any residual chord error
         a0 = math.atan2(*tang_at(s - half_span)[::-1])
         a1 = math.atan2(*tang_at(s + half_span)[::-1])
         return abs((a1 - a0 + math.pi) % (2 * math.pi) - math.pi) < \
@@ -584,9 +598,28 @@ def build_half(tag):
     NS = 720
     elig = [s for k in range(NS) if eligible(P * k / NS)
             for s in [P * k / NS]]
+    # pinned corners: user-directed support where even spacing will not
+    # go on its own (top edge above the outer key column, bottom-inner
+    # corner under the MCU). Snapped to the nearest eligible sample;
+    # loud failure if the corner cannot host a tab at all.
+    PINNED = {'Left': [(95.0, 56.0), (120.0, -52.5)],
+              'Right': [(196.5, 56.0), (161.0, -52.5)]}[tag]
     centers = []
-    if elig:
-        centers = [elig[0]]
+    for wx, wy in PINNED:
+        s0 = min((P * k / NS for k in range(NS)),
+                 key=lambda s: math.hypot(at(s)[0][0] - wx,
+                                          at(s)[0][1] - wy))
+        snap = None
+        for off in [d / 2 for k in range(25) for d in (k, -k)]:
+            if eligible((s0 + off) % P):
+                snap = (s0 + off) % P
+                break
+        if snap is None:
+            fail(f'pinned corner ({wx},{wy}) has no eligible tab '
+                 f'spot within 12mm')
+        else:
+            centers.append(snap)
+    if centers:
         while len(centers) < TAB_N and len(centers) < len(elig):
             cand, candd = elig[0], -1.0
             for s in elig:
