@@ -734,3 +734,15 @@ covers the build). Pads-on-tabs keeps the tab-suspension philosophy
 with a buyable, dimensioned, keyboard-specific gasket; grade swaps
 (-30/-50) tune feel without CAD changes. PORON DXF layer + SVG pads +
 JSON spec carry placement.
+
+## Plate rev-8: review round (2026-10-15)
+
+Three review catches closed. (1) Poron pads now sit fully ON the
+tongues (center +2.0 outward, asserted per-corner against the outline)
+instead of straddling the root. (2) The switch-strip + MCU windows were
+two overlapping rects reading as a phantom "tiny rectangle" — merged
+into one L loop via an even-odd rect-union tracer (exact-area verified).
+(3) Legend now names every mark (cutouts/encoder/windows/pads/tabs).
+On foam amount: 8x4 pads x8 tabs is isolation by design, not support —
+more foam couples more case; for a softer build swap grade (-30), not
+area. All gates green on both halves.

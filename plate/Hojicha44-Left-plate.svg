@@ -23,27 +23,28 @@
 <polygon points="393.03,398.17 451.37,412.17 465.37,353.83 407.03,339.83" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="471.54,419.56 524.76,447.26 552.46,394.04 499.24,366.34" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="546.45,458.99 591.39,498.75 631.15,453.81 586.21,414.05" fill="#000" stroke="#fff" stroke-width="1"/>
-<polygon points="503.0,102.0 553.0,102.0 553.0,82.0 503.0,82.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="541.4,279.4 626.6,279.4 626.6,95.8 541.4,95.8" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
+<polygon points="541.4,102.0 541.4,279.4 626.6,279.4 626.6,95.8 553.0,95.8 553.0,82.0 503.0,82.0 503.0,102.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="591.8,400.0 662.0,400.0 662.0,368.0 591.8,368.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="559.0,353.0 609.0,353.0 609.0,303.0 559.0,303.0" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
-<polygon points="64.0,293.6 64.0,325.6 48.0,325.6 48.0,293.6" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="56.0,293.62 56.0,325.62 40.0,325.62 40.0,293.62" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="20.0" y="309.6" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T1</text>
-<polygon points="202.49,97.3 171.35,104.67 167.67,89.1 198.81,81.73" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="200.67,89.5 169.53,96.88 165.84,81.31 196.98,73.93" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="176.79" y="58.17" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T2</text>
-<polygon points="353.48,64.0 321.48,64.0 321.48,48.0 353.48,48.0" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="353.46,56.0 321.46,56.0 321.46,40.0 353.46,40.0" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="337.48" y="20.0" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T3</text>
-<polygon points="508.73,71.4 476.84,74.06 475.51,58.12 507.4,55.46" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="508.08,63.43 476.19,66.09 474.86,50.15 506.75,47.49" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="489.13" y="28.88" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T4</text>
-<polygon points="630.6,213.04 630.6,181.04 646.6,181.04 646.6,213.04" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="638.6,213.05 638.6,181.05 654.6,181.05 654.6,213.05" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="674.6" y="197.04" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T5</text>
-<polygon points="578.58,503.98 610.34,500.06 612.3,515.94 580.54,519.86" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="579.57,511.93 611.33,508.02 613.29,523.9 581.53,527.81" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="599.84" y="545.69" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T6</text>
-<polygon points="418.07,454.93 448.03,466.17 442.41,481.15 412.45,469.91" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="415.27,462.43 445.23,473.66 439.61,488.64 409.65,477.41" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="417.6" y="501.75" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T7</text>
-<polygon points="251.68,399.97 282.84,407.24 279.2,422.83 248.04,415.56" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="249.85,407.77 281.02,415.04 277.38,430.62 246.22,423.36" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="257.26" y="446.46" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T8</text>
 <text x="8" y="14" fill="#f0f" font-size="10">T = gasket tab (poron pads top+bottom, yellow)</text>
+<text x="8" y="26" fill="#fff" font-size="10">white square = Choc cutout 15x15</text>
+<text x="8" y="38" fill="#ff9800" font-size="10">solid orange = encoder hole 12.5sq / dashed orange = component window (tall parts)</text>
 <circle cx="160.0" cy="360.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <circle cx="624.0" cy="280.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <text x="112.0" y="176.0" fill="#888" font-size="7" text-anchor="middle">SW_L00</text>

@@ -319,6 +319,86 @@ def rect_pt_dist(px, py, rect):
     return math.hypot(dx, dy)
 
 
+def seg_hit(a, b, c, d):
+    """Segment intersection params (t, u) in [0,1], or None."""
+    rx, ry = b[0] - a[0], b[1] - a[1]
+    sx, sy = d[0] - c[0], d[1] - c[1]
+    den = rx * sy - ry * sx
+    if abs(den) < 1e-12:
+        return None
+    t = ((c[0] - a[0]) * sy - (c[1] - a[1]) * sx) / den
+    u = ((c[0] - a[0]) * ry - (c[1] - a[1]) * rx) / den
+    return (t, u) if 0 <= t <= 1 and 0 <= u <= 1 else None
+
+
+def union_rects(p, q):
+    """Boundary loops of the union of two axis-aligned rects (each given
+    as 4 corners). Overlapping-with-area pairs merge into one loop;
+    disjoint/touching pairs come back as two."""
+    x0 = max(min(p[0][0], p[2][0]), min(q[0][0], q[2][0]))
+    x1 = min(max(p[0][0], p[2][0]), max(q[0][0], q[2][0]))
+    y0 = max(min(p[0][1], p[2][1]), min(q[0][1], q[2][1]))
+    y1 = min(max(p[0][1], p[2][1]), max(q[0][1], q[2][1]))
+    if x1 - x0 <= 1e-9 or y1 - y0 <= 1e-9:
+        return [p, q]  # disjoint or merely touching: keep both loops
+
+    def edges(poly, rid):
+        pts = poly + poly[:1]
+        area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(pts, pts[1:]))
+        seq = pts if area > 0 else pts[::-1]
+        return [(a, b, rid) for a, b in zip(seq, seq[1:])]
+
+    E = edges(p, 0) + edges(q, 1)
+    cut = [set() for _ in E]
+    for i in range(len(E)):
+        for j in range(i + 1, len(E)):
+            (a, b, ri), (c, d, rj) = E[i], E[j]
+            if ri == rj:
+                continue
+            h = seg_hit(a, b, c, d)
+            if h:
+                cut[i].add(round(h[0], 9))
+                cut[j].add(round(h[1], 9))
+    segs = []
+    for k, (a, b, rid) in enumerate(E):
+        ts = sorted(cut[k] | {0.0, 1.0})
+        for t0, t1 in zip(ts, ts[1:]):
+            if t1 - t0 < 1e-9:
+                continue
+            p0 = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
+            p1 = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
+            segs.append((p0, p1))
+    # kept = union boundary: subsegments with union-interior on exactly
+    # one side (tested either side of the line, so boundary-coincident
+    # samples cannot confuse the ray cast)
+    kept = []
+    for a, b in segs:
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1e-12
+        nx, ny = -dy / L * 1e-4, dx / L * 1e-4
+        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+        li = point_in_poly((mx + nx, my + ny), p) or \
+            point_in_poly((mx + nx, my + ny), q)
+        ri = point_in_poly((mx - nx, my - ny), p) or \
+            point_in_poly((mx - nx, my - ny), q)
+        if li + ri == 1:
+            kept.append((a, b))
+    loops, pool = [], kept[:]
+    while pool:
+        a, b = pool.pop()
+        loop = [a, b]
+        while True:
+            nxt = next((i for i, (c, d) in enumerate(pool)
+                        if math.hypot(c[0] - loop[-1][0],
+                                      c[1] - loop[-1][1]) < 1e-6), None)
+            if nxt is None:
+                break
+            c, d = pool.pop(nxt)
+            loop.append(d)
+        loops.append(loop)
+    return loops
+
+
 # ---- per-half build ----
 def build_half(tag):
     pcb = os.path.join(PCB_DIR, f'Hojicha44-{tag}.kicad_pcb')
@@ -412,6 +492,18 @@ def build_half(tag):
         w_trrs = rect_poly(edge_x, ty + tb[1] - tpad,
                            tx + tb[2] + tpad, ty + tb[3] + tpad)
     wins = [w_sw, w_core, w_trrs]
+    # switch strip + core overlap by design (shared tall-part zone): emit
+    # ONE union loop instead of two overlapping rects, so the CAD shows a
+    # single L opening and no phantom double-cut line. (Laser cuts the
+    # union either way; this is clarity, not geometry change.)
+    merged = union_rects(w_sw, w_core)
+    if len(merged) == 1 and len(merged[0]) >= 6:
+        mloop = merged[0]
+        if math.hypot(mloop[-1][0] - mloop[0][0],
+                      mloop[-1][1] - mloop[0][1]) < 1e-6:
+            mloop = mloop[:-1]
+        wins = [mloop, w_trrs]
+    win_rects = [w_sw, w_core, w_trrs]  # conservative keepouts
     assert enc[3] == 0, f'{tag}: encoder rotated {enc[3]}, hole assumes 0'
     # stock footprint origin is pad A; the shaft (which must pass through
     # the plate hole) sits at local +(7.5, 2.5) — gen_pcb.py places the
@@ -531,7 +623,7 @@ def build_half(tag):
 
     openings = [expand_poly(c, 0.0) for c in cuts]
     openings.append(expand_poly(enc_poly, 0.0))
-    openings += [expand_poly(wpoly, 0.0) for wpoly in wins]
+    openings += [expand_poly(wpoly, 0.0) for wpoly in win_rects]
     # port mouths the cables exit through (measured from the outline)
     if tag == 'Left':
         openings.append(rect_poly(111.0, 45.0, 125.0, 60.0))
@@ -763,17 +855,33 @@ def build_half(tag):
         fail(f'worst key-to-tab {worst:.0f}mm at '
              f'{r2(worst_pt[0])},{r2(worst_pt[1])} > {MAX_TAB_DIST}')
     tabs = []
+    poron = []
     for c in centers:
         (px, py), (tx, ty) = at(c)
         n = inward((px, py), (tx, ty))
         ang = math.degrees(math.atan2(-n[1], -n[0]))
         tabs.append({'x': r2(px), 'y': r2(py), 'angle': r2(ang),
                      'width': TAB_W, 'protrusion': TAB_L})
+        # poron pad fully ON the tongue: center pushed 2.0 outward from
+        # the root, so the 8x4 pad spans rim-line to +4.0 inside the
+        # 5-long tongue (same pad top + bottom = a pair)
+        dx, dy = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+        tx2, ty2 = -dy, dx
+        cx, cy = px + dx * 2.0, py + dy * 2.0
+        hl, hw = PORON_PAD_L / 2, PORON_PAD_W / 2
+        pad = [(cx + tx2 * a + dx * b, cy + ty2 * a + dy * b)
+               for a, b in ((-hl, -hw), (hl, -hw),
+                            (hl, hw), (-hl, hw))]
+        for vx, vy in pad:
+            if not point_in_poly((vx, vy), new_loop) and \
+                    poly_dist((vx, vy), new_loop) > 0.1:
+                fail(f'poron pad corner ({r2(vx)},{r2(vy)}) off-plate')
+        poron.append(pad)
     lands = [('tab', 0, None) for _ in tabs]
 
     return {'half': tag, 'loop': loop, 'outline': new_loop, 'cuts': cuts,
             'sw': sw, 'enc': enc_hole, 'wins': wins, 'tool': tool,
-            'tabs': tabs}, bad
+            'tabs': tabs, 'poron': poron}, bad
 
 
 # ---- DXF R12 writer ----
@@ -797,17 +905,7 @@ def dxf_write(path, res):
     for poly in res['cuts'] + res['wins']:
         closed_poly(poly + poly[:1], 'CUTOUT')
     closed_poly(res['enc'] + res['enc'][:1], 'CUTOUT')
-    for t in res['tabs']:
-        # poron pad placement: PORON_PAD_L x PORON_PAD_W centered on the
-        # tab root (same pad top + bottom = a pair); cut from 90x4 strip
-        ang = math.radians(t['angle'])
-        dx, dy = math.cos(ang), math.sin(ang)
-        tx, ty = -dy, dx
-        cx, cy = t['x'], t['y']
-        hl, hw = PORON_PAD_L / 2, PORON_PAD_W / 2
-        pad = [(cx + tx * a + dx * b, cy + ty * a + dy * b)
-               for a, b in ((-hl, -hw), (hl, -hw),
-                            (hl, hw), (-hl, hw))]
+    for pad in res['poron']:
         closed_poly(pad + pad[:1], 'PORON')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
@@ -840,24 +938,25 @@ def svg_write(path, res):
                  f'stroke-dasharray="5,3"/>')
     o.append(f'<polygon points="{" ".join(P(p) for p in enc_poly)}" '
              f'fill="#000" stroke="#ff9800" stroke-width="1.5"/>')
-    for k, t in enumerate(res['tabs'], 1):
-        ang = math.radians(t['angle'])
-        dx, dy = math.cos(ang), math.sin(ang)
-        tx, ty = -dy, dx
-        hl, hw = PORON_PAD_L / 2, PORON_PAD_W / 2
-        pad = [(t['x'] + tx * a + dx * b, t['y'] + ty * a + dy * b)
-               for a, b in ((-hl, -hw), (hl, -hw),
-                            (hl, hw), (-hl, hw))]
+    for k, (t, pad) in enumerate(zip(res['tabs'], res['poron']), 1):
         o.append(f'<polygon points="{" ".join(P(p) for p in pad)}" '
                  f'fill="rgba(255,235,59,0.30)" stroke="#ff0" '
                  f'stroke-width="1" stroke-dasharray="2,2"/>')
-        lx = t['x'] + dx * (t['protrusion'] + 4.0)
-        ly = t['y'] + dy * (t['protrusion'] + 4.0)
+        ang = math.radians(t['angle'])
+        lx = t['x'] + math.cos(ang) * (t['protrusion'] + 4.0)
+        ly = t['y'] + math.sin(ang) * (t['protrusion'] + 4.0)
         o.append(f'<text x="{r2((lx - x0) * S)}" y="{r2((y1 - ly) * S)}" '
                  f'fill="#f0f" font-size="9" font-weight="bold" '
                  f'text-anchor="middle">T{k}</text>')
     o.append(f'<text x="8" y="14" fill="#f0f" font-size="10">'
              f'T = gasket tab (poron pads top+bottom, yellow)'
+             f'</text>')
+    o.append(f'<text x="8" y="26" fill="#fff" font-size="10">'
+             f'white square = Choc cutout 15x15'
+             f'</text>')
+    o.append(f'<text x="8" y="38" fill="#ff9800" font-size="10">'
+             f'solid orange = encoder hole 12.5sq / dashed orange = '
+             f'component window (tall parts)'
              f'</text>')
     for tx, ty in res['tool']:
         o.append(f'<circle cx="{r2((tx - x0) * S)}" cy="{r2((y1 - ty) * S)}" '
@@ -891,7 +990,8 @@ def main():
                 'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
                 'poron': {'spec': PORON_SPEC, 'pad': [PORON_PAD_L,
                           PORON_PAD_W], 'faces': ['top', 'bottom'],
-                          'center': 'tab root center'},
+                          'center': 'tab root center + 2.0 outward '
+                                    '(fully on tongue)'},
                 'tabs': res['tabs'],
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
