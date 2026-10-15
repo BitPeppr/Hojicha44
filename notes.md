@@ -746,3 +746,14 @@ into one L loop via an even-odd rect-union tracer (exact-area verified).
 On foam amount: 8x4 pads x8 tabs is isolation by design, not support —
 more foam couples more case; for a softer build swap grade (-30), not
 area. All gates green on both halves.
+
+## Populated renders (2026-10-15)
+
+`pcb/render_populated.py` builds throwaway /tmp board copies with one
+dummy top-side footprint per socket, each linking koktoh/keyswitch_model
+Choc V1 Red (master/choc/v1/KiCad/red.wrl, StepUp pipeline; measured
+15.0x15.0x11.0mm = the published PG1350 15*15*11 profile exactly). Red
+is the representative render variant — BOM leaves feel to the builder.
+Repo tree untouched (22 dummies live only in /tmp); outputs in
+`pcb/kicad/export/*-populated*.png`. Sockets confirmed B.Cu SMD with
+switches on top at matching (x, y, rot), thumbs splayed correctly.
