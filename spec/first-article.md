@@ -73,6 +73,10 @@ which is the cutout source — not the PCB print.
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
   outline matches edge-for-edge including the USB notch. Seat one real
   Choc switch per region (corner/edge/thumb): clips engage, no rock.
+- [ ] Poron pads (rev-1 plate): 8×4mm 4701-40 pads stuck top+bottom on all
+  8 tabs per half per the PORON DXF layer — full tab coverage, none
+  overhanging into cutouts/windows; peel-test one: adhesive holds the
+  tab, not the case.
 
 ## 4. Power-on
 

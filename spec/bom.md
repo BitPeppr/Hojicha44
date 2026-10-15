@@ -41,7 +41,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | Qty | Part | Notes |
 |---|---|---|
 | 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.5² encoder hole, component windows, 8 gasket tabs (NO screws/holes beyond openings) |
-| 12 | Silicone gasket jackets/socks | 6 per half, one per plate tab (10×1.5mm tongue); held captive in case-wall pockets per `spec/case.md`; tab-and-jacket suspension, no rim strips |
+| ~2 | Poron gasket strip, 90×4×3mm, 4701-40 adhesive (Keebox 32-pack or equivalent) | per half: 16 pads (8 tabs × 2 faces) cut 8×4 from strip; -30 softer / -50 firmer swap without CAD change |
 
 ## Cell — locked to orderable stock (was TBD)
 

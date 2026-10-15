@@ -53,16 +53,19 @@ CUTOUT = 15.0          # Choc PG1350 plate cutout (switch body is 15x15)
 ENC_SQ = 12.5           # square hole: body ~11.7 + 0.4/side, knob rides high
 PLATE_THICK = 1.5      # mm PC
 GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
-TAB_W = 10.0             # tab width along the rim (jacket pocket ~12)
+TAB_W = 10.0             # tab width along the rim
 TAB_L = 5.0              # tab protrusion past the outline
 TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
-TAB_N = 6                # tab count per half: fewer, softer mounts =
-                             # more suspension; even spacing keeps it uniform
-TAB_TIP_CH = 1.5         # tip chamfer for jacket entry
+TAB_N = 8                # tab count per half: 2 pinned corners + 6 greedy;
+                             # fewer, softer mounts = more suspension
+TAB_TIP_CH = 1.5         # tip chamfer (no sharp points in the case)
+PORON_PAD_L = 8.0        # poron pad per tab, cut from 90x4mm strip stock
+PORON_PAD_W = 4.0
+PORON_SPEC = 'PORON 4701-40, 3mm, adhesive-backed (-30 softer / -50 firmer)'
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
                          # root (measured worst 46-47mm at 2.5 pitches).
                          # Consistency comes from mount UNIFORMITY here, not
-                         # proximity: 8 identical silicone jackets at even
+                         # proximity: 8 identical poron-padded tabs at even
                          # spacing share load equally, which is exactly what
                          # sparse tab suspension (cf. Satisfaction75) relies
                          # on. Encoder push stays soft by design.
@@ -780,7 +783,7 @@ def dxf_write(path, res):
     A('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n'
       '9\n$INSUNITS\n70\n4\n0\nENDSEC\n')
     A('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n3\n')
-    for name, color in (('OUTLINE', 3), ('CUTOUT', 7), ('TABS', 6)):
+    for name, color in (('OUTLINE', 3), ('CUTOUT', 7), ('PORON', 2)):
         A(f'0\nLAYER\n2\n{name}\n70\n0\n62\n{color}\n6\nCONTINUOUS\n')
     A('0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n')
 
@@ -795,16 +798,17 @@ def dxf_write(path, res):
         closed_poly(poly + poly[:1], 'CUTOUT')
     closed_poly(res['enc'] + res['enc'][:1], 'CUTOUT')
     for t in res['tabs']:
-        # reference envelope for jacket makers: root rect at the tab
+        # poron pad placement: PORON_PAD_L x PORON_PAD_W centered on the
+        # tab root (same pad top + bottom = a pair); cut from 90x4 strip
         ang = math.radians(t['angle'])
         dx, dy = math.cos(ang), math.sin(ang)
         tx, ty = -dy, dx
-        cx, cy, hw = t['x'], t['y'], t['width'] / 2
-        ref = [(cx + tx * a + dx * b, cy + ty * a + dy * b)
-               for a, b in ((-hw, -4.0), (hw, -4.0),
-                            (hw, t['protrusion'] + 1.0),
-                            (-hw, t['protrusion'] + 1.0))]
-        closed_poly(ref + ref[:1], 'TABS')
+        cx, cy = t['x'], t['y']
+        hl, hw = PORON_PAD_L / 2, PORON_PAD_W / 2
+        pad = [(cx + tx * a + dx * b, cy + ty * a + dy * b)
+               for a, b in ((-hl, -hw), (hl, -hw),
+                            (hl, hw), (-hl, hw))]
+        closed_poly(pad + pad[:1], 'PORON')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
 
@@ -838,13 +842,22 @@ def svg_write(path, res):
              f'fill="#000" stroke="#ff9800" stroke-width="1.5"/>')
     for k, t in enumerate(res['tabs'], 1):
         ang = math.radians(t['angle'])
-        lx = t['x'] + math.cos(ang) * (t['protrusion'] + 4.0)
-        ly = t['y'] + math.sin(ang) * (t['protrusion'] + 4.0)
+        dx, dy = math.cos(ang), math.sin(ang)
+        tx, ty = -dy, dx
+        hl, hw = PORON_PAD_L / 2, PORON_PAD_W / 2
+        pad = [(t['x'] + tx * a + dx * b, t['y'] + ty * a + dy * b)
+               for a, b in ((-hl, -hw), (hl, -hw),
+                            (hl, hw), (-hl, hw))]
+        o.append(f'<polygon points="{" ".join(P(p) for p in pad)}" '
+                 f'fill="rgba(255,235,59,0.30)" stroke="#ff0" '
+                 f'stroke-width="1" stroke-dasharray="2,2"/>')
+        lx = t['x'] + dx * (t['protrusion'] + 4.0)
+        ly = t['y'] + dy * (t['protrusion'] + 4.0)
         o.append(f'<text x="{r2((lx - x0) * S)}" y="{r2((y1 - ly) * S)}" '
                  f'fill="#f0f" font-size="9" font-weight="bold" '
                  f'text-anchor="middle">T{k}</text>')
     o.append(f'<text x="8" y="14" fill="#f0f" font-size="10">'
-             f'T = gasket tab (silicone jacket in case)'
+             f'T = gasket tab (poron pads top+bottom, yellow)'
              f'</text>')
     for tx, ty in res['tool']:
         o.append(f'<circle cx="{r2((tx - x0) * S)}" cy="{r2((y1 - ty) * S)}" '
@@ -876,6 +889,9 @@ def main():
             json.dump({
                 'half': tag, 'units': 'mm (KiCad board frame)',
                 'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
+                'poron': {'spec': PORON_SPEC, 'pad': [PORON_PAD_L,
+                          PORON_PAD_W], 'faces': ['top', 'bottom'],
+                          'center': 'tab root center'},
                 'tabs': res['tabs'],
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)

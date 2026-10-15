@@ -9,13 +9,13 @@ jacket pockets)
 
 ## Mounting: tab-and-jacket suspension
 
-The plate grows 6 discrete tongues per half (10mm wide, 5mm proud,
-2mm root fillets, chamfered tips) that slot into silicone jackets held
-captive in the case walls — no rim strips, no plate screws, no hard
-contact anywhere. The assembly floats on 8 soft mounts per half, so
-support uniformity comes from identical jackets at even spacing, not
-from foam proximity (measured worst key-to-tab 51mm at the bottom-row
-middle keys, 2.7 pitches; encoder sits 42mm out). The inner
+The plate grows 8 discrete tongues per half (10mm wide, 5mm proud,
+2mm root fillets, chamfered tips), each carrying a poron pad top and
+bottom — no rim strips, no plate screws, no hard contact anywhere. Two
+tabs are pinned (top edge above the outer key column, bottom-inner
+corner under the MCU); the rest spread even. Support uniformity comes
+from identical poron-padded tabs at even spacing, not from foam
+proximity. The inner
 (microcontroller) edge carries no tab: MCU/TRRS/encoder windows occupy
 it fully and the remaining rim finger is narrower than a tab root, so
 that zone floats between its flanking tabs by design — encoder push
@@ -26,20 +26,22 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | future design; cavity = plate outline (tabs included) + ≥0.5 clearance; wall pockets locate the 8 jackets per half |
+| Top case | future design; cavity = plate outline (tabs included) + ≥0.5 clearance |
+| Top gaskets | Poron pads 8×4mm on each tab (PORON layer in the DXF), 3mm thick |
 | Plate | 1.5mm (material below), outline = PCB outline + tabs (USB notch included) |
 | Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
+| Bottom gaskets | Same 8×4 pads under each tab (pairs at one XY), 3mm to clear socket bodies (~2.5–3mm) |
 | Bottom case | future design; acoustic foam optional, non-structural |
 
-## Jacket contract (case-side part)
+## Poron contract
 
-- Pocket per tab: 10mm wide tongue, 1.5mm thick → jacket inner slot
-  ~10.5 × 2mm, wall ~1.5mm silicone; pocket depth swallows the 5mm
-  protrusion + 1mm.
-- Jackets wrap top AND bottom of each tab (full isolation, no hard path).
-- Tabs are solid (no holes): pins through tabs would hard-mount the
-  plate and defeat the suspension.
+- Spec: PORON 4701-40, 3mm thick, adhesive-backed (-30 softer /
+  -50 firmer are drop-in swaps, no CAD change). Cut pads from 90×4mm
+  strip stock (one 90mm strip → ~9 pads; 16 pads/half → 2 strips/half).
+- Pads stick to the TABS (plate), top and bottom — never to the case,
+  so the assembly keeps its gaskets on disassembly. Pad centers = tab
+  root centers (`lands.json`); placement map on the PORON DXF layer.
 - USB/TRRS port openings in the case walls per the notch/mouth positions
   in `spec/electronics.yaml`; antenna end keeps the 3mm plastic-only rule.
 

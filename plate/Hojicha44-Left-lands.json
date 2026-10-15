@@ -3,6 +3,18 @@
  "units": "mm (KiCad board frame)",
  "plate": "1.5mm PC",
  "gap": 2.0,
+ "poron": {
+  "spec": "PORON 4701-40, 3mm, adhesive-backed (-30 softer / -50 firmer)",
+  "pad": [
+   8.0,
+   4.0
+  ],
+  "faces": [
+   "top",
+   "bottom"
+  ],
+  "center": "tab root center"
+ },
  "tabs": [
   {
    "x": -14.0,
@@ -15,6 +27,13 @@
    "x": 18.27,
    "y": 50.7,
    "angle": 103.32,
+   "width": 10.0,
+   "protrusion": 5.0
+  },
+  {
+   "x": 56.37,
+   "y": 60.0,
+   "angle": 90.0,
    "width": 10.0,
    "protrusion": 5.0
   },
@@ -36,6 +55,13 @@
    "x": 120.86,
    "y": -53.49,
    "angle": -82.98,
+   "width": 10.0,
+   "protrusion": 5.0
+  },
+  {
+   "x": 79.56,
+   "y": -43.01,
+   "angle": -110.55,
    "width": 10.0,
    "protrusion": 5.0
   },

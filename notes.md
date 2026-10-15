@@ -725,3 +725,12 @@ minus that offset, so the plate must add it back. Hole now at shaft
 (Side note verified along the way: the PCB was never asymmetric — MCU
 pad-span centers (118/173.5) and shaft centers both mirror at 145.75;
 only footprint origins differ, which carry no physical meaning.)
+
+## Plate rev-7: poron pads on tabs (2026-10-15)
+
+Back to 8 tabs (2 pinned corners + 6 greedy) carrying 8x4mm 4701-40
+poron pads top+bottom, cut from 90x4x3 strip stock (Keebox 32-pack
+covers the build). Pads-on-tabs keeps the tab-suspension philosophy
+with a buyable, dimensioned, keyboard-specific gasket; grade swaps
+(-30/-50) tune feel without CAD changes. PORON DXF layer + SVG pads +
+JSON spec carry placement.
