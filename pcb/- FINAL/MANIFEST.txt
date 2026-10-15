@@ -1,6 +1,6 @@
 Hojicha44 release manifest
 spec version: 0.3.1
-git commit: 8e14e8b9197d7c87795603f9db3f10c658106cea
+git commit: 67d9376001811ac263c766401d84bf30f1a50eee
 git tag: pcb-baseline-r10-42-g8e14e8b-dirty
 router: gen_route.py r13
 kicad-cli: 10.0.6
