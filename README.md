@@ -2,7 +2,7 @@
 
 Custom split columnar mechanical keyboard (44 keys + 2 encoders, nice!nano x2).
 Roadmap: `KEYBOARD_PROJECT_ROADMAP.md`.
-**Current phase: PCB routing** (roadmap Phase 4). Layout geometry lives in
+**Current phase: placed+routed (r13), plate rev-8 gated, release cut, ZMK CI green** (roadmap Phase 4 done). Layout geometry lives in
 `layout/ergogen/config.yaml` (frozen snapshot: `layout/- FINAL/keyboard_layout_v7`);
 each half has a placed+routed board file — see [Schematic](#schematic).
 
@@ -15,7 +15,7 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | KLE sketch (archive) | `layout/- FINAL/keyboard_layout_v1.json` | Original row-staggered sketch |
 | Layout decisions | `spec/layout.yaml` | Keymap, thumb roles, relocated keys |
 | Board outline | `layout/generated/v2/outlines/board.dxf` | PCB edge, no encoder hole — the EC11E needs copper under it |
-| Plate outline | `layout/generated/v2/outlines/plate.dxf` | Same contour + the 16mm encoder knock-through |
+| Plate outline | `plate/Hojicha44-{Left,Right}-plate.dxf` | Same contour + tabs, 12.5mm square encoder hole |
 | Generators | `layout/generators/` | `export_kle.py` (points → KLE), `render_preview.mjs` (KLE → labeled PNG) |
 | Ergogen outputs | `layout/generated/v2/` | Points, outlines, demo SVGs, keymap render |
 | Snapshots | `layout/- FINAL/` | v1–v4 KLE, v5–v6 Ergogen (frozen) |

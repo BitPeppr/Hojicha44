@@ -1,9 +1,12 @@
 /*
- * Hojicha44 minimal keymap — DRAFT. 24 transform positions (R3C4-C5 are
- * &none: unpopulated, floating row reads low through the pull-down).
- * Left hand shown; right mirrors per spec/layout.yaml. L1 positions,
- * Backspace/Delete, and combos (Fn chord, Tab) are still open keymap
- * decisions — this file proves the scan/spatial mapping only.
+ * Hojicha44 minimal keymap — DRAFT. 46 transform positions over the combined
+ * 4x12 span (rows 0-2: RC(r,0)..RC(r,11); row 3: RC(3,0)..RC(3,9);
+ * RC(3,10..11) unpopulated and omitted from the map, Corne-style).
+ * Left hand first (22 keys + 2 &none for unpopulated R3C4-C5, floating row
+ * reads low through the pull-down); right mirrors per spec/layout.yaml
+ * appended in RC order. L1 positions, Backspace/Delete, and combos (Fn
+ * chord, Tab) are still open keymap decisions — this file proves the
+ * scan/spatial mapping only.
  */
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
@@ -20,6 +23,10 @@
                 &kp A &kp S &kp D &kp F &kp G &kp LBKT
                 &kp Z &kp X &kp C &kp V &kp B &kp TAB
                 &kp LCTRL &kp LGUI &mo 1 &kp SPACE &none &none
+                &kp P &kp O &kp I &kp U &kp Y &kp BSPC
+                &kp SCLN &kp L &kp K &kp J &kp H &kp SQT
+                &kp SLASH &kp DOT &kp COMMA &kp M &kp N &kp ENTER
+                &kp RCTRL &kp RALT &mo 1 &kp SPACE
             >;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
@@ -29,13 +36,17 @@
                 &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &none &none
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans
             >;
         };
     };
 
     /* ASSUMED pending first-article: EC11 push -> C_MUTE. Mute joins the
      * existing C_VOL_UP/C_VOL_DN media cluster from sensor-bindings.
-     * Sideband keeps the 24-cell matrix bindings/transform untouched: the
+     * Sideband keeps the 46-cell matrix bindings/transform untouched: the
      * direct kscan in hojicha44.dtsi emits row 0 / column 0 for the single
      * push key. Binding source: zmk.dev/docs/config/kscan (sideband
      * section) + app/dts/bindings/kscan/zmk,kscan-sideband-behaviors.yaml

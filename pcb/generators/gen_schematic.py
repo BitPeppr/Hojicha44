@@ -460,7 +460,9 @@ def build_half(s, tag, nets, ox):
 
     All coordinates are multiples of 1.27mm (ERC connection grid) and every
     pin connection goes through Sch.tip() (library Y is UP, schematic Y DOWN).
-    Matrix uses true 19.05mm MX pitch (15 x 1.27).
+    Matrix drawn at 19.05mm column spacing (15 x 1.27 grid units);
+    measured physical MX column pitch is 19.00mm (schematic-only constant —
+    PCB copper comes from ergogen, so P never feeds physical geometry).
     """
     P = 19.05
     STUB = 10.16  # label stubs (room for pin number + label side by side)

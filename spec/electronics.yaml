@@ -4,7 +4,8 @@
 version: 0.3.1
 status: provisional
     # schematic rev 0.3 regenerated (must-fix review applied), PCB placed+routed
-  # with DRC clean modulo waivers W1/W2; still provisional pending the
+  # with DRC clean modulo waiver W1 (exact 28 asserted) + W2 predicate armed
+  # (0 on routed boards); still provisional pending the
   # hardware pinout check against a physical module.
 
 architecture:
@@ -48,7 +49,7 @@ power:
   # still wanted, but the topology is officially blessed, not a guess.
   charger: nice!nano onboard (100mA default; 500mA charge-boost jumper stays OPEN)
       # status: fixed
-    # 130mAh charges in ~1.3h at 100mA.
+    # 110mAh charges in ~1.1h at 100mA.
     # CHARGE GATE: the power switch sits between pack+ and MCU RAW, so the
     # cell only charges while the switch is ON. Charging with the switch OFF
     # does nothing. Document on the case: "charge only when ON".
@@ -268,9 +269,9 @@ pcb:
     copper preserved by normalized dedupe.
   gates: pad-containment self-check (every numbered pad inside its outline —
     would have caught the TRRS mouth-end pads going off-board, which DRC
-    does not check) + DRC clean modulo documented waivers W1 (rotated-part
-    lib_footprint_mismatch quirk) / W2 (Choc B.SilkS-vs-own-pad2 vendor
-    marginality). gen_schematic.py never clobbers a placed board.
+    does not check) + DRC clean modulo documented waiver W1 (rotated-part
+    lib_footprint_mismatch quirk, exact 28 asserted) / W2 predicate armed but
+    0 on routed boards (Choc B.SilkS-vs-own-pad2 vendor marginality). gen_schematic.py never clobbers a placed board.
   stackup: 2-layer, 1.6mm, ENIG or HASL lead-free  # status: provisional
   design_rules: 0.25mm track / 0.2mm clearance / 0.8-0.4mm via (defaults set
     in both .kicad_pro; the KiCad template's 0-width/0-drill presets are

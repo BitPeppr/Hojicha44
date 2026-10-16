@@ -96,7 +96,7 @@ symbol/footprint libraries. The half-to-half link (the TRRS crossover) lives
 in the spec, not in either netlist. A guard rejects foreign refs, so one
 half's sheet can never carry the other's components.
 
-The halves differ **only** in the TX/RX swap, which is the cost of a straight
+(SUPERSEDED — crossover is copper, both overlays share TX/RX) The halves differ **only** in the TX/RX swap, which is the cost of a straight
 cable — the right half's ZMK overlay must swap `tx-pin`/`rx-pin`.
 
 ### Also fixed
@@ -119,17 +119,17 @@ cable — the right half's ZMK overlay must swap `tx-pin`/`rx-pin`.
 2. **Antenna keepout** — 5mm copper-free zone at the module's south (antenna)
    end, no case material within 3mm. The `antenna` point and `antenna_keepout`
    outline mark it in the layout.
-3. **USB notch** — 11×5.4mm at each `usb` point; the module's USB shell must
-   overhang that edge.
-4. **Diode placement.** The Choc hotswap courtyard is ±7.75mm but **pad 2 sits
+3. ~~**USB notch** — 11×5.4mm at each `usb` point; the module's USB shell must
+   overhang that edge.~~ [CLOSED — contradicted by fixed specs: shell sits ~9mm inboard, notch alone seats the plug.]
+4. ~~**Diode placement.** The Choc hotswap courtyard is ±7.75mm but **pad 2 sits
    at x=8.5**, outside it. A SOD-123 centred 7.62mm to the right (where the
    schematic draws it) trips courtyard overlap. All 44 diodes go in the 3.55mm
-   inter-key gaps, rotated 90°.
-5. **Cell choice.** The layout config moved to a 301230 (3×12×30) — note the
+   inter-key gaps, rotated 90°.~~ [CLOSED — answered: DIODE_CLEAR gate.]
+5. ~~**Cell choice.** The layout config moved to a 301230 (3×12×30) — note the
    spec still describes a 302030 (20mm wide, wider than the 18mm module).
-   Reconcile the two before ordering cells.
-6. **`decisions/` and `experiments/proposed/` are empty** — the roadmap's
-   Phase 0/1 artefacts were never written down.
+   Reconcile the two before ordering cells.~~ [CLOSED — answered: 302030 rejected, 301230 locked.]
+6. ~~**`decisions/` and `experiments/proposed/` are empty** — the roadmap's
+   Phase 0/1 artefacts were never written down.~~ [CLOSED — dirs don't exist in repo.]
 
 ## Fabrication gates
 
@@ -235,7 +235,7 @@ clear of the bottom-side socket courtyard (DRC courtyard clean).
 
 ## PCB-design start (2026-10-13): fab blockers closed, copper ownership fixed
 
-Both blockers from the review + `fix.md` are applied, regenerated and
+Both blockers from the review + `fix.md` (untracked, not in repo) are applied, regenerated and
 re-measured on the regenerated files, not on the analysis copies.
 
 | Fix | Evidence it now holds |
@@ -273,7 +273,7 @@ GND pad-to-pad track → build OK and preserved.
 
 ### Still open before copper
 
-- The routing decisions in `fix.md` §8 (layers, TRRS vs 4-pin JST).
+- The routing decisions in `fix.md` (untracked, not in repo) §8 (layers, TRRS vs 4-pin JST).
 - `notes.md` "Open before routing" items 1, 4 and 5 (module orientation against
 a physical module, cell 301230 vs the spec's 302030, socket stack height).
 
@@ -341,7 +341,9 @@ machine-generated `gpio-map.md` (all 24 pins both halves vs netlist).
 Research corrected three stale assumptions: no `&a0`/`resolution` (use
 `steps`), no `chosen zmk,split-uart` (use `wired_split` + pinctrl
 `NRF_PSEL`), no `CONFIG_NFCT_PINS_AS_GPIOS` (use `&uicr`,
-needs full chip erase on first flash). Bigger correction: **no TX/RX
+needs full chip erase on first flash). (2026-10-16: wired-split since
+removed — BLE-only split, TRRS debug-only; the `wired_split` research above
+is superseded, UART pinctrl kept for debug.) Bigger correction: **no TX/RX
 firmware swap exists** — the copper crossover already routes correctly, so
 both halves share identical UART pinctrl; the old "must swap" claim is
 struck from README/spec. `pin_map` promoted to fixed. `west build`
@@ -357,7 +359,7 @@ Nothing verifiable-without-parts-or-toolchain remains open.
 
 ## fig.md cross-check (2026-10-13, later review)
 
-A second review (`fix.md`, untracked) was verified item by item against the
+A second review (`fix.md`, untracked/not in repo) was verified item by item against the
 current files. Where it disagrees with these notes, the files decide:
 
 - P0-1 USB notch "enclosed hole": NOT PRESENT. Loop-traced the outline —
@@ -493,7 +495,7 @@ keymap content.
   (Courtyard/Fab/Adhesive/Margin/Eco/User_* junk); `out/release/<Half>/`
   now holds exactly F.Cu,B.Cu,F/B.Mask,F/B.Silkscreen,F/B.Paste,Edge.Cuts
   + job + drill + pos + bom + MANIFEST (verified file list, all non-empty).
-  fix.md §5.3 now carries the exact verified commands (explicit `-l` layer
+  fix.md (untracked, not in repo) §5.3 now carries the exact verified commands (explicit `-l` layer
   list, `--format csv --units mm` pos, MPN-field BOM, `out/release/` paths).
   Outputs stay gitignored.
 - **ZMK `left_encoder` is shared-node naming, not a bug.** Defined once in
@@ -749,7 +751,7 @@ area. All gates green on both halves.
 
 ## Populated renders (2026-10-15)
 
-`pcb/render_populated.py` builds throwaway /tmp board copies with one
+`pcb/render_populated.py` (deleted, see render.py note below) builds throwaway /tmp board copies with one
 dummy top-side footprint per socket, each linking koktoh/keyswitch_model
 Choc V1 Red (master/choc/v1/KiCad/red.wrl, StepUp pipeline; measured
 15.0x15.0x11.0mm = the published PG1350 15*15*11 profile exactly). Red
@@ -771,3 +773,69 @@ metal lies — trust geometry, not highlights). Switch solved with a
 hand-drawn 10x2.5x6.4 envelope (courtyard-centered origin verified).
 gen_pcb MODEL_OVERRIDES keeps stock geometry (W1 waiver set provably
 unaffected: model lines don't count). All gates green, release re-cut.
+
+## Encoder transform fix (2026-10-16)
+
+User callout was right: the EC11 body sat with legs visibly off the pads
+(3-pin column exposed west of the body, columns swapped). Root cause: the
+old offset (15,0)+rot180 was derived by composing marbastlib's pairing
+with a footprint-frame correspondence — and "verified" by shaft position
+only. The shaft sits at the pin pattern's symmetry centre, so it lands
+within 0.03mm under EITHER rotation while the pin columns swap sides;
+shaft-centering proves nothing. Fix came from measuring the STEP directly:
+pin rows at model x=0 (y=-5.01/-2.48/+0.02) and x=14.5 (y=-5.03/-0.02),
+lugs y=-8.38/+3.39 — pure shift (0,5,0)+rot0 lands every contact within
+0.03mm of the stock pads (lugs 0.3mm, inside the 2.6mm MP drills) with the
+shaft at (7.47,2.49). Side finding: marbastlib's own offset+rotation does
+not land its model's pins on its own pads either — provenance is not
+verification. W1 waiver set unchanged at 28 (model lines don't count);
+all gates green.
+
+## Render set simplified (2026-10-16)
+
+Was 5 PNGs per half (bare top/bottom/top-iso/bottom-iso + populated +
+populated-iso). Now 3, via one script `pcb/render.py` (supersedes
+`render_populated.py`, deleted): bare top + bare bottom orthos straight
+off the repo board, and populated-iso with everything (22 switch dummies
++ all board models). Fixed a real bug on the way: the old script rendered
+the /tmp throwaway copy without the 3dshapes dir, so ${KIPRJMOD} models
+(encoder, sockets, TRRS, envelopes) silently went missing from every
+populated iso — render.py mirrors Hojicha44.3dshapes next to the temp
+board first. Stale variants deleted from export/ (gitignored).
+
+## Iso viewpoint flipped to thumb side (2026-10-16)
+
+Populated iso now looks from the thumb-cluster (south) side instead of the
+number-row side: `--rotate '-50,0,205'` with no sips post-rotation (the Z+180
+absorbs the old `-r 180`). `pcb/render.py` takes `[all|iso|bare] [half]` so
+one side can be re-rendered without redoing everything.
+
+
+## Engineering audit of plate/gasket stack (2026-10-16)
+
+Verified in detail:
+
+- PORON 4701-30-15: density 240 kg/m3 (15 pcf), 3.18-12.70 mm,
+  CFD ≈ 24 kPa @25% ⇒ ≈78 gf/8x4 pad. Static ≈25 g/pad ⇒ 8-10%
+  rest compression, ≈2.5-3x headroom to 25%, far below the 50%
+  densification wall. Correct for thock + bounce.
+- Eight tabs share ≈200 g per half with equal loaded forces; assembly
+  must stay under 0% (never ship loose at ~0% or rattle/-unloaded).
+- 8x4 pad geometry sits on-plate following point-in-poly within 0.1 mm,
+  with uniform 0.35 mm minimum edge clearance on every tab (pad width 8
+  vs tab width 10). Acceptable in CAD, rev-2 to-do (extend tab length or
+  shrink pad by 2-3 mm).
+- Preload target c=15-20% ⇒ cavity 6.3-6.6 mm (1.5 plate + 2x compressed).
+  Matches a 1.5 mm PC/POM plate; FR4/ALU/CARBON variants yield
+  6.5-6.9 mm with the same formula.
+- Geometry check passes for both halves: no cutout-cutout slivers >=2.0,
+  cutout-outline >=1.0, diode clearance >=0.25, encoder cutout>=1.5
+  and stroke-not-a-sliver against windows, outline self-intersection
+  none, closure <0.6, tab area gain in 30-90 x 8, no tab overlap, worst
+  key-to-tab <=55 (worst 46-47 measured). MAX_TAB_DIST 55 allowance
+  covers uniformity.
+
+Left as future-case decisions, not in code: cavity thickness tolerance
++/=0.2 mm, TRRS/antenna cutouts per notch and mouth positions.
+
+## First-article checklist (rev-1) (already in spec/first-article.md)

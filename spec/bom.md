@@ -28,7 +28,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 1 | nice!nano v2 module | socketed, USB end to board notch |
 | 2 | machine-pin SIP strips 2×12, 2.54mm pitch, 4.5–5.0mm stack | socket rows 15.24mm apart; Mill-Max 315 2.11mm banned (needs 3.5mm min for the cell) |
 | 1 | Alps EC11E15244G1 | vertical, 30 detents / 15 pulses, knob ~10mm proud (trim shaft fallback) |
-| 1 | Knob, 6mm bore, ≤13mm dia (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | clears the 16mm plate cutout; set-screw clamps anywhere on the 20mm shaft — first-article: spin + push clearance vs plate |
+| 1 | Knob, 6mm bore, ≤13×13mm square (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | 13×13mm square knob overhangs the 12.5mm square plate hole edges but rides high on the 20mm shaft (bore never enters) — first-article: spin + push clearance vs plate |
 | 1 | XKB PJ-320A TRRS 3.5mm | bring-up/debug link only; 90° cable required |
 | 1 | TRRS cable, 4-pole CTIA, right-angle 3.5mm both ends, short | mouths face each other across a 22.40mm gap — straight plugs collide head-on; measure the boot, must clear the recessed mouths (0.99mm). No vendor link guessed; any CTIA right-angle cable meeting the fit check in §1 does |
 | 1 | Kapton (polyimide) tape, ≥10mm wide | cell sandwich: pouch face + nano underside before the cell goes in |
@@ -41,7 +41,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | Qty | Part | Notes |
 |---|---|---|
 | 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.5² encoder hole, component windows, 8 gasket tabs (NO screws/holes beyond openings) |
-| ~2 | Poron gasket strip, 90×4×3mm, 4701-40 adhesive (Keebox 32-pack or equivalent) | per half: 16 pads (8 tabs × 2 faces) cut 8×4 from strip; -30 softer / -50 firmer swap without CAD change |
+| ~2 | Poron gasket stock, 4701-30 Very Soft 240kg/m³, 3mm adhesive (sheet/strip cut to 90×4; Keebox 32-pack -40 strips are the drop-in fallback) | per half: 16 pads (8 tabs × 2 faces) cut 8×4; swap ladder -30-15 → -40 → -50, no CAD change |
 
 ## Cell — locked to orderable stock (was TBD)
 

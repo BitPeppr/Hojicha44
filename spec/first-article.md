@@ -5,9 +5,10 @@ in software — this is the release gate for the physical items. Prints:
 `out/fit/Hojicha44-{Left,Right}-fit.pdf` (Edge.Cuts + silk + fab + F.Cu
 pads, 1:1 — print at 100% / actual size, then calibrate: column-adjacent
 key centres must measure **19.00mm**; if not, the print scaled and nothing
-below counts). The fit sheet shows the PCB only; the 16mm encoder
-knock-through lives in the plate DXF (`layout/generated/v2/outlines/plate.dxf`),
-which is the cutout source — not the PCB print.
+below counts). The fit sheet shows the PCB only; the 12.5mm square encoder
+hole lives in the laser plate (`plate/Hojicha44-{Left,Right}-plate.dxf`),
+which is the cutout source — not the PCB print. (`layout/generated/v2/outlines/plate.dxf`
+is legacy ergogen output, superseded by `plate/`.)
 
 ## 1. Paper fit test (before ordering anything)
 
@@ -16,7 +17,9 @@ which is the cutout source — not the PCB print.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.
 - [ ] USB notch measures **11mm wide**; dry-fit the actual USB cable — with
   4.5mm sockets the plug sits above the PCB so 11mm is normally enough. If
-  the housing hits the shoulders beside the notch, widen it to ~14mm.
+  the housing hits the shoulders beside the notch, widen it to ~14mm. Plug
+  axis rides high on 4.5mm sockets with a ~9mm-inboard shell, so verify the
+  housing clears the plate top in the solid-board overlap zone (seating depth), not just the notch width.
 - [ ] Encoder shaft hole over the anchor; 12.5mm square plate hole clears
   the EC11E body (11mm class) at 0.4/side — the 13mm knob RIDES HIGH on
   the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft
@@ -65,18 +68,28 @@ which is the cutout source — not the PCB print.
 - [ ] Antenna end: 5mm copper-free respected, no case material within 3mm.
   Case shell near the antenna end must be plastic/wood — no metal, no
   carbon fibre (both detune/kill 2.4GHz).
-- [ ] Plate clearance: top-side diodes stand ~1.35mm in the inter-key gaps.
-  Any plate above the PCB needs relief pockets over the diodes or ≥1.5mm
-  standoffs — a flat plate will rest on diodes. Validate on the build.
+- [ ] Plate clearance: top-side diodes stand ~1.35mm in the inter-key gaps
+  under solid plate (gated ≥0.25mm from every cutout edge) with a 2.0mm
+  nominal plate gap → **0.65mm nominal vertical clearance**. Slide a
+  0.5mm feeler under the plate over each diode row on the real build; any
+  contact/scrape means relief pockets over the diodes or a gap increase
+  (case-side fix). Validate on the build.
 - [ ] Plate fit (rev-1 plate in `plate/`): 1:1 print over the real PCB —
   every 15×15 cutout frames its switch footprint, the 12.5² hole frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
   outline matches edge-for-edge including the USB notch. Seat one real
   Choc switch per region (corner/edge/thumb): clips engage, no rock.
-- [ ] Poron pads (rev-1 plate): 8×4mm 4701-40 pads stuck top+bottom on all
+  (Laser kerf enlarges cutouts ~0.1–0.2mm, so expect a slip fit, not
+  interference — rock is the reject criterion. If loose in every region,
+  rev-2 cutout tightens 15.0 → 14.9.)
+- [ ] Poron pads (rev-1 plate): 8×4mm 4701-30-15 pads stuck top+bottom on all
   8 tabs per half per the PORON DXF layer — full tab coverage, none
   overhanging into cutouts/windows; peel-test one: adhesive holds the
   tab, not the case.
+- [ ] Gasket preload: dry-stack plate + pads (no PCB) and measure sandwich
+  vs the 6.3–6.6mm cavity target (15–20% foam compression per
+  `spec/case.md`). Under 6.3 crushes past 20% (bright/harsh); over 6.6
+  leaves the stack loose (rattle).
 
 ## 4. Power-on
 

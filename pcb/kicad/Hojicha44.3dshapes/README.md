@@ -24,10 +24,15 @@ MCU pads). Hand-written WRL must use /2.54 dims and (lx,-ly) mapping.
 
 - `ROT_EC11E.step` — Alps EC11E rotary encoder body, from
   ebastler/marbastlib (`3dmodels/ROT_EC11E.step`), CERN-OHL-P-2.0.
-  Paired in marbastlib as offset (-2.5,-7.5,0) + rotate (0,0,-90) on
-  THEIR pad frame; ours remaps to offset (15,0,0) + rotate (0,0,180)
-  via the verified 7-pad rigid correspondence (no mirror needed).
-  Render-verified on first use; re-verify after any footprint touch.
+  Paired in gen_pcb MODEL_OVERRIDES as offset (0,5,0) + rot 0, measured
+  directly from the STEP pin geometry (3-pin col x=0 y=-5.01/-2.48/+0.02,
+  2-pin col x=14.5 y=-5.03/-0.02, lugs y=-8.38/+3.39 → all contacts land
+  within 0.03mm of the stock pads, shaft at (7.47,2.49)). Do NOT use
+  marbastlib's own offset (-2.5,-7.5)+rot-90 — it does not land its own
+  model's pins on its own pads. Lesson: shaft-centering alone cannot
+  verify this (the shaft sits at the pattern's symmetry centre, so it
+  lands under rot-180 too while the pin columns swap sides) — only
+  legs-on-pads in the render counts. Re-verify after any footprint touch.
 - `ws-sltv-envelope.wrl` — hand-drawn bounding box for the Wuerth
   WS-SLTV slide switch (10x2.5x6.4 per footprint name). The stock
   footprint references a STEP that ships in NO KiCad bundle and exists

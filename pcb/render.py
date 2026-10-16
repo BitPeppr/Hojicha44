@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-"""Hojicha44 populated renders — switches in sockets, pictures only.
+"""Hojicha44 renders — the one canonical set. Pictures only.
+
+Per half, exactly three files in pcb/kicad/export/:
+  Hojicha44-{half}-top.png       bare board, orthographic top
+  Hojicha44-{half}-bottom.png    bare board, orthographic bottom
+  Hojicha44-{half}-populated-iso.png  iso with everything
+      (switch bodies in sockets + all board models: encoder, MCU
+      envelope, TRRS, JST, slide switch)
 
 The repo board files carry NO switch bodies (switches plug into the
-hotswap sockets; they are not PCB parts). This script builds throwaway
+hotswap sockets; they are not PCB parts). The iso build uses throwaway
 /tmp board copies with one dummy top-side footprint per switch, each
-linking the community Kailh Choc V1 model, and renders them. The repo
-tree is never touched (verified by git status inside CI-style runs).
+linking the community Kailh Choc V1 model; the repo tree is never
+touched.
 
   Switch model: koktoh/keyswitch_model, Choc V1 Red
   (master/choc/v1/KiCad/red.wrl, StepUp-exported, same pipeline as our
@@ -15,20 +22,24 @@ tree is never touched (verified by git status inside CI-style runs).
   Sockets live on B.Cu; dummies go on F.Cu at the same (x, y, rot) so
   bodies sit centered over their sockets with pins down.
 
-  python3 pcb/render_populated.py         # both halves, top + iso
-  outputs: pcb/kicad/export/Hojicha44-{half}-populated[-iso].png
-  (orientation matches export/ convention: vertical flip / rotate-180)
+  python3 pcb/render.py [all|iso|bare] [Left|Right]
+      defaults: all halves, everything
+  Iso camera looks from the thumb-cluster (south) side:
+  --rotate '-50,0,205', no post-flip. (The old '-50,0,25' + sips -r 180
+  looked from the number-row side; Z+180 absorbs the 180.)
 """
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 EXPORT_DIR = os.path.join(PCB_DIR, "export")
-TMP = "/private/var/folders/jm/dwyz5yp95vv_wg7rjp8sknwr0000gn/T/opencode"
+TMP = tempfile.mkdtemp(prefix="hojicha-render-")
 
 MODEL_URL = ("https://raw.githubusercontent.com/koktoh/keyswitch_model"
              "/master/choc/v1/KiCad/red.wrl")
@@ -38,6 +49,8 @@ KICAD_CLI = (
     __import__("shutil").which("kicad-cli")
     or "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 )
+
+SIZE = ['--width', '1992', '--height', '1409', '--quality', 'high']
 
 
 def ensure_model():
@@ -99,30 +112,45 @@ def run(cmd, **kw):
 
 def main():
     ensure_model()
-    for half in ('Left', 'Right'):
+    what = sys.argv[1] if len(sys.argv) > 1 else 'all'
+    halves = (sys.argv[2],) if len(sys.argv) > 2 else ('Left', 'Right')
+    for half in halves:
         src = os.path.join(PCB_DIR, f'Hojicha44-{half}.kicad_pcb')
-        tmp = os.path.join(TMP, f'Hojicha44-{half}-populated.kicad_pcb')
-        s = open(src).read().rstrip()
-        assert s.endswith(')')
-        inst = sw_instances(src)
-        dummies = ''.join(dummy_fp(ref, x, y, rot, 1000 + k)
-                          for k, (ref, x, y, rot) in enumerate(inst))
-        open(tmp, 'w').write(s[:-1] + '\n' + dummies + ')\n')
-        for side, extra, flip in (('top', [], ['-f', 'vertical']),
-                                  ('iso', ['--perspective', '--rotate',
-                                           '-50,0,25', '--floor'],
-                                   ['-r', '180'])):
-            out = os.path.join(
-                EXPORT_DIR,
-                f'Hojicha44-{half}-populated'
-                f'{"-iso" if side == "iso" else ""}.png')
-            run([KICAD_CLI, 'pcb', 'render', '--side', 'top',
-                 '--width', '1992', '--height', '1409',
-                 '--quality', 'high'] + extra +
-                ['-o', out, tmp],
-                cwd=REPO)
-            run(['sips'] + flip + [out], cwd=REPO)
-            print(f'{half} {side}: {out} ({len(inst)} switches)')
+        if what in ('all', 'bare'):
+            # bare orthos straight off the repo board
+            for side, flip in (('top', ['-f', 'vertical']),
+                               ('bottom', ['-f', 'vertical'])):
+                out = os.path.join(EXPORT_DIR, f'Hojicha44-{half}-{side}.png')
+                run([KICAD_CLI, 'pcb', 'render', '--side', side]
+                    + SIZE + ['-o', out, src], cwd=REPO)
+                if shutil.which("sips"):
+                    run(['sips'] + flip + [out], cwd=REPO)
+                else:
+                    print(f'warning: sips not found, leaving {out} unflipped')
+                print(f'{half} bare {side}: {out}')
+        if what in ('all', 'iso'):
+            # populated iso off a throwaway copy (repo untouched).
+            # ${KIPRJMOD} resolves to the BOARD's directory, so a /tmp copy
+            # would lose every project-relative model (encoder, sockets,
+            # TRRS, nano/switch envelopes) — mirror the 3dshapes dir next
+            # to it. Without this the iso silently renders with bodies
+            # missing.
+            shutil.copytree(os.path.join(PCB_DIR, 'Hojicha44.3dshapes'),
+                            os.path.join(TMP, 'Hojicha44.3dshapes'),
+                            dirs_exist_ok=True)
+            tmp = os.path.join(TMP, f'Hojicha44-{half}-populated.kicad_pcb')
+            s = open(src).read().rstrip()
+            assert s.endswith(')')
+            inst = sw_instances(src)
+            dummies = ''.join(dummy_fp(ref, x, y, rot, 1000 + k)
+                              for k, (ref, x, y, rot) in enumerate(inst))
+            open(tmp, 'w').write(s[:-1] + '\n' + dummies + ')\n')
+            out = os.path.join(EXPORT_DIR,
+                               f'Hojicha44-{half}-populated-iso.png')
+            run([KICAD_CLI, 'pcb', 'render', '--side', 'top']
+                + SIZE + ['--perspective', '--rotate', '-50,0,205',
+                          '--floor', '-o', out, tmp], cwd=REPO)
+            print(f'{half} populated iso: {out} ({len(inst)} switches)')
 
 
 if __name__ == '__main__':

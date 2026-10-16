@@ -61,15 +61,21 @@ THUMBS = ["t_ctrl", "t_cmd", "t_l1", "t_space"]
 # only the render/stack model pointer is re-homed to a vendored file.
 # Needed because the stock references dangle: neither file ships in any
 # KiCad bundle nor exists in any upstream repo (footprints added without
-# their models). ENC remap math: marbastlib pairs ROT_EC11E.step as
-# offset (-2.5,-7.5,0) + rotate (0,0,-90) on ITS pad frame; ours remaps
-# to offset (15,0,0) + rotate (0,0,180) via the verified 7-pad rigid
-# correspondence (no mirror needed). Render-verified on first use.
+# their models). ENC remap: measured DIRECTLY from the STEP pin geometry,
+# not from marbastlib's pairing (whose offset (-2.5,-7.5)+rot-90 does not
+# land its own model's pins on its own pads — provenance untrustworthy).
+# Model-space contacts: 3-pin column x=0 at y=-5.01/-2.48/+0.02, 2-pin
+# column x=14.5 at y=-5.03/-0.02, lugs x~7.47 at y=-8.38/+3.39. Stock pads:
+# A/B/C x=0 y=0/5/2.5, S2/S1 x=14.5 y=0/5, MP x=7.5 y=-3.1/8.1. Pure shift
+# (0,5,0) + rot 0 lands every signal/switch pin within 0.03mm (lugs within
+# 0.3mm — fine inside the 2.6mm MP drills) and the shaft at (7.47,2.49).
+# NOTE the trap: the shaft alone lands (within 0.03mm) under rot-180 too,
+# so shaft-centering can NOT verify this — only legs-on-pads can.
 MODEL_OVERRIDES = {
     ("Rotary_Encoder",
      "RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles"):
         ("${KIPRJMOD}/Hojicha44.3dshapes/ROT_EC11E.step",
-         "(xyz 15 0 0)", "(xyz 0 0 180)"),
+         "(xyz 0 5 0)", "(xyz 0 0 0)"),
     ("Button_Switch_THT",
      "SW_Slide-03_Wuerth-WS-SLTV_10x2.5x6.4_P2.54mm"):
         ("${KIPRJMOD}/Hojicha44.3dshapes/ws-sltv-envelope.wrl",
@@ -727,7 +733,9 @@ def pick_tooling(tag, placements, fiducials, n=2):
 # antenna keepout. A footprint that moves without re-routing therefore fails
 # the build instead of producing a silently broken board.
 
-ANT_R_MM = 5.0   # antenna copper keepout radius (config: antenna_keepout)
+ANT_R_MM = 5.0   # antenna keepout: no COPPER within 5.0mm of the
+                  # antenna centre (edge-based: track centerline clears
+                  # 5.0 + width/2, vias clear 5.0 + drill/2)
 COPPER_KINDS = ("segment", "via", "zone")
 
 
@@ -801,7 +809,13 @@ def extract_copper(path, name_code):
 
 
 def copper_pieces(copper, code_name):
-    """(segments, vias) as {net name: [(...)]} for the dangling check."""
+    """(segments, vias) as {net name: [(...)]} for the dangling check.
+
+    Segments carry their copper half-width (parsed from (width ..),
+    default 0.125mm) and vias their drill (parsed from (drill ..),
+    default 0.4mm), so the antenna-keepout gate tests the copper EDGE
+    against the 5.0mm radius, not the track centerline.
+    """
     segs, vias = {}, {}
     for kind, blk in copper:
         m = re.search(r"\(net (\d+)\)", blk)
@@ -811,16 +825,31 @@ def copper_pieces(copper, code_name):
         if kind == "segment":
             g = re.search(r"\(start ([\d.-]+) ([\d.-]+)\)\s*"
                           r"\(end ([\d.-]+) ([\d.-]+)\)", blk)
-            segs.setdefault(name, []).append(tuple(float(g.group(i))
-                                                   for i in (1, 2, 3, 4)))
+            w = re.search(r"\(width ([\d.-]+)\)", blk)
+            try:
+                hw = float(w.group(1)) / 2 if w else 0.125
+            except ValueError:
+                hw = 0.125
+            segs.setdefault(name, []).append(
+                (float(g.group(1)), float(g.group(2)),
+                 float(g.group(3)), float(g.group(4)), hw))
         elif kind == "via":
             g = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", blk)
-            vias.setdefault(name, []).append((float(g.group(1)), float(g.group(2))))
+            d = re.search(r"\(drill ([\d.-]+)\)", blk)
+            try:
+                drill = float(d.group(1)) if d else 0.4
+            except ValueError:
+                drill = 0.4
+            vias.setdefault(name, []).append(
+                (float(g.group(1)), float(g.group(2)), drill))
     return segs, vias
 
 
 def check_copper(tag, copper, placements, code_name, pts):
     """Preserved copper must attach to copper and avoid the antenna keepout.
+
+    Keepout is edge-based (spec: no copper within 5.0mm): track centerlines
+    must clear 5.0 + width/2, via centres 5.0 + drill/2.
 
     Catches the invisible break: move a footprint, regenerate, and the old
     track now ends in the middle of nowhere. KiCad reports that only as an
@@ -845,26 +874,38 @@ def check_copper(tag, copper, placements, code_name, pts):
     for name, ss in segs.items():
         plist, vlist = pads.get(name, []), vias.get(name, [])
         for i, seg in enumerate(ss):
-            for pt in (seg[:2], seg[2:]):
+            for pt in (seg[:2], seg[2:4]):
                 touch = (sum(same(pt, q) for q in plist)
-                         + sum(same(pt, q) for q in vlist)
+                         + sum(same(pt, q[:2]) for q in vlist)
                          + sum(1 for k, o in enumerate(ss)
-                               if k != i and (same(pt, o[:2]) or same(pt, o[2:]))))
+                               if k != i and (same(pt, o[:2]) or same(pt, o[2:4]))))
+                touch += sum(1 for k, o in enumerate(ss)
+                             if k != i and seg_dist(pt[0], pt[1], o[:2], o[2:4]) < 0.01)
                 if touch == 0:
                     bad.append(f"{name}: dangling track end at "
                                f"({r2(pt[0])}, {r2(pt[1])})")
+    for name, vs in vias.items():
+        plist = pads.get(name, [])
+        ends = [e for s in segs.get(name, []) for e in (s[:2], s[2:4])]
+        for vx, vy, _drill in vs:
+            pt = (vx, vy)
+            touch = (sum(same(pt, q) for q in plist)
+                     + sum(same(pt, q) for q in ends))
+            if touch == 0:
+                bad.append(f"{name}: dangling via at "
+                           f"({r2(vx)}, {r2(vy)})")
 
     ax, ay, _ = pts["antenna" if tag == "L" else "mirror_antenna"]
     for name, ss in segs.items():
-        for x1, y1, x2, y2 in ss:
+        for x1, y1, x2, y2, hw in ss:
             d = seg_dist(ax, ay, (x1, y1), (x2, y2))
-            if d < ANT_R_MM - 1e-9:
+            if d < ANT_R_MM + hw - 1e-9:
                 bad.append(f"{name}: track passes {r2(d)}mm from the antenna "
                            f"centre (keepout r={ANT_R_MM})")
     for name, vs in vias.items():
-        for vx, vy in vs:
+        for vx, vy, drill in vs:
             d = math.hypot(vx - ax, vy - ay)
-            if d < ANT_R_MM - 1e-9:
+            if d < ANT_R_MM + drill / 2 - 1e-9:
                 bad.append(f"{name}: via {r2(d)}mm from the antenna centre "
                            f"(keepout r={ANT_R_MM})")
 
@@ -945,9 +986,6 @@ def build_placements(tag, pts, pin_net):
 
     # every schematic footprint must be placed exactly once (no extras, none
     # missing) — otherwise net parity is a lie.
-    sch_refs = {r for (r, _) in pin_net} | \
-        {f"SW_{tag}{i:02d}" for i in range(22)} | \
-        {f"D_{tag}{i:02d}" for i in range(22)}
     placed_refs = {p[3] for p in placements}
     # pin_net only holds refs that own nets; power symbols own none. The
     # schematic-placement cross-check lives in gen_schematic; here assert the

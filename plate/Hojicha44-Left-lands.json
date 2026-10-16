@@ -4,7 +4,7 @@
  "plate": "1.5mm PC",
  "gap": 2.0,
  "poron": {
-  "spec": "PORON 4701-40, 3mm, adhesive-backed (-30 softer / -50 firmer)",
+  "spec": "PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)",
   "pad": [
    8.0,
    4.0

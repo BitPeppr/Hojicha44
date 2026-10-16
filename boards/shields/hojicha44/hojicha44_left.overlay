@@ -30,13 +30,6 @@
     pinctrl-names = "default", "sleep";
 };
 
-/ {
-    wired_split {
-        compatible = "zmk,wired-split";
-        device = <&uart0>;
-    };
-};
-
 &left_encoder {
     status = "okay";
 };

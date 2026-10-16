@@ -47,11 +47,13 @@ encoder:
   # Knock-through belongs to the PLATE/CASE, not the PCB: the EC11E body sits
   # ON the board and all seven of its pads need copper (the A/B/C row is within
   # 7.9mm of the knob centre, i.e. inside an 8mm-radius hole).
-  plate_cutout: 16mm circle at the encoder point, in the `plate` outline
+  plate_cutout: 12.5mm square hole at the shaft, cut in plate/
+    (plate/Hojicha44-{Left,Right}-plate.dxf) — layout/generated/v2/outlines/plate.dxf
+    is legacy ergogen output and no longer the cutout source
   footprint: Ergogen stock `rotary` (EC11), attached in the PCB phase
 
 mcu:
-  keepout: 18x33 rect north of the encoder, in the gap (`_mcu` outline)
+  keepout: 18.3x34.1 rect (envelope only) north of the encoder, in the gap (`_mcu` outline)
   part: nice!nano (Pro Micro footprint) # status: provisional
   orientation: >-
     USB-UP — the USB end points at the north board edge, which is open, so
@@ -148,7 +150,7 @@ board:
     (they live in `plate`) — the EC11E body rests on the PCB
   smoothing: helper point bridges the dip between thumb fan and outer
     columns so the contour runs gentle there
-  note: plate truth moves to CadQuery in the CAD phase; this is a preview
+  note: plate truth is pure-Python plate/gen_plate.py; this is a preview
 
 relocated_keys:  # v1 -> v2 dispositions (status: fixed unless noted)
   Tab_1_5u: inner-bottom-left

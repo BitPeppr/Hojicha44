@@ -32,16 +32,9 @@
     pinctrl-names = "default", "sleep";
 };
 
-/ {
-    wired_split {
-        compatible = "zmk,wired-split";
-        device = <&uart0>;
-    };
-};
-
 /* Right half reports its physical 6 columns at logical offset 6, so both
- * halves share one 6-column transform and one 24-cell keymap (Corne-style
- * col-offset; no 12-column transform needed). */
+ * halves share one 12-column transform and one 46-cell keymap (Corne-style
+ * col-offset into the combined RC(.,0..11) span). */
 &default_transform {
     col-offset = <6>;
 };

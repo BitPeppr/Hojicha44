@@ -61,9 +61,9 @@ TAB_N = 8                # tab count per half: 2 pinned corners + 6 greedy;
 TAB_TIP_CH = 1.5         # tip chamfer (no sharp points in the case)
 PORON_PAD_L = 8.0        # poron pad per tab, cut from 90x4mm strip stock
 PORON_PAD_W = 4.0
-PORON_SPEC = 'PORON 4701-40, 3mm, adhesive-backed (-30 softer / -50 firmer)'
+PORON_SPEC = 'PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)'
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
-                         # root (measured worst 46-47mm at 2.5 pitches).
+                         # root (measured worst 48.14mm at 2.5 pitches).
                          # Consistency comes from mount UNIFORMITY here, not
                          # proximity: 8 identical poron-padded tabs at even
                          # spacing share load equally, which is exactly what
@@ -79,7 +79,7 @@ WEB_MIN = {            # min solid web (mm) per plate material, 1.5mm stock.
                        # conductive: plate touches switch plastic + gaskets
                        # only by construction — verify at assembly
 }[MATERIAL]
-DIODE_CLEAR = 0.25     # min diode-to-cutout-edge (diodes stay under solid plate)
+DIODE_CLEAR = 0.3      # min diode-to-cutout-edge (diodes stay under solid plate)
 WIN_TRRS_WEST_MARGIN = 0.5  # asymmetric: body coverage vs encoder-hole web
 
 CHOC_RE = re.compile(r'SW_[LR]\d+$')
@@ -537,10 +537,10 @@ def build_half(tag):
 
     ex, ey = enc[1] + _osx, enc[2] + _osy  # shaft center (see above)
     if web(enc_poly, loop) < WEB_MIN:
-        fail('encoder hole within 1.5 of outline')
+        fail(f'encoder hole within {WEB_MIN} of outline')
     for c in cuts:
         if web(enc_poly, c) < WEB_MIN:
-            fail('encoder hole within 1.5 of a cutout')
+            fail(f'encoder hole within {WEB_MIN} of a cutout')
     for wpoly in wins:
         # overlap (dd<0) is a deliberate union; slivers (0<=dd<1) are not
         dd = web(enc_poly, wpoly)

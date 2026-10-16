@@ -10,10 +10,13 @@ layout/generated/
 
 # KiCad working-tree noise (release reports go to generated/release/)
 *.kicad_prl
+*.rpt
 *-erc.rpt
 *-drc.rpt
 
 # versioned release evidence stays tracked (roadmap Phase 7/12)
+/generated/
+!/generated/release/
 !generated/release/**
 !pcb/- FINAL/**
 pcb/- FINAL/.DS_Store
