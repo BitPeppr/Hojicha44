@@ -30,3 +30,5 @@ pcb/kicad/export/
 
 # generated fit-print / release PDFs (kicad-cli; regenerate on demand)
 out/
+case/.venv/
+case/out/

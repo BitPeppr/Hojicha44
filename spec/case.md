@@ -31,7 +31,7 @@ Encoder push over the window zone stays soft by design.
 | Plate | 1.5mm (material below), outline = PCB outline + tabs (USB notch included) |
 | Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
-| Bottom gaskets | Same 8×4 pads under each tab (pairs at one XY), 3mm to clear socket bodies (~2.5–3mm) |
+| Bottom gaskets | Same 8×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | future design; acoustic foam optional, non-structural |
 
 - **Bottom-case floor (case design):** floor under the PCB zone must sit
