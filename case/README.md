@@ -21,9 +21,12 @@ Blender visualises.
 
 ## Status
 
-- v1: bottom tub per half (stepped outer wall, tab pockets + shelf blocks,
-  stepped floor, 4 captive-nut bosses for M3 nylon, USB/TRRS openings via
-  the outline). No top cover yet (MCU cover later, reuses the same nuts).
-- v0: plain-wall tub (superseded by v1 above).
+- v2: smooth homogeneous exterior: single vertical skin swollen gently
+  over each tab (internal blind pockets, nothing punches through), no
+  bosses/screws (friction now; cover fastening decided at cover time),
+  explicit full-height USB/TRRS port slots (the wall-offset notch is too
+  narrow for real plugs). No layer steps anywhere.
+- v1: stepped wall + captive-nut bosses — superseded: exterior had
+  jutting pockets/bosses and layer lines. Interior logic carried over.
 - Verify: `case/.venv/bin/python case/gen_case.py` (exit 0 = all gates).
   Inspect in FreeCAD when available; Blender for renders (not installed).
