@@ -6,6 +6,10 @@
  *  - gen_pcb.py W1 gate asserts the exact 28-entry mismatch set, verified
  *    against the TRACKED release DRC copies (generated/release/vX.Y.Z/)
  *  - release MANIFEST exists for the spec version and lists both halves
+ *  - ZMK structure: transform map RC count == keymap bindings per layer,
+ *    every RC inside the columns/rows span, right-half col-offset covered,
+ *    BLE-only (no wired-split node, no SPLIT_WIRED), diode-direction set
+ *    (the 6-column-transform-for-12-columns bug can never recur silently)
  */
 const { execFileSync } = require("child_process");
 const fs = require("fs");
@@ -129,6 +133,76 @@ sys.exit(rc)
   ok("w1-gate");
 } catch (e) {
   fail("w1-gate", "see python output above");
+}
+
+// 5. ZMK structure: map RC count == bindings/layer, span + offset covered,
+//    BLE-only transport, diode-direction set (no toolchain needed).
+try {
+  const d = (p) => fs.readFileSync(path.join(REPO, p), "utf8");
+  const strip = (s) => s
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("#") && !l.trim().startsWith("//"))
+    .join("\n");
+  const dtsi = strip(d("boards/shields/hojicha44/hojicha44.dtsi"));
+  const cols = parseInt(/columns\s*=\s*<(\d+)>/.exec(dtsi)[1], 10);
+  const rows = parseInt(/rows\s*=\s*<(\d+)>/.exec(dtsi)[1], 10);
+  const rcs = [.../map\s*=\s*<([\s\S]*?)>/.exec(dtsi)[1]
+    .matchAll(/RC\((\d+),\s*(\d+)\)/g)].map((m) => [+m[1], +m[2]]);
+  const have = (r, c) => rcs.some(([a, b]) => a === r && b === c);
+  const km = strip(d("config/hojicha44.keymap"));
+  const ki = km.indexOf("keymap");
+  let depth = 0, end = -1;
+  const start = km.indexOf("{", ki);
+  for (let i = start; i < km.length; i++) {
+    if (km[i] === "{") depth++;
+    else if (km[i] === "}") { depth--; if (!depth) { end = i; break; } }
+  }
+  const body = km.slice(start, end);
+  const layers = [...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g)]
+    .map((m) => (m[1].match(/&[A-Za-z][\w-]*/g) || []).length);
+  const problems = [];
+  if (layers.length < 1) problems.push("no layer bindings blocks found");
+  for (const [i, n] of layers.entries()) {
+    if (n !== rcs.length) {
+      problems.push(`layer ${i}: ${n} bindings vs ${rcs.length} map positions`);
+    }
+  }
+  for (const [r, c] of rcs) {
+    if (r >= rows || c >= cols) {
+      problems.push(`RC(${r},${c}) outside ${rows}x${cols} span`);
+      break;
+    }
+  }
+  const rovl = strip(d("boards/shields/hojicha44/hojicha44_right.overlay"));
+  const off = /col-offset\s*=\s*<(\d+)>/.exec(rovl);
+  if (!off) {
+    problems.push("right overlay missing col-offset");
+  } else {
+    // right half populates the left's shape mirrored: full rows 0-2 plus
+    // the 4 populated thumbs (r3c0-3); RC(3,10..11) intentionally omitted
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 6; c++) {
+        if (!have(r, c + +off[1])) problems.push(`RC(${r},${c + +off[1]}) missing from map`);
+      }
+    }
+    for (let c = 0; c < 4; c++) {
+      if (!have(3, c + +off[1])) problems.push(`RC(3,${c + +off[1]}) missing from map`);
+    }
+  }
+  for (const f of ["boards/shields/hojicha44/hojicha44_left.overlay",
+    "boards/shields/hojicha44/hojicha44_right.overlay",
+    "boards/shields/hojicha44/hojicha44.dtsi"]) {
+    if (/wired-split|wired_split/.test(strip(d(f)))) problems.push(`${f} still enables wired split`);
+  }
+  const conf = strip(d("config/hojicha44.conf"));
+  if (/SPLIT_WIRED/.test(conf)) problems.push("conf still sets SPLIT_WIRED");
+  if (!/CONFIG_ZMK_BLE=y/.test(conf)) problems.push("conf missing BLE");
+  if (!/diode-direction/.test(dtsi)) problems.push("dtsi missing diode-direction");
+  if (problems.length) fail("zmk-structure", problems.slice(0, 4).join("; "));
+  else ok(`zmk-structure (${rcs.length} positions, ${layers.length} layers, BLE-only)`);
+} catch (e) {
+  fail("zmk-structure", e.message);
 }
 
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nall static checks pass");

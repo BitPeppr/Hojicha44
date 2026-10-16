@@ -2,6 +2,10 @@ name: Static repo checks
 
 on: [push, pull_request, workflow_dispatch]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   static_checks:
     name: Spec/gate static checks (no KiCad)
@@ -17,3 +21,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: npm test
+      - run: python3 pcb/make_release.py --check
