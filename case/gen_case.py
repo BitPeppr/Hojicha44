@@ -171,36 +171,6 @@ def resample_ring(pts, step=1.0):
     return out
 
 
-def arclength(outline):
-    """Cumulative arclength table (len n+1, last = perimeter)."""
-    cum = [0.0]
-    for i in range(1, len(outline) + 1):
-        a, b = outline[i - 1], outline[i % len(outline)]
-        cum.append(cum[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
-    return cum
-
-
-def tab_stations(outline, tabs, cum):
-    """Arclength position of each tab root (nearest vertex)."""
-    st = []
-    for t in tabs:
-        bi = min(range(len(outline)), key=lambda i: math.hypot(
-            outline[i][0] - t["x"], outline[i][1] - t["y"]))
-        st.append(cum[bi])
-    return st
-
-
-def swell(s, stations, Ptot, P):
-    """Smooth outward swell (cosine humps) over tab stations; peak adds
-    SWELL_PEAK so the outer skin clears every pocket nose + SKIN_MIN."""
-    h = 0.0
-    for st in stations:
-        d = abs((s - st + Ptot / 2) % Ptot - Ptot / 2)
-        if d < P.SWELL_HALF:
-            h += P.SWELL_PEAK * math.cos(math.pi / 2 * d / P.SWELL_HALF) ** 2
-    return h
-
-
 def slot_frame(ring, normals, anchor):
     """(origin, outward, transverse) at the RING point nearest anchor.
     ring and normals must come from the same resampled loop."""
@@ -226,20 +196,14 @@ def build_half(tag):
     cav_poly = offset_pts(outline, P.RIM_CLEAR)     # plate + clearance
     z_bot = P.FLOOR_Z - 2.0                          # 2mm floor slab
 
-    # smooth closed outer skin: plate outline offset by WALL_T, swollen
-    # over each tab station (walls bulge where pockets need room inside).
-    # base wall = TRUE geometric offset (robust at concave corners like
-    # the USB notch; naive per-vertex offset folds there), then a small
-    # smooth swell is added on top — per-vertex, but gently enough not to
-    # fold. Gates below re-prove containment and validity anyway.
-    base = resample_ring(offset_pts(outline, P.WALL_T), P.SKIN_STEP)
+    # v3 exterior (Sofle/Corne/Lily lesson): ONE constant dilation of the
+    # plate outline — uniform wall thickness everywhere, no sculpting.
+    # Notches shallower than CASE_OUTSET (USB 5.4, TRRS channel, split-gap
+    # nick) fill in entirely; the silhouette is a soft, evenly rounded
+    # dilation of the key field. Nothing internal touches the surface.
+    base = resample_ring(offset_pts(outline, P.CASE_OUTSET), P.SKIN_STEP)
     bnorm = outward_field(base)
-    bcum = arclength(base)
-    Ptot = bcum[-1]
-    bstat = tab_stations(base, tabs, bcum)
-    skin = [(base[i][0] + bnorm[i][0] * swell(bcum[i], bstat, Ptot, P),
-             base[i][1] + bnorm[i][1] * swell(bcum[i], bstat, Ptot, P))
-            for i in range(len(base))]
+    skin = base
     solid = prism(skin, z_bot, P.TOP_LIP_Z)
     solid = solid.cut(prism(cav_poly, P.FLOOR_Z, P.TOP_LIP_Z))
 
@@ -299,8 +263,10 @@ def check_half(tag, solid, info):
         return math.hypot(pt[0] - (a[0] + t * rx), pt[1] - (a[1] + t * ry))
 
     # skin containment: every tab pocket rect must fit inside the OUTER
-    # skin with >= SKIN_MIN web (analytic; swell guarantees this at tab
-    # stations, this gate re-proves it against the generated loop).
+    # skin with >= SKIN_MIN web. Same rect as the builder (-POCKET_IN ..
+    # POCKET_OUT) — the 2026-10-16 v0 span bug (protrusion + POCKET_OUT =
+    # 10.5mm phantom corners) lived here silently until v3; measured real
+    # pockets sit >= 4.2 inside at CASE_OUTSET 6.0, straight rims 0.5.
     skin = info["skin"]
     bnorm = info["bnorm"]
     sksegs = list(zip(skin, skin[1:] + skin[:1]))
@@ -308,7 +274,7 @@ def check_half(tag, solid, info):
         o, u, v = tab_frame(t)
         for cr in rect_in_frame(o, u, v,
                                 -P.POCKET_IN,
-                                t["protrusion"] + P.POCKET_OUT,
+                                P.POCKET_OUT,
                                 -(t["width"] / 2 + P.POCKET_CLEAR),
                                 t["width"] / 2 + P.POCKET_CLEAR):
             d = min(segd(cr, a, b) for a, b in sksegs)
@@ -377,14 +343,14 @@ def check_half(tag, solid, info):
         anchor = PORTS[tag][name]
         o, u, v = slot_frame(info["base"], bnorm, anchor)
         expect(f"{name} slot void",
-               o[0] + u[0] * (P.WALL_T / 2),
-               o[1] + u[1] * (P.WALL_T / 2), 0.0, False)
+               o[0] + u[0] * (P.CASE_OUTSET / 2),
+               o[1] + u[1] * (P.CASE_OUTSET / 2), 0.0, False)
     # volume band: analytic estimate ±12% (offset joins differ slightly)
     vol = solid.Volume()
     print(f"  {tag}: volume {vol / 1000:.1f} cm3, "
           f"bbox z [{bb.zmin:.1f}, {bb.zmax:.1f}]")
-    if not (45000 <= vol <= 60000):
-        bad.append(f"volume {vol / 1000:.1f} cm3 outside [45, 60] tripwire")
+    if not (55000 <= vol <= 75000):
+        bad.append(f"volume {vol / 1000:.1f} cm3 outside [55, 75] tripwire")
     if not (vol > 0):
         bad.append("empty solid")
     return bad

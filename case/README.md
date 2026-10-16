@@ -21,12 +21,13 @@ Blender visualises.
 
 ## Status
 
-- v2: smooth homogeneous exterior: single vertical skin swollen gently
-  over each tab (internal blind pockets, nothing punches through), no
-  bosses/screws (friction now; cover fastening decided at cover time),
-  explicit full-height USB/TRRS port slots (the wall-offset notch is too
-  narrow for real plugs). No layer steps anywhere.
-- v1: stepped wall + captive-nut bosses — superseded: exterior had
-  jutting pockets/bosses and layer lines. Interior logic carried over.
+- v3 (Sofle/Corne/Lily lesson): exterior = ONE constant 6.0mm dilation
+  of the plate outline — uniform wall everywhere, no sculpting, no bumps,
+  no steps, no visible fasteners. Shallow notches (USB 5.4, TRRS channel,
+  split-gap nick) fill in and vanish from the silhouette; ports are clean
+  flush slots. Internal blind pockets + shelf pillars unchanged.
+- v2: per-tab smooth swells — superseded (walls varied in thickness;
+  uniform dilation is the reference-case answer). v1: stepped walls +
+  bosses — superseded (jutting pockets, layer lines).
 - Verify: `case/.venv/bin/python case/gen_case.py` (exit 0 = all gates).
   Inspect in FreeCAD when available; Blender for renders (not installed).

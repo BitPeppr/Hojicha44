@@ -23,14 +23,15 @@ SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # 2.0 - 2.55 = -0.55
 FLOOR_Z = -5.6  # floor top surface (spec-derived: -1.6 PCB, ~3.0 sockets,
 # 1.0 clearance; first-article measures pin/socket protrusion)
 
-# ---- outer skin (smooth, homogeneous exterior) ----
-WALL_T = 2.5        # nominal wall: outline + WALL_T, swollen at tabs
-SWELL_FLOOR = 0.0   # minimum extra skin offset beyond WALL_T (0 = straight
-#   vertical wall everywhere the swell is 0 — no steps, no taper, no juts)
-SWELL_PEAK = 3.5    # peak outward hump: pocket nose 5.5 needs skin offset
-#   >= 5.9 at stations (WALL_T 2.5 + 3.5 = 6.0, margin 0.5 > SKIN_MIN)
-SWELL_HALF = 11.0   # half-width of each hump along the rim (cos^2, smooth
-#   to zero slope at both ends — no visible seam)
+# ---- outer skin (v3: uniform dilation, Sofle/Corne/Lily lesson) ----
+# ONE constant offset of the plate outline. Straight rims need
+# 5.5 (pocket nose) + SKIN_MIN = 5.9; curved/valley rims measure >= 4.2
+# (valley dilation bridges far out). Notches shallower than the offset
+# (USB 5.4, TRRS channel) fill in and vanish from the silhouette.
+# Chunky = milled-case look, intended. (6.5 was tried on a false alarm:
+# the containment gate tested 10.5mm phantom corners from the v0 span
+# bug — fixed 2026-10-17, outset restored to the true requirement.)
+CASE_OUTSET = 6.0   # constant plate-outline -> exterior offset
 SKIN_MIN = 0.4      # min material between any pocket corner and the skin
 SKIN_STEP = 1.0     # ring resample step for the outer skin (folds gone;
 #                   verified crossing-free at 1.0/0.6/0.4)
