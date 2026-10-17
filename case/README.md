@@ -21,6 +21,21 @@ Blender visualises.
 
 ## Status
 
+- v3.2 (strength + ports + antenna, user review round): **CASE_OUTSET
+  6.0 → 7.0** — the wall over every tab tip measured exactly 0.5 (skin
+  vs tab tip + RIM_CLEAR), 1-2 FDM extrusion lines at 8 stations, the
+  "concerningly thin" sections the user flagged. Census now: wall min
+  1.50 at all tab stations (gate ≥ 1.40), 6.50 typical. **Port slots
+  re-z'd** — v3.1's cut ran from the case bottom and punched two
+  through-holes in the floor slab at the anchors (the "hole in the
+  bottom" the user found); slots now open the wall from FLOOR_Z (slab
+  top) to the lip, sill intact, battery-probed. **TRRS slot 12 → 9.5**
+  (molds the 90° boot, bore-side ≤ 8.5, not the jack body) — first
+  article measures the real boot. **Antenna**: "no case material within
+  3mm" (electronics.yaml) is now battery-gated at the module points
+  (118/173.5, 15.55) at three z bands; nearest tub material is >19mm
+  away by construction, so no antenna opening exists or is required in
+  the tub — the duty moves to the future top cover.
 - v3.1 (bulges fixed): the exterior dilates the PCB RIM, not the plate
   outline — the tabs are spliced INTO the plate outline, so dilating it
   gave the case eight 5mm bulges. Rim dilation keeps the wall uniform

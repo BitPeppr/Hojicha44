@@ -286,13 +286,16 @@ def build_half(tag):
     # these on the SKIN ring, cutting outward into air — silent no-ops
     # (battery passed by probing outside the case). v3.1 anchors on the
     # RIM and spans the full wall band: SLOT_IN into the cavity through
-    # SLOT_OUT past the skin, guaranteeing a real breach both sides.
+    # SLOT_OUT past the skin. v3.2 z-span: FLOOR_Z (slab top) .. lip —
+    # the v3.1 cut ran from z_bot and punched the port plugs clean
+    # through the 2mm floor slab (the "hole in the bottom" the user
+    # found); plugs sit above the slab so a sill is free clearance.
     for name in ("usb", "trrs"):
         anchor = PORTS[tag][name]
         o, u, v = slot_frame(rim_ring, rnorm, anchor)
         w = P.USB_SLOT_W if name == "usb" else P.TRRS_SLOT_W
         slot = rect_in_frame(o, u, v, -P.SLOT_IN, P.SLOT_OUT, -w / 2, w / 2)
-        solid = solid.cut(prism(slot, z_bot, P.TOP_LIP_Z))
+        solid = solid.cut(prism(slot, P.FLOOR_Z, P.TOP_LIP_Z))
 
     return solid, {"tabs": tabs, "pockets": pocket_centers,
                    "pocket_rects": pocket_rects,
@@ -336,13 +339,25 @@ def check_half(tag, solid, info):
                 bad.append(f"pocket corner ({r2(cr[0])},{r2(cr[1])}) "
                            f"only {d:.2f} inside skin < {P.SKIN_MIN}")
     # skin must stay outside the cavity everywhere (no pinch-back);
-    # tab tips (rim+5, cavity rim+5.5) sit inside the rim+6.0 band by
+    # tab tips (rim+5, cavity rim+5.5) sit inside the rim+7.0 band by
     # design, so the TABBED outline is the wrong reference here
     for sp in skin[::4]:
         if point_in_poly(sp, info["cav_poly"]):
             bad.append(f"skin pinches inside cavity at "
                        f"({r2(sp[0])},{r2(sp[1])})")
             break
+    # wall-thickness census (v3.2 strength review): thinnest skin->cavity
+    # distance must clear the design floor. Design value: tab tips are
+    # the closest cavity points (rim+TAB_L+RIM_CLEAR = rim+5.5 vs skin
+    # rim+CASE_OUTSET) -> 1.5 uniform at every tab; elsewhere walls run
+    # 6.5. Resample chord sag costs <=0.03, so 1.40 leaves real margin.
+    cav = info["cav_poly"]
+    cavsegs = list(zip(cav, cav[1:] + cav[:1]))
+    wall_min = min(min(segd(sp, a, b) for a, b in cavsegs)
+                   for sp in skin[::2])
+    if wall_min < 1.40:
+        bad.append(f"wall thins to {wall_min:.3f} < 1.40 (tab-tip floor "
+                   f"is OUTSET-TAB_L-RIM_CLEAR)")
     # point-in-solid battery: proves void/solid SEMANTICS (distances alone
     # cannot catch an inside-out build — a flipped normal still measures).
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
@@ -402,6 +417,21 @@ def check_half(tag, solid, info):
         expect(f"{name} slot void",
                o[0] + u[0] * (P.CASE_OUTSET / 2),
                o[1] + u[1] * (P.CASE_OUTSET / 2), 0.0, False)
+        # v3.2: the slot must open the WALL ONLY — the 2mm slab below it
+        # stays (v3.1's through-cut made two holes in the case bottom)
+        expect(f"{name} slab under slot solid",
+               o[0] + u[0] * (P.CASE_OUTSET / 2),
+               o[1] + u[1] * (P.CASE_OUTSET / 2),
+               P.FLOOR_Z - 1.0, True)
+    # antenna keepout: "no case material within 3mm" of the module
+    # antenna (electronics.yaml; r=5 circles verified against both PCB
+    # Cmts.User marks). Probes the point and the 3mm compass ring at
+    # cavity-depth, board-surface, and module-antenna height. The FUTURE
+    # COVER carries this rule too (no plastic over the antenna zone).
+    ant = P.ANTENNA_L if tag == "Left" else P.ANTENNA_R
+    for dz in (P.FLOOR_Z + 0.4, 0.0, 4.0):
+        for dx, dy in ((0, 0), (3, 0), (-3, 0), (0, 3), (0, -3)):
+            expect("antenna clear", ant[0] + dx, ant[1] + dy, dz, False)
     # slots are analytically bounded by their rects; prove they cannot
     # merge with tab pockets (a slot eating a pocket would free the tab)
     def rects_overlap(p, q):

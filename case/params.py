@@ -31,8 +31,14 @@ FLOOR_Z = -5.6  # floor top surface (spec-derived: -1.6 PCB, ~3.0 sockets,
 # Chunky = milled-case look, intended. (6.5 was tried on a false alarm:
 # the containment gate tested 10.5mm phantom corners from the v0 span
 # bug — fixed 2026-10-17, outset restored to the true requirement.)
-CASE_OUTSET = 6.0   # constant plate-outline -> exterior offset
-SKIN_MIN = 0.4      # min material between any pocket corner and the skin
+# STRENGTH REVIEW (v3.2, user-flagged thin walls): at 6.0 the wall over
+# every tab tip measured exactly 0.5 (skin rim+6.0 vs cavity tab tip
+# +RIM_CLEAR) — 1-2 FDM extrusion lines over an 11mm span at each of 8
+# stations. The tab tongues define the minimum wall locally, so the
+# whole case thickens (user-sanctioned) to close the pockets without
+# creating local swells (v2 sin, rejected).
+CASE_OUTSET = 7.0   # wall over tab tip = 7.0 - TAB_L - RIM_CLEAR = 1.5
+SKIN_MIN = 1.0      # min material between any pocket corner and the skin
 SKIN_STEP = 1.0     # ring resample step for the outer skin (folds gone;
 #                   verified crossing-free at 1.0/0.6/0.4)
 TOP_LIP_Z = 6.0     # rim top: symmetric 16.7% top preload ((6.0-3.5)/3.0),
@@ -60,9 +66,19 @@ POCKET_TOP = TOP_LIP_Z     # open to the top (cover presses upper foam)
 # the cavity through SLOT_OUT past the skin. Verify with the actual
 # plug on the first article (dry-fit gates in first-article.md).
 USB_SLOT_W = 14.0    # notch is 11; +3 for housing shoulders
-TRRS_SLOT_W = 12.0   # jack mouth; 90-degree plug boot needs ~12
+TRRS_SLOT_W = 9.5    # 90-degree TRRS plug boot (bore side <=8.5 max,
+#   typically 6.5-7.5) + 0.5/side clearance; the boot swings INSIDE the
+#   slot, so the slot clears the boot — not the 12 former jack-body guess
 SLOT_IN = 2.0        # slot starts inside the cavity (breach proof)
 SLOT_OUT = CASE_OUTSET + 1.5   # slot ends past the skin (breach proof)
+
+# ---- antenna keepout (spec/electronics.yaml antenna_keepout block) ----
+# NB: the keepout circle drawn on each board's Cmts.User has radius 5.0
+# (pcb gen_pcb.py ANT_R_MM) at the antenna centre; this file must match.
+ANT_R_MM = 5.0
+ANT_CASE_CLEAR = 3.0   # "no case material within 3mm" (electronics.yaml)
+ANTENNA_L = (118.0, 15.55)
+ANTENNA_R = (173.5, 15.55)
 
 # ---- internals carried over ----
 RIM_CLEAR = 0.5   # plate-to-wall clearance (spec/case.md stack table)

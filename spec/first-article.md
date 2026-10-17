@@ -20,6 +20,14 @@ is legacy ergogen output, superseded by `plate/`.)
   the housing hits the shoulders beside the notch, widen it to ~14mm. Plug
   axis rides high on 4.5mm sockets with a ~9mm-inboard shell, so verify the
   housing clears the plate top in the solid-board overlap zone (seating depth), not just the notch width.
+- [ ] Case port slots (case v3.2): case slot widths are **USB 14.0 / TRRS
+  9.5** — caliper the actual cable at the slot plane (with the slot
+  opening in a printed 1:1 slice). USB-C housing must clear 14.0 with
+  margin; the 90° TRRS boot must measure **≤ 8.5** (the 9.5 slot gives
+  +0.5/side). A boot over 9.5 means widening `TRRS_SLOT_W` in
+  `case/params.py` and re-cutting BEFORE the real case order. Slots stop
+  at the floor slab top (sill under each opening stays solid) — print
+  slices must show **no through-hole in the case bottom**.
 - [ ] Encoder shaft hole over the anchor; 12.5mm square plate hole clears
   the EC11E body (11mm class) at 0.4/side — the 13mm knob RIDES HIGH on
   the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft

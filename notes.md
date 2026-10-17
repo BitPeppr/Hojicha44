@@ -839,3 +839,30 @@ Left as future-case decisions, not in code: cavity thickness tolerance
 +/=0.2 mm, TRRS/antenna cutouts per notch and mouth positions.
 
 ## First-article checklist (rev-1) (already in spec/first-article.md)
+## Case v3.2 strength + ports + antenna round (2026-10-17)
+
+User-reported: thin walls, a hole in the case bottom, oversized TRRS, antenna
+opening question. All four found/measured/fixed:
+
+- **Thin walls were real**: the wall over every tab tip measured exactly
+  0.5 (skin at rim+OUTSET vs cavity at tab tip+RIM_CLEAR) — 1-2 FDM lines
+  at 8 stations. Whole-case dilation raised OUTSET 6.0→7.0 (user-sanctioned
+  thickening): wall census min 1.49-1.50 at tab stations (new gate ≥1.40),
+  6.50 typical (p50), nowhere thin. Pocket-corner webs 1.15-1.55
+  (SKIN_MIN 0.4→1.0), no adaptive nose shrink triggers left.
+- **The hole in the bottom** was the port slots: v3.1 cut them from z_bot
+  (−7.6) — full-height of the CASE, not the wall — slicing the 2mm floor
+  slab at the USB and TRRS anchors. Fixed: slots run FLOOR_Z (−5.6, slab
+  top) → lip; slab intact, battery-gated now ("slab under slot solid").
+  Plugs ride above the PCB top (z 0), so the sill is free clearance.
+- **TRRS slot 12 → 9.5** (user: mold to the required size): sized to the
+  90° boot (≤8.5 target + 0.5/side), not the jack body. Boot caliper at
+  first article verifies; over 9.5 ⇒ widen TRRS_SLOT_W and re-cut.
+- **Antenna**: keepout points verified against BOTH boards' Cmts.User
+  circles (118/173.5, 15.55, r=5) — matches points.yaml `antenna` and the
+  nice!nano usage (USB 118,49.95 ↔ antenna 118,15.55 = 34.4mm module
+  span). "No case material within 3mm" passes by construction (>19mm to
+  the nearest wall) and is battery-gated at 3 z bands; NO antenna opening
+  exists or is required in the tub — duty moves to the top cover.
+- Volumes 67.7 cm³ both halves (was 60.3 at OUTSET 6), z unchanged
+  [−7.6, +6.0], all gates green both halves, npm test green.
