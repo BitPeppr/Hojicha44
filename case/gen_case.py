@@ -73,6 +73,46 @@ def read_outline(path):
         raise RuntimeError(f"no OUTLINE in {path}")
 
 
+def segd(pt, a, b):
+    """Distance from a point to a segment."""
+    rx, ry = b[0] - a[0], b[1] - a[1]
+    L2 = rx * rx + ry * ry or 1e-12
+    t = max(0.0, min(1.0, ((pt[0] - a[0]) * rx + (pt[1] - a[1]) * ry) / L2))
+    return math.hypot(pt[0] - (a[0] + t * rx), pt[1] - (a[1] + t * ry))
+
+
+def read_pcb_outline(path):
+    """Closed Edge.Cuts loop from a .kicad_pcb (the PCB rim: the plate
+    outline withOUT tabs — tabs are plate features, not rim features).
+    The case exterior dilates THIS, so tab tongues never bump the skin."""
+    import re as _re
+    segs = []
+    for m in _re.finditer(
+            r'\(gr_line \(start (-?[\d.]+) (-?[\d.]+)\) '
+            r'\(end (-?[\d.]+) (-?[\d.]+)\) \(layer "Edge\.Cuts"',
+            open(path).read()):
+        segs.append(((float(m.group(1)), float(m.group(2))),
+                     (float(m.group(3)), float(m.group(4)))))
+    assert len(segs) > 8, f"no Edge.Cuts loop in {path}"
+    key = lambda p: (round(p[0], 2), round(p[1], 2))
+    loop = [segs[0][0], segs[0][1]]
+    used = {0}
+    while len(loop) < len(segs) + 1:
+        nxt = None
+        for i, (a, b) in enumerate(segs):
+            if i in used:
+                continue
+            if key(a) == key(loop[-1]):
+                nxt = (i, b); break
+            if key(b) == key(loop[-1]):
+                nxt = (i, a); break
+        assert nxt is not None, "Edge.Cuts does not chain into one loop"
+        used.add(nxt[0])
+        loop.append(nxt[1])
+    assert key(loop[-1]) == key(loop[0]), "Edge.Cuts loop not closed"
+    return loop[:-1]
+
+
 def wire_of(pts):
     """Closed wire from a point loop (drops explicit closure dup)."""
     if math.hypot(pts[-1][0] - pts[0][0], pts[-1][1] - pts[0][1]) < 1e-6:
@@ -184,9 +224,12 @@ def slot_frame(ring, normals, anchor):
 def build_half(tag):
     P = params
     dxf = os.path.join(PLATE_DIR, f"Hojicha44-{tag}-plate.dxf")
+    pcb = os.path.join(REPO, "pcb", "kicad",
+                       f"Hojicha44-{tag}.kicad_pcb")
     lands = json.load(open(os.path.join(
         PLATE_DIR, f"Hojicha44-{tag}-lands.json")))
-    outline = read_outline(dxf)
+    outline = read_outline(dxf)        # PLATE outline (tabs included)
+    rim = read_pcb_outline(pcb)        # PCB rim (tabs are NOT rim)
     tabs = lands["tabs"]
     assert len(tabs) == 8, f"{tag}: want 8 tabs, got {len(tabs)}"
     for t in tabs:  # params must match the plate generator's truth
@@ -196,44 +239,66 @@ def build_half(tag):
     cav_poly = offset_pts(outline, P.RIM_CLEAR)     # plate + clearance
     z_bot = P.FLOOR_Z - 2.0                          # 2mm floor slab
 
-    # v3 exterior (Sofle/Corne/Lily lesson): ONE constant dilation of the
-    # plate outline — uniform wall thickness everywhere, no sculpting.
-    # Notches shallower than CASE_OUTSET (USB 5.4, TRRS channel, split-gap
-    # nick) fill in entirely; the silhouette is a soft, evenly rounded
-    # dilation of the key field. Nothing internal touches the surface.
-    base = resample_ring(offset_pts(outline, P.CASE_OUTSET), P.SKIN_STEP)
-    bnorm = outward_field(base)
-    skin = base
+    # v3.1 exterior: ONE constant dilation of the PCB RIM — the plate
+    # outline includes the tab tongues, and dilating it gave the case
+    # eight bulges. Dilating the rim keeps the wall uniformly thick
+    # everywhere; tabs live in internal pockets inside the band.
+    # Notches shallower than CASE_OUTSET (USB 5.4, TRRS channel) fill in
+    # and vanish from the silhouette; ports breach via explicit slots.
+    rim_ring = resample_ring(rim, P.SKIN_STEP)
+    rnorm = outward_field(rim_ring)
+    skin = resample_ring(offset_pts(rim, P.CASE_OUTSET), P.SKIN_STEP)
     solid = prism(skin, z_bot, P.TOP_LIP_Z)
     solid = solid.cut(prism(cav_poly, P.FLOOR_Z, P.TOP_LIP_Z))
 
-    # shelf/pocket per tab (fully interior; skin swells around them)
+    # shelf/pocket per tab (fully interior). Adaptive nose: straight rims
+    # carry the full POCKET_OUT, but tabs near rim curvature (the north
+    # tab by the USB-notch shoulder measures 0.25 web at 5.5) shrink the
+    # nose in 0.05 steps, floored at TAB_L+0.2, until every corner
+    # clears SKIN_MIN against the actual skin ring.
+    sksegs_b = list(zip(skin, skin[1:] + skin[:1]))
+    pocket_rects = []
     pocket_centers = []
     for t in tabs:
         o, u, v = tab_frame(t)
         hw = t["width"] / 2 + P.POCKET_CLEAR
-        pillar = rect_in_frame(o, u, v, -P.POCKET_IN,
-                               P.POCKET_OUT, -hw, hw)
+        nose = P.POCKET_OUT
+        while nose > P.TAB_L + 0.2:
+            cs = rect_in_frame(o, u, v, -P.POCKET_IN, nose, -hw, hw)
+            web = min(min(segd(c, a, b) for a, b in sksegs_b) for c in cs)
+            if web >= P.SKIN_MIN:
+                break
+            nose -= 0.05
+        assert nose <= P.POCKET_OUT + 1e-9 and \
+            all(min(segd(c, a, b) for a, b in sksegs_b)
+                >= P.SKIN_MIN
+                for c in rect_in_frame(o, u, v, -P.POCKET_IN, nose,
+                                        -hw, hw)), \
+            f"tab at {t['x']},{t['y']}: no nose >= TAB_L+0.2 clears SKIN_MIN"
+        pillar = rect_in_frame(o, u, v, -P.POCKET_IN, nose, -hw, hw)
         solid = solid.fuse(prism(pillar, P.FLOOR_Z, P.SHELF_Z))
         solid = solid.cut(prism(pillar, P.POCKET_BOT, P.POCKET_TOP))
+        pocket_rects.append(pillar)
         pocket_centers.append((o[0] + u[0] * (t["protrusion"] / 2),
                                o[1] + u[1] * (t["protrusion"] / 2)))
 
-    # port slots: full-height wall openings at USB + TRRS (the propagated
-    # notch is too narrow for real plugs; slots are sized generously)
+    # port slots: full-height wall openings at USB + TRRS. v3 anchored
+    # these on the SKIN ring, cutting outward into air — silent no-ops
+    # (battery passed by probing outside the case). v3.1 anchors on the
+    # RIM and spans the full wall band: SLOT_IN into the cavity through
+    # SLOT_OUT past the skin, guaranteeing a real breach both sides.
     for name in ("usb", "trrs"):
         anchor = PORTS[tag][name]
-        o, u, v = slot_frame(base, bnorm, anchor)
-        if name == "usb":
-            w, d = P.USB_SLOT_W, P.USB_SLOT_D
-        else:
-            w, d = P.TRRS_SLOT_W, P.TRRS_SLOT_D
-        slot = rect_in_frame(o, u, v, 0.0, d, -w / 2, w / 2)
+        o, u, v = slot_frame(rim_ring, rnorm, anchor)
+        w = P.USB_SLOT_W if name == "usb" else P.TRRS_SLOT_W
+        slot = rect_in_frame(o, u, v, -P.SLOT_IN, P.SLOT_OUT, -w / 2, w / 2)
         solid = solid.cut(prism(slot, z_bot, P.TOP_LIP_Z))
 
     return solid, {"tabs": tabs, "pockets": pocket_centers,
-                   "outline": outline, "skin": skin, "bnorm": bnorm,
-                   "base": base}
+                   "pocket_rects": pocket_rects,
+                   "outline": outline, "rim": rim, "skin": skin,
+                   "rim_ring": rim_ring, "rnorm": rnorm,
+                   "cav_poly": cav_poly}
 
 
 def check_half(tag, solid, info):
@@ -256,35 +321,26 @@ def check_half(tag, solid, info):
     oc = info["outline"]
     segs = list(zip(oc, oc[1:] + oc[:1]))
 
-    def segd(pt, a, b):
-        rx, ry = b[0] - a[0], b[1] - a[1]
-        L2 = rx * rx + ry * ry or 1e-12
-        t = max(0.0, min(1.0, ((pt[0] - a[0]) * rx + (pt[1] - a[1]) * ry) / L2))
-        return math.hypot(pt[0] - (a[0] + t * rx), pt[1] - (a[1] + t * ry))
-
     # skin containment: every tab pocket rect must fit inside the OUTER
     # skin with >= SKIN_MIN web. Same rect as the builder (-POCKET_IN ..
     # POCKET_OUT) — the 2026-10-16 v0 span bug (protrusion + POCKET_OUT =
     # 10.5mm phantom corners) lived here silently until v3; measured real
     # pockets sit >= 4.2 inside at CASE_OUTSET 6.0, straight rims 0.5.
     skin = info["skin"]
-    bnorm = info["bnorm"]
+    snorm = outward_field(skin)
     sksegs = list(zip(skin, skin[1:] + skin[:1]))
-    for t in info["tabs"]:
-        o, u, v = tab_frame(t)
-        for cr in rect_in_frame(o, u, v,
-                                -P.POCKET_IN,
-                                P.POCKET_OUT,
-                                -(t["width"] / 2 + P.POCKET_CLEAR),
-                                t["width"] / 2 + P.POCKET_CLEAR):
+    for rect in info["pocket_rects"]:
+        for cr in rect:
             d = min(segd(cr, a, b) for a, b in sksegs)
             if d < P.SKIN_MIN:
                 bad.append(f"pocket corner ({r2(cr[0])},{r2(cr[1])}) "
                            f"only {d:.2f} inside skin < {P.SKIN_MIN}")
-    # skin must stay outside the plate outline everywhere (no pinch-back)
+    # skin must stay outside the cavity everywhere (no pinch-back);
+    # tab tips (rim+5, cavity rim+5.5) sit inside the rim+6.0 band by
+    # design, so the TABBED outline is the wrong reference here
     for sp in skin[::4]:
-        if point_in_poly(sp, oc):
-            bad.append(f"skin pinches inside plate at "
+        if point_in_poly(sp, info["cav_poly"]):
+            bad.append(f"skin pinches inside cavity at "
                        f"({r2(sp[0])},{r2(sp[1])})")
             break
     # point-in-solid battery: proves void/solid SEMANTICS (distances alone
@@ -333,18 +389,33 @@ def check_half(tag, solid, info):
         sp = skin[si]
         # step INWARD along the local base-ring normal (origin-scaling
         # would drag far-side probes into the cavity)
-        px = sp[0] - bnorm[si % len(bnorm)][0] * 0.3
-        py = sp[1] - bnorm[si % len(bnorm)][1] * 0.3
+        px = sp[0] - snorm[si][0] * 0.3
+        py = sp[1] - snorm[si][1] * 0.3
         if (min(math.hypot(px - t["x"], py - t["y"])
                 for t in info["tabs"]) > 12.0 and not near_port(px, py)):
             expect("skin band solid", px, py, 0.0, True)
-    # port slots void: probe inside each slot rect near mid-height
+    # port slots void: probe INSIDE the wall band on the rim anchor (the
+    # v3 probes sat outside the case and passed while the cut was a no-op)
     for name in ("usb", "trrs"):
         anchor = PORTS[tag][name]
-        o, u, v = slot_frame(info["base"], bnorm, anchor)
+        o, u, v = slot_frame(info["rim_ring"], info["rnorm"], anchor)
         expect(f"{name} slot void",
                o[0] + u[0] * (P.CASE_OUTSET / 2),
                o[1] + u[1] * (P.CASE_OUTSET / 2), 0.0, False)
+    # slots are analytically bounded by their rects; prove they cannot
+    # merge with tab pockets (a slot eating a pocket would free the tab)
+    def rects_overlap(p, q):
+        return (point_in_poly(p[0], q) or point_in_poly(p[2], q)
+                or point_in_poly(q[0], p) or point_in_poly(q[2], p))
+    for name in ("usb", "trrs"):
+        anchor = PORTS[tag][name]
+        o, u, v = slot_frame(info["rim_ring"], info["rnorm"], anchor)
+        w = P.USB_SLOT_W if name == "usb" else P.TRRS_SLOT_W
+        slot = rect_in_frame(o, u, v, -P.SLOT_IN, P.SLOT_OUT,
+                             -w / 2, w / 2)
+        for rect in info["pocket_rects"]:
+            if rects_overlap(slot, rect):
+                bad.append(f"{name} slot overlaps a tab pocket")
     # volume band: analytic estimate ±12% (offset joins differ slightly)
     vol = solid.Volume()
     print(f"  {tag}: volume {vol / 1000:.1f} cm3, "

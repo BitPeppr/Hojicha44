@@ -21,11 +21,16 @@ Blender visualises.
 
 ## Status
 
-- v3 (Sofle/Corne/Lily lesson): exterior = ONE constant 6.0mm dilation
-  of the plate outline — uniform wall everywhere, no sculpting, no bumps,
-  no steps, no visible fasteners. Shallow notches (USB 5.4, TRRS channel,
-  split-gap nick) fill in and vanish from the silhouette; ports are clean
-  flush slots. Internal blind pockets + shelf pillars unchanged.
+- v3.1 (bulges fixed): the exterior dilates the PCB RIM, not the plate
+  outline — the tabs are spliced INTO the plate outline, so dilating it
+  gave the case eight 5mm bulges. Rim dilation keeps the wall uniform
+  (measured: skin-to-rim max exactly 6.0, ~1.0 cover over every tab
+  tip). Port slots re-anchored on the rim and span the full wall band
+  (v3's were silent no-ops — battery passed by probing outside the
+  case). Pocket noses adaptive per tab (5.5 nominal, floor TAB_L+0.2)
+  where rim curvature eats the corner web.
+- v3: uniform 6.0mm dilation of the plate outline — superseded by v3.1
+  (dilating the tabbed outline bulged at every tab).
 - v2: per-tab smooth swells — superseded (walls varied in thickness;
   uniform dilation is the reference-case answer). v1: stepped walls +
   bosses — superseded (jutting pockets, layer lines).

@@ -54,14 +54,15 @@ POCKET_BOT = SHELF_Z       # pocket floor IS the shelf (foam rests on it)
 POCKET_TOP = TOP_LIP_Z     # open to the top (cover presses upper foam)
 
 # ---- port slots (explicit full-height wall openings) ----
-# The plate's USB notch propagates too narrow through a +0.5/WALL_T wall
-# (~6mm of clear width), so real plug housings need explicit slots, cut
-# through the wall at the anchors. Generous width + depth; verify with
-# the actual plug on the first article (dry-fit gates in first-article.md).
+# The rim's USB notch (11 wide) fills in under CASE_OUTSET dilation, and
+# real plug housings are wider anyway, so ports breach via explicit
+# slots anchored on the RIM, spanning the whole wall band: SLOT_IN into
+# the cavity through SLOT_OUT past the skin. Verify with the actual
+# plug on the first article (dry-fit gates in first-article.md).
 USB_SLOT_W = 14.0    # notch is 11; +3 for housing shoulders
-USB_SLOT_D = 8.0     # plug housing depth beyond the notch line
-TRRS_SLOT_W = 12.0   # jack mouth 3.5-ish; 90-degree plug boot needs ~12
-TRRS_SLOT_D = 8.0    # boot depth beyond the mouth line
+TRRS_SLOT_W = 12.0   # jack mouth; 90-degree plug boot needs ~12
+SLOT_IN = 2.0        # slot starts inside the cavity (breach proof)
+SLOT_OUT = CASE_OUTSET + 1.5   # slot ends past the skin (breach proof)
 
 # ---- internals carried over ----
 RIM_CLEAR = 0.5   # plate-to-wall clearance (spec/case.md stack table)
