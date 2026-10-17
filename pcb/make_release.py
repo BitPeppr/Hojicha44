@@ -40,6 +40,18 @@ def spec_version():
     return m.group(1)
 
 
+def board_commit():
+    """Last commit that touched board-affecting sources. A release cut at
+    an older commit is stale by definition (gerbers predate the boards)."""
+    def run(*a):
+        r = subprocess.run(a, capture_output=True, text=True, cwd=REPO)
+        return r.stdout.strip().splitlines()[0] if r.returncode == 0 and \
+            r.stdout.strip() else "unknown"
+    return run("git", "log", "-1", "--format=%H", "--",
+               "pcb/kicad", "pcb/generators", "pcb/make_release.py",
+               "spec/electronics.yaml")
+
+
 def git_info():
     def run(*a):
         r = subprocess.run(a, capture_output=True, text=True, cwd=REPO)
@@ -100,8 +112,35 @@ def sha12(path):
     return h.hexdigest()[:12]
 
 
-def verify_release(reldir):
+def manifest_lines(reldir):
+    man = os.path.join(reldir, "MANIFEST.txt")
+    if not os.path.exists(man):
+        return []
+    return open(man).read().splitlines()
+
+
+def manifest_value(lines, key):
+    """Value of 'key: value' manifest header line, or None."""
+    for l in lines:
+        if l.startswith(f"{key}: "):
+            return l.split(f"{key}: ", 1)[1].strip()
+    return None
+
+
+def verify_release(reldir, with_manifest=True):
+    """with_manifest=True (--check/CI): hashes + commit currency + scope.
+    with_manifest=False (mid-build): structure only, manifest not written yet."""
     bad = []
+    lines = manifest_lines(reldir)
+    if with_manifest and not lines:
+        return ["MANIFEST.txt missing or empty"]
+    if with_manifest:
+        tops = sorted(os.listdir(reldir))
+        if tops != ["Left", "MANIFEST.txt", "Right"]:
+            bad.append(f"unexpected release top-level: {tops} (clean-cut only)")
+    # every listed file must still hash to its manifest sha12 (the manifest
+    # is the tamper evidence; eb6678f was caught shipping stale gerbers
+    # beside a re-pointed manifest exactly because nothing re-verified)
     for half in ("Left", "Right"):
         d = os.path.join(reldir, half)
         if not os.path.isdir(d):
@@ -123,8 +162,46 @@ def verify_release(reldir):
         if not any(f.endswith(".drl") for f in files):
             bad.append(f"{half}: drill file missing")
         for f in files:
-            if os.path.getsize(os.path.join(d, f)) == 0:
+            p = os.path.join(d, f)
+            if os.path.getsize(p) == 0:
                 bad.append(f"{half}/{f} empty")
+        if with_manifest:
+            listed = {}
+            started = False
+            for l in lines:
+                if l.startswith(f"[{half}]"):
+                    started = True
+                    continue
+                if started and l.startswith("["):
+                    break
+                if started:
+                    m = re.match(r"^  ([0-9a-f]{12})  (\S+)$", l)
+                    if not m:
+                        bad.append(f"{half}: unparseable manifest line {l!r}")
+                        continue
+                    listed[m.group(2)] = m.group(1)
+            if len(listed) != len(files):
+                bad.append(f"{half}: manifest lists {len(listed)} files, "
+                           f"dir has {len(files)}")
+            for f, want_hash in listed.items():
+                if not os.path.exists(os.path.join(d, f)):
+                    bad.append(f"{half}/{f} in manifest but missing on disk")
+                    continue
+                got_hash = sha12(os.path.join(d, f))
+                if got_hash != want_hash:
+                    bad.append(f"{half}/{f} hash {got_hash} != manifest "
+                               f"{want_hash} (stale content or edited artifact)")
+            for f in files:
+                if f not in listed:
+                    bad.append(f"{half}/{f} on disk but not in manifest")
+    # the manifest must claim the CURRENT board-affecting commit, else the
+    # gerbers were exported from older boards
+    if with_manifest:
+        head = board_commit()
+        cmt = manifest_value(lines, "git commit")
+        if cmt != head:
+            bad.append(f"manifest commit {cmt} != board-affecting HEAD {head} "
+                       f"(- boards changed since the cut; re-run make_release)")
     return bad
 
 
@@ -132,22 +209,35 @@ def main():
     check_only = "--check" in sys.argv
     ver = spec_version()
     reldir = os.path.join(REPO, "generated", "release", f"v{ver}")
+    bhead = board_commit()
     if check_only:
         bad = verify_release(reldir)
-        print(f"release {reldir}: {'CLEAN' if not bad else 'FAIL'}")
+        print(f"release {reldir}: "
+              f"{'CLEAN' if not bad else 'FAIL'} (boards @{bhead[:12]})")
         for b in bad:
             print(f"  !! {b}")
         sys.exit(1 if bad else 0)
-    commit, tag = git_info()
+    # clean cut: no stale artifacts from previous exports can survive
+    # beside the new ones (a half-updated tree shipped exactly that way
+    # once — drill+manifest refreshed, gerbers not)
+    if os.path.isdir(reldir):
+        shutil.rmtree(reldir)
     cli, router = tool_versions()
     for half in ("Left", "Right"):
         export_half(half, os.path.join(reldir, half))
-    bad = verify_release(reldir)
+    bad = verify_release(reldir, with_manifest=False)
+    if bad:  # surface BEFORE hashing so a broken cut never self-certifies
+        print(f"release v{ver}: export FAILED:")
+        for b in bad:
+            print(f"  !! {b}")
+        sys.exit(1)
     lines = [
         "Hojicha44 release manifest",
         f"spec version: {ver}",
-        f"git commit: {commit}",
-        f"git tag: {tag}",
+        # commit the boards were exported from (NOT repo HEAD — case, docs
+        # and firmware commits must not flag the release stale)
+        f"git commit: {bhead}",
+        f"git tag: {git_info()[1]}",
         f"router: gen_route.py {router}",
         f"kicad-cli: {cli}",
         "ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)",
@@ -163,12 +253,7 @@ def main():
             lines.append(f"  {sha12(os.path.join(d, f))}  {f}")
     open(os.path.join(reldir, "MANIFEST.txt"), "w").write("\n".join(lines) + "\n")
     print(f"release v{ver}: {reldir}")
-    print(f"  spec {ver} commit {commit[:12]} router {router} cli {cli[:24]}")
-    if bad:
-        print("  FAIL:")
-        for b in bad:
-            print(f"  !! {b}")
-        sys.exit(1)
+    print(f"  spec {ver} boards @{bhead[:12]} router {router} cli {cli[:24]}")
     print("  CLEAN: 9 gerbers + job + drill + pos + pos-smt + bom + erc + drc per half")
 
 

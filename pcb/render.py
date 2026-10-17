@@ -112,6 +112,8 @@ def run(cmd, **kw):
 
 def main():
     ensure_model()
+    os.makedirs(EXPORT_DIR, exist_ok=True)  # gitignored; kicad-cli -o fails
+    # if the parent dir is absent
     what = sys.argv[1] if len(sys.argv) > 1 else 'all'
     halves = (sys.argv[2],) if len(sys.argv) > 2 else ('Left', 'Right')
     for half in halves:

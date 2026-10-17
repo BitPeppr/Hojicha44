@@ -184,7 +184,8 @@ mcu_socket_height: 4.5mm round machine-pin SIP + 0.6mm pins (or 5.0mm PBS
 mcu_verify: >-
   silkscreen; check_mcu_footprint() guards the pad map on every build.
   Remaining check for the PCB phase: orient the socket so the pin-1/USB end
-  faces the module's USB end (open board edge, back of the keyboard).
+  faces the module's USB end (north rim; the 11mm outlet notch is the
+  module's only route to a plug — the socket shell stays inboard).
 
 pin_map:                           # status: fixed — see pcb_gate below
   rows: {R0: D4, R1: D5, R2: D6, R3: D7}
@@ -284,24 +285,27 @@ pcb:
     Confirmed by part geometry (switch pins and socket pads not co-planar).
 
 mechanical:
-  mounting: gasket, no PCB holes  # status: fixed — case clamps PCB edge
+  mounting: gasket, no PCB holes  # status: fixed — poron pads hold TABS, PCB hangs off the switches; the case never clamps the board
   flex_cuts: per-key routed slots — DEFERRED to rev 2 (not in this outline)
       # status: deferred-to-rev-2 — verified single Edge.Cuts loop per half
     # with no slots; no geometry change. Gasket build works without flex
     # cuts. FAB GATE (rev 2): confirm min slot width / cost with the fab
     # (typically >=1mm routed) before drawing them.
   antenna_keepout: >-
-    no case material within 3mm; antenna end points at an open board edge
+    no case material within 3mm of the r=5 antenna circle (measured wall
+    distance >=14.15mm; the case gate bounds both ring boundaries)
     # PCB-phase rule: module USB end = north board edge (USB notch + plug
-    # access), so the ANTENNA end = south end of the module. Reserve a 5mm
-    # copper-free zone there; the `antenna` point + `antenna_keepout`
-    # outline (r=5) mark it in the layout.
+    # access), so the ANTENNA end points INBOARD (near the rim but never
+    # edge-open): the antenna circle sits >=13.6mm from every board edge.
+    # Reserve a 5mm copper-free zone there; the `antenna` point +
+    # `antenna_keepout` outline (r=5) mark it in the layout.
   # status: fixed
   usb_edge: both module USB-C ports exposed at board edge
       # status: fixed
     # Module is placed USB-up: pin 1 (D1) and pin 24 (RAW) at the USB end,
     # antenna end (pads 12/13) at the south end. The board outline carries a
-    # 11x5.4mm notch at each `usb` point so the plug can seat. The module's
+    # 11mm-wide × ~5.45mm-deep outlet notch at each `usb` point so the plug
+    # can seat. The module's
     # USB shell does NOT overhang the board edge (measured inboard by ~9mm);
     # the notch alone provides plug seating.
   pcb_gates:  # all must hold before Gerber export

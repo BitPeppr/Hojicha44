@@ -7,8 +7,10 @@
  *    against the TRACKED release DRC copies (generated/release/vX.Y.Z/)
  *  - release MANIFEST exists for the spec version and lists both halves
  *  - ZMK structure: transform map RC count == keymap bindings per layer,
- *    every RC inside the columns/rows span, right-half col-offset covered,
- *    BLE-only (no wired-split node, no SPLIT_WIRED), diode-direction set
+ *    exact 2 layers, every binding's POSITION against the row-major
+ *    interleaved legend signature (the left-then-right ordering bug can
+ *    never silently ship wrong characters), col-offset coverage, BLE-only
+ *    (no wired-split node, no SPLIT_WIRED), diode-direction set
  *    (the 6-column-transform-for-12-columns bug can never recur silently)
  */
 const { execFileSync } = require("child_process");
@@ -80,9 +82,6 @@ try {
   const src = fs.readFileSync(
     path.join(REPO, "pcb", "generators", "gen_schematic.py"),
     "utf8"
-  );
-  const pairs = [...src.matchAll(/\("([^"]+\.kicad_sym)",\s*"([^"]+)",/g)].map(
-    (m) => `${m[1]}:${m[2]}`
   );
   // Only scan the NEED block (first occurrence region) to avoid false hits.
   const needBlock = src.slice(src.indexOf("NEED = ["), src.indexOf("LIB_IDS"));
@@ -159,13 +158,54 @@ try {
     else if (km[i] === "}") { depth--; if (!depth) { end = i; break; } }
   }
   const body = km.slice(start, end);
-  const layers = [...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g)]
-    .map((m) => (m[1].match(/&[A-Za-z][\w-]*/g) || []).length);
+  // Full token sequence per layer (binding + args, in position order).
+  // Checked against the expected ROW-MAJOR INTERLEAVED signature so the
+  // B1-class bug (bindings listed left-half-first instead of per-row)
+  // can never ship silently again. Update the EXPECT arrays when the
+  // draft legends change — that is the point of the assert.
+  const toks = (s) => s.match(/&[A-Za-z][\w-]*(?:\s+[A-Za-z0-9_+]+)*/g) || [];
+  const layerBlocks = [
+    ...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g),
+  ].map((m) => toks(m[1]));
+  // Row-major interleaved expected lists: 0-5 = left row0, 6-11 = right
+  // row0, 12-17 = left row1, ... (see transform map RC order).
+  const DEFAULT_EXP = [
+    "&kp Q", "&kp W", "&kp E", "&kp R", "&kp T", "&kp GRAVE",
+    "&kp P", "&kp O", "&kp I", "&kp U", "&kp Y", "&kp BSPC",
+    "&kp A", "&kp S", "&kp D", "&kp F", "&kp G", "&kp LBKT",
+    "&kp SCLN", "&kp L", "&kp K", "&kp J", "&kp H", "&kp SQT",
+    "&kp Z", "&kp X", "&kp C", "&kp V", "&kp B", "&kp TAB",
+    "&kp SLASH", "&kp DOT", "&kp COMMA", "&kp M", "&kp N", "&kp ENTER",
+    "&kp LCTRL", "&kp LGUI", "&mo 1", "&kp SPACE", "&none", "&none",
+    "&kp RCTRL", "&kp RALT", "&mo 1", "&kp SPACE",
+  ];
+  const T6 = Array(6).fill("&trans");
+  const LOWER_EXP = [
+    ...T6, ...T6, ...T6, ...T6, ...T6, ...T6, // rows 0-2: 36 trans
+    "&trans", "&trans", "&trans", "&trans",
+    "&none", "&none",                          // unpopulated left R3C4-C5
+    "&trans", "&trans", "&trans", "&trans",
+  ];
   const problems = [];
-  if (layers.length < 1) problems.push("no layer bindings blocks found");
-  for (const [i, n] of layers.entries()) {
-    if (n !== rcs.length) {
-      problems.push(`layer ${i}: ${n} bindings vs ${rcs.length} map positions`);
+  if (layerBlocks.length !== 2) {
+    problems.push(`want exactly 2 layers, got ${layerBlocks.length}`);
+  }
+  for (const [i, got] of layerBlocks.entries()) {
+    if (got.length !== rcs.length) {
+      problems.push(`layer ${i}: ${got.length} bindings vs ${rcs.length} map positions`);
+    }
+    const exp = [DEFAULT_EXP, LOWER_EXP][i];
+    if (exp && got.length === rcs.length) {
+      const want = exp.join("\u0000");
+      if (got.join("\u0000") !== want) {
+        for (let j = 0; j < rcs.length; j++) {
+          if (got[j] !== exp[j]) {
+            problems.push(`layer ${i} position ${j} is RC(${rcs[j][0]},${rcs[j][1]})=` +
+              ` got ${got[j]}, want ${exp[j]}`);
+            break;
+          }
+        }
+      }
     }
   }
   for (const [r, c] of rcs) {
@@ -200,7 +240,8 @@ try {
   if (!/CONFIG_ZMK_BLE=y/.test(conf)) problems.push("conf missing BLE");
   if (!/diode-direction/.test(dtsi)) problems.push("dtsi missing diode-direction");
   if (problems.length) fail("zmk-structure", problems.slice(0, 4).join("; "));
-  else ok(`zmk-structure (${rcs.length} positions, ${layers.length} layers, BLE-only)`);
+  else ok(`zmk-structure (${rcs.length} positions, ${layerBlocks.length} layers, ` +
+    `binding order verified, BLE-only)`);
 } catch (e) {
   fail("zmk-structure", e.message);
 }

@@ -9,6 +9,11 @@ Blender visualises.
 - `params.py` — every dimension with its spec source. Change here.
 - `gen_case.py` — tub generator + self-checks. Outputs to `case/out/`
   (gitignored): STEP (exchange), STL (print).
+- `gen_cover.py` — the ring cover (retention lid, v3.5). It imports the
+  tub's `compute_ports` / `pocket_layout` / `magnet_stations`, so the
+  two parts interlock from shared anchors; same output convention.
+- `probe_bores.py` — offline bore shape audit on the finished solids
+  (not part of CI; run before a real print).
 - `requirements.txt` — pinned CadQuery (`case/.venv`, Python 3.12).
 
 ## Conventions (match the rest of the repo)
@@ -21,21 +26,107 @@ Blender visualises.
 
 ## Status
 
+- v3.5 (user "implement" round: pwrsw + magnets + ring cover): **PWR
+  actuator aperture** — the WS-SLTV sits wholly inside the cavity, so
+  the wall question was really a mouth: a 5.0-wide slot, z 4.3..top
+  with 0.8mm fillets, through the north rim plateau. The plateau is the
+  raw Edge.Cuts line y=58.0 (x 97.5..110.5, mirror 181..194), so the
+  port frame is EXACT axis-aligned — no resample-phase wobble (a
+  wobbling anchor x put the slot 0.87 from tab-4's pocket; the SAT gate
+  caught it, and mouth centre 106.3/185.2 clears the pocket ≥3.2 and
+  the USB mouth ~1.8). **Retention: recessed magnets** —
+  `magnet_stations()` picks 8 per half on the band top face: local band
+  ≥6.4 (≥1.1 webs both sides, re-checked against the true boundaries),
+  ≥5.1 from every port/pocket rect via a rect-aware distance
+  (`rect_d` — edge-distance alone read a deep-inside point as "far"
+  and parked a phantom station inside the USB notch void; the pocket
+  web probes caught it), antenna ≥10.1, spacing ≥14, slots snapped at
+  perimeter/8 with both rings rotated to the USB anchor for mirror
+  symmetry. Ø4.2×2.2 pockets, faces flush at the lip plane. **Ring
+  cover v1** (`gen_cover.py`): flush ring z 6.0..9.0 reusing the tub's
+  helpers verbatim — W1 full-depth (the plug's overmold pokes ~0.2 past the top; the module
+  tops 7.7, below the ring),
+  TRRS = the same Ø9.5 cylinder as a BLIND tunnel in the 6..9 slice
+  (tops 7.25 > boot swing 6.75; chord ≤4.82, ring NOT split), pwrsw
+  full-depth but keeping a 1.1 inner web (W1 stays the only radial
+  severance → single solid; hard-won: hand-placed ring-resume
+  coordinates were wrong for the wider bite outline, replaced by a
+  port-agnostic skin-hug battery). New per-port census print every
+  build (housing/boot/lever margins, breach, SAT) + magnet band/ant
+  line. Measured: tub 68.0/68.0 cm³ (magnets+pwrsw −0.3), cover
+  7.7/7.7 cm³, wall_min 1.49/1.50, webs 1.25/1.15, magnet band min
+  6.48/6.49, stations mirrored 1.29mm (measured). `probe_bores.py` gained a
+  7-probe pwrsw group per half (below/flank/fillet/wall-resumed/top/
+  sills).
+
+- v3.5 review round (user solo review, findings A–F): **the ring now
+  bridges the tabs** — v1 cut its interior from the plate outline,
+  which left a tab-shaped bite over every tab pocket so the top poron
+  pads pressed NOTHING (reviewer probed pad centres void at z 6.2/7.5).
+  The interior is the PCB rim + 0.5 now: the ring presses all 8 top
+  pads at the designed 16.7% (new tab-pad press gate fails in the
+  bite state; the 0..0.5mm pad-root sliver stays unpressed). Encoder
+  hole 12.5 → 12.7 (the vendored EC11 body measures 12.30 wide in the
+  plate band → 0.20/side; plates re-gated CLEAN). Wording batch:
+  TRRS mouths documented RECESSED 0.99 (drop-in is even easier than
+  claimed — the jack never crosses the band), USB socket stack 4.5 /
+  module 4.5..7.7, notch depth 6.3–10.3 local, slot sill vs module
+  poke wording, `PWRSW_COVER_IN = 1.6` replaces the derived t_web,
+  magnet mirror documented 1.29, print-orientation note. Measured
+  after: cover 8.9/8.9 cm³, census wall_min 5.85, stations unchanged.
+
+- v3.4 (user review round): **ports became shaped bores** — the
+  v3.2-3.3 wall slots cut the FULL wall band (14×11.6 USB / 9.5×11.6
+  TRRS rectangles the user rightly called "big gaping"). v3.4 sizes
+  each mouth to the plug's z band instead (params.py carries the stack
+  reasoning): **USB = 14.0-wide slot with 1.2mm bottom fillets spanning
+  z 2.0..top** (plug axis rides at the lip plane — overmold bottom
+  ~2.8; the neck above the lip exits through the open top, which is
+  the cover's duty), **TRRS = Ø9.5 round bore on the jack-axis estimate
+  z 2.4** (≤8.5 ball swings freely inside; margins hold for ±0.5mm
+  axis drift; clipped flat by the lip only where it passes the top).
+  Measured breach unchanged (the march is z-independent): usb out=19.00,
+  trrs out=9.50. Material returns: volumes 66.7/66.8 → **68.3 cm³**
+  both halves; wall_min 1.49/1.50 and pocket webs 1.25/1.15 unchanged.
+  `check_half` gates re-dereded to bore geometry (bore-aware skin-band
+  classification, mouth probes at 0.9 half-width across two in-bore
+  z planes, air beyond per plane, SAT bounding-rect proof); new
+  `case/probe_bores.py` throws an offline shape audit (fillet envelope,
+  full-width top, circle edges, extreme-z chords, sill). **Antenna
+  window: none, by measurement** — 14.15mm of air to the nearest
+  material beats the 3mm rule with margin; a window would only matter
+  if a future cover passed closer than 3mm, which the contract
+  forbids.
+- v3.3 (comprehensive-review fix round): **port slots measured-breach** —
+  the v3.2 fixed `SLOT_OUT = 8.5` capped the USB opening under the
+  skin the dilated rim BRIDGES across the notch (the skin envelope
+  rides ~17mm north of the rim there, so both halves shipped with the
+  USB sealed shut). The slot face now marches outward until every point
+  across its width clears the skin ring (+1.0mm travel; printed
+  `out=19.00` USB / `9.50` TRRS), and the gate battery re-proves the
+  breach on the finished solid: mouth probes across the whole face at
+  two z planes, air beyond the face, slab under each slot solid. The
+  16mm port mask on the wall census is gone (band probes now flip to
+  expect-void inside a slot rect — the mask hid the open face). New
+  gates: single-solid topology, SAT slot-vs-pocket separation ≥ 3mm
+  (corner-containment was unsound), antenna envelope rings (24
+  azimuths × 3 radii × 4 z) replacing stray compass points, and
+  printed wall web metrics (`wall_min`, `pocket_web_min`).
 - v3.2 (strength + ports + antenna, user review round): **CASE_OUTSET
   6.0 → 7.0** — the wall over every tab tip measured exactly 0.5 (skin
   vs tab tip + RIM_CLEAR), 1-2 FDM extrusion lines at 8 stations, the
   "concerningly thin" sections the user flagged. Census now: wall min
-  1.50 at all tab stations (gate ≥ 1.40), 6.50 typical. **Port slots
-  re-z'd** — v3.1's cut ran from the case bottom and punched two
-  through-holes in the floor slab at the anchors (the "hole in the
-  bottom" the user found); slots now open the wall from FLOOR_Z (slab
-  top) to the lip, sill intact, battery-probed. **TRRS slot 12 → 9.5**
+  1.49-1.50 at all tab stations (gate ≥ 1.40), 6.50 typical, printed
+  every run. **Port slots re-z'd** — v3.1's cut ran from the case
+  bottom and punched two through-holes in the floor slab at the anchors
+  (the "hole in the bottom" the user found); slots now open the wall
+  from FLOOR_Z (slab top) to the lip, sill intact. **TRRS slot 12 → 9.5**
   (molds the 90° boot, bore-side ≤ 8.5, not the jack body) — first
   article measures the real boot. **Antenna**: "no case material within
-  3mm" (electronics.yaml) is now battery-gated at the module points
-  (118/173.5, 15.55) at three z bands; nearest tub material is >19mm
-  away by construction, so no antenna opening exists or is required in
-  the tub — the duty moves to the future top cover.
+  3mm" (electronics.yaml) bounded by ring distance gates at the module
+  points (118/173.5, 15.55); the wall runs ≥14.15mm away (nearest
+  material = the cavity edge at rim+0.5), so no antenna opening exists
+  or is required in the tub — the duty moves to the future top cover.
 - v3.1 (bulges fixed): the exterior dilates the PCB RIM, not the plate
   outline — the tabs are spliced INTO the plate outline, so dilating it
   gave the case eight 5mm bulges. Rim dilation keeps the wall uniform
@@ -49,5 +140,7 @@ Blender visualises.
 - v2: per-tab smooth swells — superseded (walls varied in thickness;
   uniform dilation is the reference-case answer). v1: stepped walls +
   bosses — superseded (jutting pockets, layer lines).
-- Verify: `case/.venv/bin/python case/gen_case.py` (exit 0 = all gates).
+- Verify: `case/.venv/bin/python case/gen_case.py`, then `gen_cover.py`
+  and `probe_bores.py` the same way (exit 0 = all gates; probe_bores
+  rebuilds the halves offline).
   Inspect in FreeCAD when available; Blender for renders (not installed).

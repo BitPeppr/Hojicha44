@@ -735,7 +735,8 @@ def pick_tooling(tag, placements, fiducials, n=2):
 
 ANT_R_MM = 5.0   # antenna keepout: no COPPER within 5.0mm of the
                   # antenna centre (edge-based: track centerline clears
-                  # 5.0 + width/2, vias clear 5.0 + drill/2)
+                  # 5.0 + width/2, vias clear 5.0 + size/2 — the annular
+                  # ring, not the drill hole)
 COPPER_KINDS = ("segment", "via", "zone")
 
 
@@ -812,9 +813,10 @@ def copper_pieces(copper, code_name):
     """(segments, vias) as {net name: [(...)]} for the dangling check.
 
     Segments carry their copper half-width (parsed from (width ..),
-    default 0.125mm) and vias their drill (parsed from (drill ..),
-    default 0.4mm), so the antenna-keepout gate tests the copper EDGE
-    against the 5.0mm radius, not the track centerline.
+    default 0.125mm) and vias their drill + outer radius (parsed from
+    (drill ..), default 0.4mm, and (size ..), default 0.6mm), so the
+    antenna-keepout gate tests the copper EDGE against the 5.0mm
+    radius, not the track centerline.
     """
     segs, vias = {}, {}
     for kind, blk in copper:
@@ -835,13 +837,19 @@ def copper_pieces(copper, code_name):
                  float(g.group(3)), float(g.group(4)), hw))
         elif kind == "via":
             g = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", blk)
+            z = re.search(r"\(size ([\d.-]+)\)", blk)
             d = re.search(r"\(drill ([\d.-]+)\)", blk)
             try:
-                drill = float(d.group(1)) if d else 0.4
+                # the KEEPOUT is copper-edge vs radius: the via's outer
+                # radius is size/2 (annular ring), NOT drill/2 — using the
+                # drill under-enforces by (size-drill)/2, the hole is
+                # smaller than the copper that touches the keepout
+                out_r = float(z.group(1)) / 2 if z else 0.3
             except ValueError:
-                drill = 0.4
+                out_r = 0.3
+            drill = float(d.group(1)) if d else 0.4
             vias.setdefault(name, []).append(
-                (float(g.group(1)), float(g.group(2)), drill))
+                (float(g.group(1)), float(g.group(2)), drill, out_r))
     return segs, vias
 
 
@@ -887,7 +895,7 @@ def check_copper(tag, copper, placements, code_name, pts):
     for name, vs in vias.items():
         plist = pads.get(name, [])
         ends = [e for s in segs.get(name, []) for e in (s[:2], s[2:4])]
-        for vx, vy, _drill in vs:
+        for vx, vy, _drill, _out in vs:
             pt = (vx, vy)
             touch = (sum(same(pt, q) for q in plist)
                      + sum(same(pt, q) for q in ends))
@@ -903,11 +911,11 @@ def check_copper(tag, copper, placements, code_name, pts):
                 bad.append(f"{name}: track passes {r2(d)}mm from the antenna "
                            f"centre (keepout r={ANT_R_MM})")
     for name, vs in vias.items():
-        for vx, vy, drill in vs:
+        for vx, vy, _drill, out_r in vs:
             d = math.hypot(vx - ax, vy - ay)
-            if d < ANT_R_MM + drill / 2 - 1e-9:
+            if d < ANT_R_MM + out_r - 1e-9:
                 bad.append(f"{name}: via {r2(d)}mm from the antenna centre "
-                           f"(keepout r={ANT_R_MM})")
+                           f"(keepout r={ANT_R_MM} + annular {r2(out_r)})")
 
     n = sum(1 for k, _ in copper if k == "segment")
     nv = sum(1 for k, _ in copper if k == "via")

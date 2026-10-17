@@ -1,12 +1,12 @@
 /*
- * Hojicha44 shared devicetree — DRAFT, not yet compiled against a ZMK tree.
+ * Hojicha44 shared devicetree — compiled by CI against zmkfirmware/zmk
+ * v0.3.0 (board nice_nano_v2, see .github/workflows/build.yml).
  *
  * Covers both halves: 4x6 matrix (R3C4-C5 unpopulated), EC11 on A0/A1 with
- * push on D16, VDDH battery sensing, NFC pins as GPIO. Per-half differences
- * (none for kscan/UART — see hojicha44_{left,right}.overlay) live in the
- * half overlays. UART pinctrl is IDENTICAL on both halves: the TX/RX
- * crossover for the straight TRRS cable is done in copper (right half wires
- * D1->RING1, D0->TIP), so both MCUs use TX=P0.06 RX=P0.08.
+ * push on D16, NFC pins as GPIO. Per-half differences (UART only — see
+ * hojicha44_{left,right}.overlay) live in the half overlays. The board
+ * file provides vbatt/VDDH sensing (chosen zmk,battery is set there, so
+ * this file must not redefine it) and defaults uart0 off.
  *
  * Verify with: west build -b nice_nano_v2 -- -DSHIELD=hojicha44_left
  * (needs a zmk-config wrapper providing the shield + board files).
@@ -19,7 +19,7 @@
     chosen {
         zmk,kscan = &kscan0;
         zmk,matrix-transform = &default_transform;
-        zmk,battery = &vbatt;
+        /* zmk,battery = &vbatt comes from the nice_nano_v2 board file. */
     };
 
     kscan0: kscan0 {
@@ -107,10 +107,6 @@
         compatible = "zmk,keymap-sensors";
         sensors = <&left_encoder>;
         triggers-per-rotation = <30>;
-    };
-
-    vbatt: vbatt {
-        compatible = "zmk,battery-nrf-vddh";
     };
 };
 

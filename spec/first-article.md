@@ -5,13 +5,23 @@ in software — this is the release gate for the physical items. Prints:
 `out/fit/Hojicha44-{Left,Right}-fit.pdf` (Edge.Cuts + silk + fab + F.Cu
 pads, 1:1 — print at 100% / actual size, then calibrate: column-adjacent
 key centres must measure **19.00mm**; if not, the print scaled and nothing
-below counts). The fit sheet shows the PCB only; the 12.5mm square encoder
+below counts). The fit sheet shows the PCB only; the 12.7mm square encoder
 hole lives in the laser plate (`plate/Hojicha44-{Left,Right}-plate.dxf`),
 which is the cutout source — not the PCB print. (`layout/generated/v2/outlines/plate.dxf`
 is legacy ergogen output, superseded by `plate/`.)
 
+Print notes (for the case tub/cover orders): PETG or ASA recommended
+(PC also works); print both parts AS ORIENTED — tub open-face-up,
+cover underside-up — every feature is then self-supporting except the
+USB/TRRS mouth arc bridges (~7mm spans), which typically bridge
+support-free on any decent bridge profile; add supports only for a
+poor bridger.
+
 ## 1. Paper fit test (before ordering anything)
 
+- [ ] **Regenerate the fit PDFs first** — `out/fit` renders predate the
+  16 Oct boards (and the case v3.3-v3.5 port changes); rebuild prints
+  from the current tracked artifacts before any caliper check here.
 - [ ] Module footprint: place a real nice!nano on the print, pin-1/USB end
   to the notch edge. All 24 pads must sit on printed copper.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.
@@ -20,16 +30,74 @@ is legacy ergogen output, superseded by `plate/`.)
   the housing hits the shoulders beside the notch, widen it to ~14mm. Plug
   axis rides high on 4.5mm sockets with a ~9mm-inboard shell, so verify the
   housing clears the plate top in the solid-board overlap zone (seating depth), not just the notch width.
-- [ ] Case port slots (case v3.2): case slot widths are **USB 14.0 / TRRS
-  9.5** — caliper the actual cable at the slot plane (with the slot
-  opening in a printed 1:1 slice). USB-C housing must clear 14.0 with
-  margin; the 90° TRRS boot must measure **≤ 8.5** (the 9.5 slot gives
-  +0.5/side). A boot over 9.5 means widening `TRRS_SLOT_W` in
-  `case/params.py` and re-cutting BEFORE the real case order. Slots stop
-  at the floor slab top (sill under each opening stays solid) — print
-  slices must show **no through-hole in the case bottom**.
-- [ ] Encoder shaft hole over the anchor; 12.5mm square plate hole clears
-  the EC11E body (11mm class) at 0.4/side — the 13mm knob RIDES HIGH on
+- [ ] Case port bores (case v3.3 **measured breach** + v3.4 shaped
+  bores + v3.5 pwrsw aperture — no fixed depths): **USB = 14.0-wide
+  bottom-filleted slot (z 2.0..top, plug axis rides at the lip plane) /
+  TRRS = Ø9.5 round bore (axis z 2.5, measured off the vendored STEP)**;
+  all three reach past the skin (printed `out=19.00` USB / `9.50` TRRS /
+  `9.50` pwrsw). Caliper the actual cables at the bore
+  plane (with the bores open in a printed 1:1 slice — pre-v3.4 slices
+  are the "gaping rectangle" and must not be printed): USB-C housing
+  must clear **14.0 with margin** and the USB plug must SLIDE FULLY to
+  the receptacle in the printed slice; the 90° TRRS boot must measure
+  **≤ 8.5** across (it then swings freely inside the Ø9.5 bore).
+  Measure the Z bands too: an overmold bottom below z 2.0 above the PCB
+  means lowering `USB_MOUTH_Z0`; a jack axis far off the z 2.5 estimate
+  (mouth-face centre vertex of the vendored PJ-320A STEP) means
+  shifting `TRRS_MOUTH_ZC` (the bore then recentres on
+  the jack); if the slicing shows a clipped-looking bore mouth, check
+  the axis first. A boot wider than 8.5 means increasing `TRRS_MOUTH_R`
+  in `case/params.py` and re-running `gen_case.py` BEFORE the real case
+  order. Bores stop at the floor slab top (sill under each opening
+  stays solid) — print slices must show **no through-hole in the case
+  bottom**.
+- [ ] PWR aperture (v3.5): 5.0-wide slot at the north rim plateau
+  (mouth centre x 106.3/185.2, slot SILL 0.7 below the switch body top
+  z 5.0). Flick test in the printed slice: a fingernail entering from
+  above must reach and slide the red lever across its travel; caliper
+  the lever blade across the 10mm body (design assumed ~2.0 blade +
+  ±0.8 travel = ~3.6 sweep, 0.7/side margin in `params.py` — if the
+  real sweep is wider, widen `PWRSW_MOUTH_W` and re-run
+  `case/gen_case.py` BEFORE the case order). The window sits east of
+  the switch centre by design (SAT ≥3 to tab-4's pocket, ~1.8 web to
+  the USB mouth — check the lever shows through, not centred).
+- [ ] Magnets (16× 4×2×2mm N52 per both halves' pockets): the tub has
+  8 × Ø4.2×2.2 recesses in the band top, faces flush at the lip plane;
+  the ring cover mirrors them face-down. Glue: tub magnets FACE-UP
+  flush, cover magnets FACE-DOWN flush (the 0.2mm glue seat in the
+  2.2 pocket decides the zero-gap stop). Station coordinates print in
+  the gen_case/gen_cover census lines each run (PCB frame; e.g. Left
+  tub (129.96,57.2), (135.97,12.8), …) — cross-check one per half in
+  the slicer against the STEP. Tests: dry-fit the cover with NO
+  magnets and NO plate — it sits level at the 6.0 lip plane; then drop
+  the plate in (pads live on its tabs) and reseat the cover: the ring
+  underside must now PRESS each tab pad — a visible cushion gap at any
+  tab zone is a reject (the foam compression mark check), and the
+  stack rides ~0.5mm lower than the no-plate seat (uncompressed top
+  pads 6.5 vs the 6.0 ring underside = the designed 16.7% preload);
+  then with magnets it
+  must snap-seat without rocking and hold a firm pull; poron must not
+  stick to either case part.
+- [ ] Ring cover dry-fit: outer face FLUSH with the tub skin (lid seam
+  visible but flush — fingernail probe), inner edge = PCB rim + 0.5
+  (key field clear; the ring BRIDGES the tabs and presses the top
+  pads), the plug's overmold rides through
+  the cover slot and pokes ~0.2 above the top face (the module tops at
+  7.7, below the ring), the jack boot
+  clears the blind W2 tunnel (solid ceiling above the boot at 7.25),
+  and the tub/ring pwrsw slots are ALIGNED into a single 5.0 flick
+  channel (the ring's slot keeps a 1.1 inner web — confirm it prints
+  intact).
+- [ ] Encoder shaft hole over the anchor — **FIRST pre-order bench check,
+  order (1) hole sample, (2) Choc clip fit + kerf on the 0.35mm pad
+  margin (needs a laser-cut sample), (3) the plug slices below**. The
+  12.7mm square plate hole clears the vendored EC11 STEP body, which
+  measures **12.30 wide in the plate band (z 2.0..3.5)** — nominal
+  0.20/side (the old 12.5 was spec'd 0.4/side off the "11mm class";
+  the real part is wider) — drop the real (or spec-identical) encoder
+  through a laser-cut hole sample before ordering the plate batch:
+  ±0.2 fab tolerance can still rub; a further widen to 13.0 costs a
+  ~3.35mm web to SW_L17 (still gate-safe). The 13mm knob RIDES HIGH on
   the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft
   engagement + spin clearance above the plate, not through it).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
@@ -83,7 +151,7 @@ is legacy ergogen output, superseded by `plate/`.)
   contact/scrape means relief pockets over the diodes or a gap increase
   (case-side fix). Validate on the build.
 - [ ] Plate fit (rev-1 plate in `plate/`): 1:1 print over the real PCB —
-  every 15×15 cutout frames its switch footprint, the 12.5² hole frames
+  every 15×15 cutout frames its switch footprint, the 12.7² hole frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
   outline matches edge-for-edge including the USB notch. Seat one real
   Choc switch per region (corner/edge/thumb): clips engage, no rock.

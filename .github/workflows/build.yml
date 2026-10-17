@@ -4,10 +4,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least privilege on the caller: the reusable workflow's own steps use
+# its implicit github.token for checkout/artifact upload (no secrets are
+# referenced by build-user-config.yml@v0.3, so nothing to inherit).
+permissions:
+  contents: read
+
 jobs:
   firmware_build:
     name: Build the ZMK firmware
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
     with:
       archive_name: hojicha44-firmwares
-    secrets: inherit

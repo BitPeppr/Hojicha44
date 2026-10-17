@@ -1,33 +1,17 @@
 /*
- * Hojicha44 LEFT half overlay — DRAFT (see hojicha44.dtsi header).
+ * Hojicha44 LEFT half overlay — the split central (see .github/workflows/
+ * build.yml; the central role default lives in Kconfig.defconfig).
  *
- * Split link: straight TRRS cable. Left TIP carries left-TX (D1 = P0.06),
- * left RING1 carries left-RX (D0 = P0.08). The far-end crossover is copper
- * (right half swaps at its MCU), so this UART map is the natural one.
+ * Split link: straight TRRS cable over BLE-split debug: left TIP carries
+ * left-TX (D1 = P0.06), left RING1 carries left-RX (D0 = P0.08). The
+ * far-end crossover is copper (right half swaps at its MCU), so the
+ * board's uart0_default (RX=P0.08 pull-up, TX=P0.06) is correct as-is —
+ * do NOT redefine board pinctrl here, just enable the peripheral.
  */
 #include "hojicha44.dtsi"
 
-&pinctrl {
-    uart0_default: uart0_default {
-        group1 {
-            psels = <NRF_PSEL(UART_TX, 0, 6)>, <NRF_PSEL(UART_RX, 0, 8)>;
-        };
-    };
-    uart0_sleep: uart0_sleep {
-        group1 {
-            psels = <NRF_PSEL(UART_TX, 0, 6)>, <NRF_PSEL(UART_RX, 0, 8)>;
-            low-power-enable;
-        };
-    };
-};
-
 &uart0 {
-    compatible = "nordic,nrf-uarte";
     status = "okay";
-    current-speed = <115200>;
-    pinctrl-0 = <&uart0_default>;
-    pinctrl-1 = <&uart0_sleep>;
-    pinctrl-names = "default", "sleep";
 };
 
 &left_encoder {

@@ -2,11 +2,13 @@
  * Hojicha44 minimal keymap — DRAFT. 46 transform positions over the combined
  * 4x12 span (rows 0-2: RC(r,0)..RC(r,11); row 3: RC(3,0)..RC(3,9);
  * RC(3,10..11) unpopulated and omitted from the map, Corne-style).
- * Left hand first (22 keys + 2 &none for unpopulated R3C4-C5, floating row
- * reads low through the pull-down); right mirrors per spec/layout.yaml
- * appended in RC order. L1 positions, Backspace/Delete, and combos (Fn
- * chord, Tab) are still open keymap decisions — this file proves the
- * scan/spatial mapping only.
+ * Bindings are in the transform's POSITION order: RC-listed ROW-MAJOR with
+ * both halves per row — position 0-5 = left row0 C0-5, 6-11 = right row0,
+ * 12-17 = left row1, ... so each layer lists L0 L1 L2 | R0 R1 R2 row by
+ * row. Left hand: 22 keys + 2 &none for unpopulated R3C4-C5 (floating row
+ * reads low through the pull-down); right mirrors per spec/layout.yaml.
+ * L1 positions, Backspace/Delete, and combos (Fn chord, Tab) are still
+ * open keymap decisions — this file proves the scan/spatial mapping only.
  */
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
@@ -20,12 +22,12 @@
         default_layer {
             bindings = <
                 &kp Q &kp W &kp E &kp R &kp T &kp GRAVE
-                &kp A &kp S &kp D &kp F &kp G &kp LBKT
-                &kp Z &kp X &kp C &kp V &kp B &kp TAB
-                &kp LCTRL &kp LGUI &mo 1 &kp SPACE &none &none
                 &kp P &kp O &kp I &kp U &kp Y &kp BSPC
+                &kp A &kp S &kp D &kp F &kp G &kp LBKT
                 &kp SCLN &kp L &kp K &kp J &kp H &kp SQT
+                &kp Z &kp X &kp C &kp V &kp B &kp TAB
                 &kp SLASH &kp DOT &kp COMMA &kp M &kp N &kp ENTER
+                &kp LCTRL &kp LGUI &mo 1 &kp SPACE &none &none
                 &kp RCTRL &kp RALT &mo 1 &kp SPACE
             >;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
@@ -35,12 +37,18 @@
                 &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans &none &none
-                &trans &trans &trans &trans &trans &trans
-                &trans &trans &trans &trans &trans &trans
-                &trans &trans &trans &trans &trans &trans
                 &trans &trans &trans &trans
             >;
+            /* Draft: encoder scroll on the lower layer (v3.2 open decision:
+             * volume stays on the default layer). C_AC_SCROLL_UP/DOWN are
+             * this tree's consumer-page names (v0.3 has no bare C_SCROLL_*);
+             * if hosts ignore them, switch to &im wheel_* after adding
+             * CONFIG_ZMK_POINTING. */
+            sensor-bindings = <&inc_dec_kp C_AC_SCROLL_UP C_AC_SCROLL_DOWN>;
         };
     };
 

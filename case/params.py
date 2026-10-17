@@ -1,4 +1,4 @@
-"""Hojicha44 case parameters — every number cites its spec source.
+"""Hojicha44 case parameters (design constants; sources annotated in-line).
 
 Frame: KiCad board frame, mm. z = 0 is the PCB TOP surface.
 """
@@ -16,7 +16,8 @@ TAB_L = 5.0         # tab protrusion past outline
 
 PLATE_TOP = PLATE_UNDER + PLATE_T          # +3.5
 # Tab-support shelf: bottom foam compressed under the tab.
-SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # 2.0 - 2.55 = -0.55
+# SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 2.0 - 2.55 = -0.55
+SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -0.55
 # Floor under the PCB zone: PCB bottom (-1.6) + sockets (~3.0) + 1.0 clear.
 # A flat floor at sandwich depth collides — the tub MUST step down here
 # (spec/case.md audit trail). -5.6 abs = -7.6 rel. plate underside.
@@ -24,25 +25,23 @@ FLOOR_Z = -5.6  # floor top surface (spec-derived: -1.6 PCB, ~3.0 sockets,
 # 1.0 clearance; first-article measures pin/socket protrusion)
 
 # ---- outer skin (v3: uniform dilation, Sofle/Corne/Lily lesson) ----
-# ONE constant offset of the plate outline. Straight rims need
-# 5.5 (pocket nose) + SKIN_MIN = 5.9; curved/valley rims measure >= 4.2
-# (valley dilation bridges far out). Notches shallower than the offset
-# (USB 5.4, TRRS channel) fill in and vanish from the silhouette.
-# Chunky = milled-case look, intended. (6.5 was tried on a false alarm:
-# the containment gate tested 10.5mm phantom corners from the v0 span
-# bug — fixed 2026-10-17, outset restored to the true requirement.)
-# STRENGTH REVIEW (v3.2, user-flagged thin walls): at 6.0 the wall over
-# every tab tip measured exactly 0.5 (skin rim+6.0 vs cavity tab tip
-# +RIM_CLEAR) — 1-2 FDM extrusion lines over an 11mm span at each of 8
-# stations. The tab tongues define the minimum wall locally, so the
-# whole case thickens (user-sanctioned) to close the pockets without
-# creating local swells (v2 sin, rejected).
+# ONE constant offset of the PCB RIM (gen_case.py). Notches shallower
+# than the offset (USB ~5.45 deep, TRRS channel) fill in and vanish
+# from the silhouette — breaching them is the port slots' job.
+# STRENGTH HISTORY: at 6.0 the wall over every tab tip measured 0.5
+# (skin rim+6.0 vs cavity tab tip rim+5.5) — 1-2 FDM extrusion lines
+# over an 11mm span at each of 8 stations; the whole case thickened
+# (user-sanctioned) to close the pockets without creating local
+# swells (v2 sin, rejected).
 CASE_OUTSET = 7.0   # wall over tab tip = 7.0 - TAB_L - RIM_CLEAR = 1.5
 SKIN_MIN = 1.0      # min material between any pocket corner and the skin
 SKIN_STEP = 1.0     # ring resample step for the outer skin (folds gone;
 #                   verified crossing-free at 1.0/0.6/0.4)
-TOP_LIP_Z = 6.0     # rim top: symmetric 16.7% top preload ((6.0-3.5)/3.0),
-#   matching the 15% bottom; receives the future top cover / upper foam.
+TOP_LIP_Z = 6.0     # lip at plate top +2.5: leaves a 2.5mm gap = 16.7%
+#   preload on the 3.0 top foam ((3.0 - 2.5) / 3.0), matching the ~15%
+#   bottom preload (2.55 of 3.0); receives the future top cover / upper
+#   foam. NOTE: the USB-C module stack tops ~7.7 above the PCB — the
+#   COVER must carry that opening (open decisions below).
 
 # ---- fastening (REVISED: no visible fasteners on the exterior) ----
 # Rev-1 tub: friction fit (plate + poron preload holds the assembly).
@@ -50,7 +49,10 @@ TOP_LIP_Z = 6.0     # rim top: symmetric 16.7% top preload ((6.0-3.5)/3.0),
 # cover-design time, NOT screws/bosses through the skin.
 #   OPEN (cover): cover MUST carry the W1/W2 windows + USB notch + TRRS
 #   channel openings (they exist in the plate outline today; do not lose
-#   them in the cover) and close the lip at TOP_LIP_Z.
+#   them in the cover) AND the plug passages above the slots — the USB
+#   overmold tops ~3.2 and the socketed module ~7.7, both above the lip;
+#   and it must keep ANT_R_MM + ANT_CASE_CLEAR clearance over the
+#   antenna zones in case/params.py below.
 
 # ---- tab pockets (lands.json roots; jackets swallow tab + both foams) ----
 POCKET_CLEAR = 0.5        # side clearance in the pocket
@@ -59,22 +61,108 @@ POCKET_OUT = TAB_L + 0.5  # pocket nose past the tab tip
 POCKET_BOT = SHELF_Z       # pocket floor IS the shelf (foam rests on it)
 POCKET_TOP = TOP_LIP_Z     # open to the top (cover presses upper foam)
 
-# ---- port slots (explicit full-height wall openings) ----
-# The rim's USB notch (11 wide) fills in under CASE_OUTSET dilation, and
-# real plug housings are wider anyway, so ports breach via explicit
-# slots anchored on the RIM, spanning the whole wall band: SLOT_IN into
-# the cavity through SLOT_OUT past the skin. Verify with the actual
-# plug on the first article (dry-fit gates in first-article.md).
-USB_SLOT_W = 14.0    # notch is 11; +3 for housing shoulders
-TRRS_SLOT_W = 9.5    # 90-degree TRRS plug boot (bore side <=8.5 max,
-#   typically 6.5-7.5) + 0.5/side clearance; the boot swings INSIDE the
-#   slot, so the slot clears the boot — not the 12 former jack-body guess
-SLOT_IN = 2.0        # slot starts inside the cavity (breach proof)
-SLOT_OUT = CASE_OUTSET + 1.5   # slot ends past the skin (breach proof)
+# ---- port mouths (v3.4: shaped bores, NOT full-height wall slots) ----
+# The rim's USB notch (11 wide) fills in under CASE_OUTSET dilation, so
+# ports still breach via explicit bores anchored on the RIM, SLOT_IN
+# into the cavity through the skin and past it, and the outer extent
+# stays MEASURED (gen_case.py marches the bore face outward until it
+# clears the skin ring across the whole width + margin). v3.3 closed
+# the same contract with full-wall 14x11.6 / 9.5x11.6 rectangles the
+# user rightly called "gaping"; v3.4 shapes each mouth to the plug:
+#   USB  = 14.0-wide port with 1.2 fillets UNDER it only (flat top,
+#          z band 2.0..lip). Plug stack math: sockets ~4.5 (measured —
+#          the old ~3.0 figure was wrong) -> module 4.5..7.7 ->
+#          receptacle mid ~6.1 = the plug AXIS rides AT the lip plane;
+#          overmold tops ~3.2 ABOVE
+#          the lip (~9.2 abs), bottom ~2.8, so only 2.8..lip of the
+#          plug crosses the wall band — its neck above the lip rides
+#          through the open top plane, which the future COVER carries.
+#   TRRS = round bore (9.5 dia) centered on the jack axis:
+#          PJ-320A measured off the vendored model
+#          (pcb/kicad/Hojicha44.3dshapes/PJ-320A.step): body 6.1 wide,
+#          top face flat at z 5.0, plastic mouth face RECESSED 0.99mm
+#          behind the board edge (review: nothing of the jack then
+#          crosses the wall band on the straight drop-in — the worst
+#          corner analysis stands as a conservative bound: r=3.94
+#          (face corner (3.05, 5.0) about axis 2.5)
+#          vs bore 4.75 -> ~0.8mm clear). The right-angle plug's ball
+#          boot (<=8.5) swings about that axis and stays inside for
+#          +/-0.5 axis drift. The bore is clipped flat by the lip only
+#          where it would pass above the open top (jack top 5.0 < lip
+#          6.0: the clip region is empty above the jack in service).
+USB_MOUTH_W = 14.0     # notch is 11; +3 for housing shoulders
+USB_MOUTH_Z0 = 2.0     # overmold bottom ~2.8 (axis ~6.1, h ~6.5) + margin
+USB_MOUTH_R = 1.2      # bottom-corner fillet (flat top, see above)
+TRRS_MOUTH_R = 4.75    # Ø9.5: boot ball <=8.5 + 0.5/side swing clearance
+TRRS_MOUTH_ZC = 2.5    # jack axis: mouth-face centre vertex z=2.5 in the
+#   vendored STEP; ±0.5 drift stays covered. Verify on the first article.
+
+# ---- power-switch actuator window (v3.5, north rim) ----
+# WS-SLTV (450301014042, Wuerth datasheet + KiCad footprint name
+# 10x2.5x6.4): body 10 x 2.5, body top z 5.0 above the PCB, red
+# actuator 1.4 tall on top (z 5.0..6.4), slide travel 0.8/side along
+# the 10mm axis, flick = fingernail entering the aperture from above.
+# Placement: footprint at (104,51); the north rim runs a STRAIGHT
+# plateau y=58 across x 97.5..110.5, so the whole switch (its most
+# outboard point y=52.25) sits >=6.25mm INSIDE the cavity — no body or
+# pin ever crosses the wall band. The mouth is therefore only the
+# actuator aperture, and it must NOT span the 7.0 wall band fully: a
+# full-width cut breaks the ring into two disconnected arcs (2 solids).
+PWRSW_MOUTH_W = 5.0    # lever (~3 swept with throw) + nail entry; ALSO
+#   the ring-safety cap: (7.0 band - w)/2 >= 1.0 web.
+PWRSW_MOUTH_Z0 = 4.3   # 0.7 below the body top for nail entry angle
+PWRSW_COVER_IN = 1.6   # cover slot starts this far outboard of the port
+                       # anchor, leaving the 1.1mm inner web next to the
+                       # cavity edge (W1 must stay the ring's ONLY full
+                       # radial severance — single-solid gate)
+PWRSW_MOUTH_R = 0.8    # bottom fillets (molded look, matches USB)
+
+# ---- plug envelopes the census prints against (gen_case.py table) ----
+# Same sources as the port comments above: USB housing from the plug
+# stack math, boot/face from the vendored PJ-320A STEP, lever from the
+# Wuerth WS-SLTV datasheet (blade ~2.0 + travel 1.6; verify first art.)
+USB_HOUSING_W = 12.35       # overmold body widest around the axis
+TRRS_BOOT_DIA = 8.5         # right-angle plug's ball boot, <= Ø8.5
+TRRS_FACE_HW = 3.05         # PJ-320A mouth face half-width (STEP)
+TRRS_FACE_TOP = 5.0         # PJ-320A mouth face top plane (STEP)
+PWRSW_LEVER_SWEEP = 3.6     # actuator blade ~2.0 + travel 1.6 (verify)
+
+# ---- retention magnets (v3.5 tub + ring cover, recessed both sides) ----
+# Zero-gap stack: tub magnet faces flush at TOP_LIP_Z, ring magnet faces
+# flush at the cover underside — adjacent faces MEET at the lip plane, a
+# rigid stop, so the ring bottom cannot pass the lip plane and the
+# poron top-pad preload stays purely geometric (uncompressed 6.5 vs ring
+# bottom 6.0 = the designed 16.7%); the ~3-4 kg magnet pull is reacted
+# by the band-face contact, NOT by crushing the foam. 4x2 N52 pairs:
+# ~0.4-0.6 kg/pair x 8 >= 3 kg vs a ~200 g half; nothing pokes outside.
+MAG_DIA = 4.2          # pocket bore for a 4.0 magnet + glue film
+MAG_DEPTH = 2.2        # pocket depth per side (magnet 2.0 + glue line)
+MAG_STATION_BAND = 6.4 # local band needed: pocket + >=1.1 web both faces
+MAG_MIN_SEP = 14.0     # arc separation between stations
+MAG_MAX_STATIONS = 8
+MAG_MIN_STATIONS = 6   # retention gate on station count
+
+# ---- ring cover (v3.5: flush bezel ring on the lip) ----
+# Underside = TOP_LIP_Z (presses the top poron), top = +COVER_T (stays
+# below the keycap field ~9.5-10.5). Openings: W1 = USB plug
+# neck/housing band to its top ~9.2 (full-depth pass), W2 = TRRS boot
+# swing past the lip (top ~6.75: the Ø9.5 cylinder cut reaches 7.25 and
+# its chord in the 6..9 slice stays <=4.82 so the ring is NOT split),
+# the pwrsw flick slot, and the magnet pockets. Outer face = the skin
+# face FLUSH (an intentional lid seam).
+COVER_T = 3.0          # 6.0..9.0; 0.8 floor over the 2.2 magnet pockets
+SLOT_PAST_TOP = 0.5    # bore cut extends past the case top plane so the
+#   mouth's top face is the solid's own face, not a coincident-face seam
+SLOT_IN = 2.0          # bore starts inside the cavity (anchored in material)
+SLOT_OUT = CASE_OUTSET + 1.5   # scan start / minimum outer extent
+SLOT_BREACH_MARGIN = 1.0   # extra travel past the skin along the face
 
 # ---- antenna keepout (spec/electronics.yaml antenna_keepout block) ----
 # NB: the keepout circle drawn on each board's Cmts.User has radius 5.0
 # (pcb gen_pcb.py ANT_R_MM) at the antenna centre; this file must match.
+# CONSUMED by the case gate (envelope rings + wall-distance floor).
+# Antenna centres = layout helper points antenna/mirror_antenna
+# (mcu + [0, -16.45]) in layout/generated/v2/points/points.yaml.
 ANT_R_MM = 5.0
 ANT_CASE_CLEAR = 3.0   # "no case material within 3mm" (electronics.yaml)
 ANTENNA_L = (118.0, 15.55)

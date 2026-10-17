@@ -25,7 +25,7 @@
 <polygon points="103.21,498.75 148.15,458.99 108.39,414.05 63.45,453.81" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="68.0,95.8 68.0,279.4 153.2,279.4 153.2,102.0 191.6,102.0 191.6,82.0 141.6,82.0 141.6,95.8" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="32.6,400.0 104.8,400.0 104.8,368.0 32.6,368.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="85.6,353.0 135.6,353.0 135.6,303.0 85.6,303.0" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
+<polygon points="85.2,353.4 136.0,353.4 136.0,302.6 85.2,302.6" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
 <polygon points="638.6,325.61 638.6,293.61 654.6,293.61 654.6,325.61" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="674.6" y="309.6" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T1</text>
 <polygon points="525.03,96.87 493.89,89.49 497.58,73.92 528.72,81.3" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
@@ -44,7 +44,7 @@
 <text x="437.3" y="446.46" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T8</text>
 <text x="8" y="14" fill="#f0f" font-size="10">T = gasket tab (poron pads top+bottom, yellow)</text>
 <text x="8" y="26" fill="#fff" font-size="10">white square = Choc cutout 15x15</text>
-<text x="8" y="38" fill="#ff9800" font-size="10">solid orange = encoder hole 12.5sq / dashed orange = component window (tall parts)</text>
+<text x="8" y="38" fill="#ff9800" font-size="10">solid orange = encoder hole 12.7sq / dashed orange = component window (tall parts)</text>
 <circle cx="68.6" cy="280.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <circle cx="536.6" cy="360.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <text x="582.6" y="176.0" fill="#888" font-size="7" text-anchor="middle">SW_R00</text>

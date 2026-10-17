@@ -7,8 +7,9 @@ geometry, never hand-drawn):
   outline  = PCB Edge.Cuts loop, identical (USB notch included, so the
              plug housing passes the plate edge exactly as it passes the PCB)
   cutouts  = 22x 15x15mm Choc PG1350 squares at switch instances/rotations
-  encoder  = 12.5x12.5mm square hole (instance rot 0, body axis-aligned):
-             clears the ~11.7 body at 0.4/side AND clears the neighbour key
+  encoder  = 12.7x12.7mm square hole (instance rot 0, body axis-aligned):
+             clears the 12.30 body (measured off the vendored STEP in the
+             plate band) at 0.20/side AND clears the neighbour key
              cutout where a 17mm round hole would merge into it; the 13mm
              knob rides high on the 20mm shaft (bore never enters the hole)
   W1       = switch strip + MCU/cell/USB + JST windows (slide switch 6.4,
@@ -46,11 +47,18 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 OUT_DIR = os.path.join(REPO, "plate")
-STOCK_FP = ("/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints")
+# Stock-footprint search: vendored copies ship in-repo (CI-portable, see
+# plate/vendor_footprints/README.md); fall back to the local KiCad install.
+VENDOR_FP = os.path.join(REPO, "plate", "vendor_footprints")
+STOCK_FP = os.environ.get(
+    "KICAD_STOCK_FP",
+    "/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints")
 
 # ---- rev-1 decisions (change here, everything downstream follows) ----
 CUTOUT = 15.0          # Choc PG1350 plate cutout (switch body is 15x15)
-ENC_SQ = 12.5           # square hole: body ~11.7 + 0.4/side, knob rides high
+ENC_SQ = 12.7           # square hole: vendored EC11 body measures 12.30 wide
+                        # in the plate band (z 2.0..3.5) -> 0.20/side; knob
+                        # rides high on the 20mm shaft either way
 PLATE_THICK = 1.5      # mm PC
 GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
 TAB_W = 10.0             # tab width along the rim
@@ -102,6 +110,9 @@ def fp_source(lib, name):
     if lib == "Hojicha44":
         p = os.path.join(PCB_DIR, "Hojicha44.pretty", name + ".kicad_mod")
     else:
+        p = os.path.join(VENDOR_FP, lib + ".pretty", name + ".kicad_mod")
+        if os.path.exists(p):
+            return open(p).read()
         p = os.path.join(STOCK_FP, lib + ".pretty", name + ".kicad_mod")
     return open(p).read()
 
@@ -955,7 +966,7 @@ def svg_write(path, res):
              f'white square = Choc cutout 15x15'
              f'</text>')
     o.append(f'<text x="8" y="38" fill="#ff9800" font-size="10">'
-             f'solid orange = encoder hole 12.5sq / dashed orange = '
+             f'solid orange = encoder hole 12.7sq / dashed orange = '
              f'component window (tall parts)'
              f'</text>')
     for tx, ty in res['tool']:

@@ -219,17 +219,17 @@ Adjust the directory structure if necessary, but keep specification/source files
 
 ### Tasks
 
-- [ ] Choose the controller and confirm its operating voltage, available pins, USB approach, and firmware support.
-- [ ] Define the switch matrix and diode arrangement.
-- [ ] Design the split interconnect and power architecture.
-- [ ] Add the encoder, connectors, and optional peripherals if required.
-- [ ] Choose verified component symbols and footprints; verify pin numbering and physical dimensions against datasheets.
-- [ ] Create the KiCad schematic and run ERC.
-- [ ] Import or reproduce the canonical layout coordinates in the PCB.
-- [ ] Position components and route the PCB, respecting mechanical keep-outs and fabrication rules.
-- [ ] Run DRC and inspect all violations; do not blindly waive warnings.
-- [ ] Check matrix connectivity, diode direction, controller pin mapping, connectors, power, board outline, mounting holes, and switch footprint locations.
-- [ ] Export a PCB STEP model for mechanical integration.
+- [x] Choose the controller and confirm its operating voltage, available pins, USB approach, and firmware support.
+- [x] Define the switch matrix and diode arrangement.
+- [x] Design the split interconnect and power architecture.
+- [x] Add the encoder, connectors, and optional peripherals if required.
+- [x] Choose verified component symbols and footprints; verify pin numbering and physical dimensions against datasheets.
+- [x] Create the KiCad schematic and run ERC.
+- [x] Import or reproduce the canonical layout coordinates in the PCB.
+- [x] Position components and route the PCB, respecting mechanical keep-outs and fabrication rules.
+- [x] Run DRC and inspect all violations; do not blindly waive warnings.
+- [x] Check matrix connectivity, diode direction, controller pin mapping, connectors, power, board outline, mounting holes, and switch footprint locations.
+- [x] Export a PCB STEP model for mechanical integration.
 
 ### Deliverables
 

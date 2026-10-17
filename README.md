@@ -15,10 +15,10 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | KLE sketch (archive) | `layout/- FINAL/keyboard_layout_v1.json` | Original row-staggered sketch |
 | Layout decisions | `spec/layout.yaml` | Keymap, thumb roles, relocated keys |
 | Board outline | `layout/generated/v2/outlines/board.dxf` | PCB edge, no encoder hole — the EC11E needs copper under it |
-| Plate outline | `plate/Hojicha44-{Left,Right}-plate.dxf` | Same contour + tabs, 12.5mm square encoder hole |
+| Plate outline | `plate/Hojicha44-{Left,Right}-plate.dxf` | Same contour + tabs, 12.7mm square encoder hole |
 | Generators | `layout/generators/` | `export_kle.py` (points → KLE), `render_preview.mjs` (KLE → labeled PNG) |
 | Ergogen outputs | `layout/generated/v2/` | Points, outlines, demo SVGs, keymap render |
-| Snapshots | `layout/- FINAL/` | v1–v4 KLE, v5–v6 Ergogen (frozen) |
+| Snapshots | `layout/- FINAL/` | v1–v4 KLE, v5–v6 Ergogen, v7 config, v8 layout (frozen) |
 
 ## Schematic
 
@@ -30,7 +30,8 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | Right project | `pcb/kicad/Hojicha44-Right.kicad_sch` | Same; both share the vendored libs below |
 | Board files | `pcb/kicad/Hojicha44-{Left,Right}.kicad_pcb` | Placed+routed: 54 footprints / 48 nets per half, outline from `board.dxf`. Routed copper survives regeneration |
 | Placement generator | `pcb/generators/gen_pcb.py` | Points + outline + netlist → boards + pad-containment check + DRC gate |
-| ZMK draft | `zmk/` | Overlay + keymap + conf + machine-generated GPIO map (needs `west build`) |
+| ZMK firmware | `boards/shields/hojicha44/` + `config/` | Shield dtsi/overlays/Kconfig + keymap/conf; compiled by CI (`.github/workflows/build.yml`), no local `west build` |
+| ZMK evidence | `zmk/gpio-map.md` | Machine-generated GPIO continuity map |
 | Project symbols | `pcb/kicad/Hojicha44.kicad_sym` | Local `nice!nano` (stock libs cover the rest) |
 | Project footprints | `pcb/kicad/Hojicha44.pretty/` | Choc hotswap, PJ-320A, 2x12 nice!nano socket (vendored, see spec `sources`) |
 

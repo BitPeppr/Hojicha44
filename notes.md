@@ -691,18 +691,6 @@ simplicity (0 crossings, verified), per-tab area, min segment, closure.
 rim finger < tab root) and floats between flanks — documented in
 spec/case.md with measured worst key-to-tab 51mm.
 
-## Plate rev-4: geometry debugged, 6 tabs (2026-10-15)
-
-Review found real defects, all fixed and now self-checked. (1) Splice
-bug: tab paths injected at nearest-dense-index could precede their rim
-anchor, spiking 15mm out-and-back — inject at lower-bound instead.
-(2) B-side fillet arcs swept the long way (270° loops) — traverse
-T2->T1. (3) Closure duplicates dropped. Generator now asserts outline
-simplicity (0 crossings, verified), per-tab area, min segment, closure.
-8 -> 6 tabs; inner edge stays tab-free by physics (windows occupy it,
-rim finger < tab root) and floats between flanks — documented in
-spec/case.md with measured worst key-to-tab 51mm.
-
 ## Plate rev-5: pinned corners + cross-file proof (2026-10-15)
 
 Two review items closed. (1) Corners: 2 pinned tabs per half (top edge
@@ -866,3 +854,260 @@ opening question. All four found/measured/fixed:
   exists or is required in the tub — duty moves to the top cover.
 - Volumes 67.7 cm³ both halves (was 60.3 at OUTSET 6), z unchanged
   [−7.6, +6.0], all gates green both halves, npm test green.
+
+## Comprehensive review fix round (2026-10-17)
+
+14 read-only review agents (7 free models) audited the whole repo; fixes
+landed (case re-ran green first try, `npm test` green, release re-cut):
+
+- **B1 keymap binding order (blocker)**: `config/hojicha44.keymap` shipped
+  LEFT-HALF-then-RIGHT-HALF while the transform is row-major interleaved —
+  every binding from position 6 hit the wrong key on both layers. Reordered
+  to per-row interleave (positions 0-5 = left row0, 6-11 = right row0, …);
+  `zmk-structure` gate now asserts the FULL token sequence per layer (2
+  layers pinned) so reordering can never silently ship again.
+- **B2 USB port sealed shut (blocker)**: the 7.0 rim dilation BRIDGES the
+  11×5.45 USB notch (skin envelope ~17mm north of the rim), so the v3.2
+  fixed `SLOT_OUT = 8.5` capped the slot under 3-6mm of wall on BOTH
+  halves. Fix: per-port measured breach (face marches outward till every
+  point clears the skin ring, +1.0mm margin; printed `usb out=19.00`,
+  `trrs out=9.50`) + breach gates on the finished solid (mouth void
+  probes across the full face ×2 z planes, air beyond the face, slab
+  under slots, in-slot band probes unmasked). STEP/STL re-exported
+  (volumes 66.7/66.8 cm³, wall_min 1.49/1.50, webs 1.25/1.15).
+- **Firmware hardening**: removed the duplicated `vbatt` node + chosen
+  line (the nice_nano_v2 board file provides both, verified against
+  zmkfirmware/zmk v0.3.0); dropped the duplicated UART pinctrl defs in
+  both overlays (board pinctrl is identical AND carries the RX pull-up
+  ours lacked) — left keeps `&uart0` enabled for TRRS debug, right is
+  now truly BLE-only (no uart, no USB). Split roles were verified
+  correct in `Kconfig.defconfig` (left central / right peripheral,
+  upstream corne convention — NOT a conf problem); `CONFIG_ZMK_SPLIT=y`
+  dropped as redundant, `CONFIG_ZMK_USB=y` moved to the new
+  `config/hojicha44_left.conf` (per-half confs ARE collected from the
+  user config dir; the empty confs in the shield dir are dead — deleted),
+  central gains battery-level FETCHING+PROXY (peripheral levels can now
+  reach the host). L1 encoder scrolls: `C_AC_SCROLL_UP/DOWN` (the
+  v0.3 tree has no bare `C_SCROLL_*`; verified in keys.h). NFC comment
+  rewritten (tree is Zephyr 3.5.0+zmk-fixes). Dead conf files in the
+  shield dir deleted (ZMK v0.3 reads confs from the user config dir
+  only — verified in the keymap-module CMake).
+- **Release integrity**: `make_release.py --check` now re-hashes every
+  artifact against MANIFEST.txt, rejects extra top-level files, and
+  gates the manifest commit against the BOARD-AFFECTING head
+  (`git log -1 -- pcb …`), replacing the self-referential HEAD pointer
+  (that's why v0.3.1's manifest claimed 3016153 while its content was
+  cut at eb6678f — verified: hashes all matched, only the pointer was
+  stale). Release re-cut CLEAN at eb6678f6640f (`usb` boards unchanged;
+  gerber re-exports differ only in date headers). Clean rmtree rebuild
+  prevents half-updated trees.
+- **CI**: `checks.yml` gains case (cadquery venv-free pip) + plate
+  (`--check` writes nothing) gate jobs + `permissions: contents: read`;
+  `build.yml` drops `secrets: inherit` (the ZMK v0.3 reusable workflow
+  references no secrets; artifact upload uses the implicit github.token —
+  watch the next firmware run, restore inherit if artifacts vanish).
+- **Plate CI portability**: the two stock footprints gen_plate reads
+  (W1 windows) vendored into `plate/vendor_footprints/` (KiCad 10.0.6,
+  CC-BY-SA 4.0 note included); `STOCK_FP` now env-overridable, vendored
+  dir takes precedence. `python3 plate/gen_plate.py --check` passes
+  KiCad-less.
+- **Docs sweep**: case.md got the port-breach contract + cover z
+  contract (module top ~7.7 > lip 6.0: cover MUST carry the opening),
+  she VALUES frame-labelled (FLOOR_Z/SHELF_Z from the PCB-top frame),
+  the stray `<|end|>` removed, 17mm-hole rationale set straight
+  (18.18mm encoder-to-SW_L17 measured — the original 18.2 claim was
+  TRUE, the review verdict on it was wrong), stack table updated
+  (bottom tub BUILT). electronics.yaml: antenna rule phrased
+  inboard (not "open board edge", the antenna circle sits ≥13.6mm
+  inside), "11x5.4" → "11mm wide × ~5.45 deep", mounting comment
+  no longer claims the case clamps the PCB. case/README: wall
+  numbers 1.49-1.50, antenna 14.15, v3.3 section. first-article.md:
+  regenerate-fit-PDFs-first note + measured-breach dry-fit checklist.
+  render.py: EXPORT_DIR makedirs.
+- NOT changed on purpose: PCB geometry (keepout gate clears min copper
+  edge 5.175/5.375 ≥ 5.0 empirically), plate geometry (poron margin
+  stays measure-first rev-2 trigger), `SKIN_MIN 1.0` (webs 1.15-1.55
+  stand; raising it mid-rev shrinks noses for no hardware evidence),
+  cover design (contract documented, build deferred).
+
+## Case v3.4 port bores (2026-10-17)
+
+User looked at the v3.3 output and called the ports what they were:
+"no need for a drastic big gaping rectangular hole" — and asked where
+the antenna window and the smaller molded audio port were. Both fair:
+
+- **Bores shaped to the plugs (the actual fix)**: v3.2-3.3 cut each
+  port as a FULL-WALL rectangle (14×11.6 / 9.5×11.6 at z −5.6..6.0 —
+  11.6mm tall!). Plug stack arithmetic (sockets ~4.5 — the old ~3.0
+  figure was wrong, corrected in review; module 4.5..7.7, receptacle
+  mid ~6.1 per the cover-contract
+  numbers) puts the USB plug axis AT the lip plane: only ~2.8..lip of
+  the plug crosses the wall; the neck above the lip rides through the
+  open top (future cover's duty). So: **USB = 14.0-wide slot, 1.2mm
+  bottom fillets, z 2.0..top; TRRS = round Ø9.5 bore centered z 2.4**
+  (jack-axis estimate; the ≤8.5 right-angle plug boot swings about it,
+  margins hold ±0.5mm drift; bore clipped flat by the lip where it
+  passes the top). TRRS is the "molded audio port" shape the user
+  asked about — a round bore, not a rectangle.
+- **Antenna window: none.** The 3mm rule is met by 14.15mm
+  (nearest-material measurement); plastic >3mm from the antenna is not
+  a radio problem, so no window existed or is needed in the tub — the
+  question was answered and documented rather than cutting a cosmetic
+  hole.
+- **Mechanics kept**: measured breach unchanged (the z-independent
+  march still prints usb out=19.00 / trrs out=9.50), walls 1.49/1.50,
+  webs 1.25/1.15, sill solid (no bottom holes), SAT ≥3mm to pockets.
+  Material returned partly: volumes 66.7/66.8 → 68.3 cm³.
+- **Gates re-derived to bores**: bore half-width function (circle vs
+  bottom-filleted rect) as ground truth for the probe battery; skin
+  band classification is bore-aware at z=0 (USB band SOLID below
+  z0=2.0); mouth probes at two in-bore z planes ±0.9 half-width; air
+  beyond per plane; SAT wording now bore-vs-pocket (bounding rect stays
+  sound). Both halves green on first re-run; plus a throwaway shape
+  audit (`case/probe_bores.py`, kept) probing fillet/edge/chord/sill
+  positions on the finished solids — 15/15 per half.
+  (First probe draft hit two points that turned out to be pre-existing
+  cavity/bridge voids, not bore regressions — mapping the material
+  around the anchors confirmed it; HEAD at the time is v3.2 so there is
+  no v3.3 baseline on disk, only the working tree.)
+- Docs: spec/case.md port contract rewritten (breach + shaping +
+  no-window rationale), first-article.md dry-fit now measures boot/jack
+  z bands and names the v3.4 params, case/README v3.4 entry.
+
+## User QA round on v3.4: drop-in proof + "lowering" ID (2026-10-17)
+- **Question 1 (TRRS circle drop-in)**: user read the round bore's
+  top-clip as an insertion blocker for the PCB + jack. Resolved by
+  measurement, not by shape change: parsed the vendored
+  `pcb/kicad/Hojicha44.3dshapes/PJ-320A.step` (506 pts). The earlier
+  "6.4-tall" memory was wrong — the model says body **6.1 wide
+  (±3.05), top face FLAT at z 5.0**, rear tail local y −2.0, plastic
+  mouth face at local y 12.1 (a face RECESSED 0.99mm — the old
+  "0.99mm-proud" claim was wrong, corrected in review), THT pin tips
+  at z −3.0, and a mouth-face centre vertex at z **2.5** (= the plug
+  axis). The jack is inboard of the cavity line everywhere — the
+  recessed mouth face (see above) means NOTHING of the jack crosses
+  the wall band during the straight drop-in; the conservative worst
+  corner
+  (±3.05, 5.0) is r 3.94 about the axis vs bore r 4.75 → ~0.8mm clear;
+  the boot ball (≤8.5 about z 2.5) also stays inside (chord 2.41 at the
+  z 6.0 clip). The "circle curving back in above the top" region
+  (z > 5.0) hosts no jack material in service or in the drop.
+- **Params**: `TRRS_MOUTH_ZC` 2.4 → **2.5** (measured, no longer an
+  estimate); comment now carries the STEP-measured dims. Case rebuilt:
+  breach march unchanged (usb out=19.00 / trrs out=9.50, z-independent),
+  volume 68.3/68.3 cm³, wall 1.49/1.50, webs 1.25/1.15, STEP/STL
+  re-exported.
+- **probe_bores.py gained a drop-in group**: per half, the jack face
+  section (b ±2.9, spares at ±3.3, wall resuming at +0.2 past the local
+  circle) probed at z {0.15, zc, 4.85} × t {0.7, 3.5} — void inside,
+  solid outside, plus a design-break fail if the bore can't host the
+  face corner. All pass both halves.
+- **Question 2 ("slight lowering in front of the microcontroller")**:
+  that is the **USB plug seating notch** — 11 wide × ~5.45 deep in the
+  PCB RIM at each `usb` point (spec/electronics.yaml: "the notch alone
+  provides plug seating"; the module's USB shell sits ~9mm inboard and
+  does not overhang). It exists since the first PCB/plate/case chain —
+  v3.4 changed nothing there except the bore band 2.0..lip cut into
+  that wall. **Not an antenna feature**: the antenna keepout is at the
+  module's SOUTH end (5.0mm Cmts circle + 3mm case rule), nearest
+  material measured 14.15mm; the notch is 30+mm away and untouched.
+- Docs: spec/case.md TRRS contract now states the measured dims +
+  drop-in proof; first-article.md dry-fit names the z 2.5 axis
+  (still caliper-verify). npm test + release --check CLEAN @eb6678f6640f.
+- **Case v3.5 — PWR mouth finalized on raw Edge.Cuts**: the north rim
+  near the switch is a y=58.0 plateau across x 97.5..110.5 (mirror
+  181..194); the WS-SLTV (footprint 104/187.5, 51, body top z 5.0)
+  never crosses the wall, so the wall question was a MOUTH: 5.0-wide
+  slot z 4.3..top with 0.8 fillets (nail entry 0.7 below body top).
+  Frame anchored EXACT (no resample phase — a wobbling anchor x left
+  the slot 0.87 from tab-4's pocket at x=100.59; SAT gate rejected;
+  mouth centre 106.3/185.2 → SAT 3.21/3.13, ~1.8 web to the USB
+  mouth). Lever sweep ~3.6 assumed (datasheet blade + ±0.8 travel);
+  first-article flick test closes it.
+- **Case v3.5 — magnet stations (v3.5)**: `magnet_stations()` walks
+  the cavity boundary outward: local band ≥6.4 → ≥1.1 webs (mid-band
+  premise re-checked against the true boundaries), SAT ≥5.1 from every
+  port/pocket rect using rect-aware distance — a point INSIDE a rect
+  is 0, edge-distance alone once parked a phantom station inside the
+  USB-notch void and the pocket web probes caught it — antenna ≥10.1,
+  spacing ≥14, slots at perimeter/8, rings rotated to the USB anchor
+  (Left/Right mirror measured 1.29mm — exact-mirrored generation
+deferred, tolerance documented). Result: 8/half, band min 6.48/6.49,
+  Ø4.2×2.2 pockets face-flush at the lip plane. Retention stack:
+  tub magnets face-UP, cover magnets face-DOWN — faces meet at 6.0
+  (rigid zero-gap stop; the 0.2 glue seat is the only compliance), so
+  the poron preload stays geometric (uncompressed 6.5 vs ring 6.0).
+- **Ring cover v1 shipped** (`case/gen_cover.py`): skin prism 6.0..9.0
+  minus the cavity prism — outer face flush with the tub skin
+  (intentional lid seam), inner edge = cavity line. Passages via
+  `compute_ports` verbatim: W1 full-depth (the plug's overmold pokes ~0.2 past the top at ~9.2
+abs — the module tops 7.7; wording corrected in review), TRRS = the
+  same Ø9.5 cylinder as a BLIND tunnel in
+  the 6..9 slice (tops 7.25 > boot swing 6.75 chord ≤4.82 < band ⇒ ring
+  NOT split), pwrsw full-depth but 1.1 inner web (W1 stays the only
+  radial severance ⇒ single solid; first attempt with a full radial
+  slot would have made 2 pieces). First hand-placed ring-resume probes
+  were wrong for the wider bite outline — replaced by a port-agnostic
+  skin-hug battery (resume solid 0.6mm inside every skin sample hugging
+  a port rect). Measured: cover 7.7/7.7 cm³, wall_min 1.49/1.50,
+  station bands 6.48/6.49. Shared helpers now live in gen_case
+  (compute_ports / pocket_layout (extracted adaptive-nose rule) /
+  magnet_stations); `pocket_layout` reused for station SAT.
+- **Case v3.5 — census + gates**: per-port census prints every tub run
+  (usb housing 0.83/side + plug bottom 0.8; trrs boot 0.50/side + face
+  drop-in 0.81; pwrsw sweep 0.70/side; breach outs; pocket SAT) plus a
+  magnet line (count, coords, band/web min, ant margin 14.15). Tub
+  68.0/68.0 cm³ (−0.3 from magnets+pwrsw), bbox unchanged. probe_bores
+  gained a 7-probe pwrsw group/half (sill below, flank, fillet
+  envelope, wall resume past w/2, lip-plane top). npm test pass;
+  `pcb/make_release.py --check` CLEAN @eb6678f6640f (case-only changes
+  leave the boards byte-stable). Docs: spec/case.md (stack rows, port
+  contract pwrsw bullet, new "Retention: recessed magnets + ring
+  cover" chapter), spec/first-article.md (pwrsw flick / magnet glue /
+  ring dry-fit items), case/README.md v3.5 entry + gen_cover listed.
+
+## Review round on case v3.5 + plate encoder (user solo review, 2026-10-17)
+- **Finding A (HIGH) — the ring did not press the top pads**: v1 cut its
+  interior prism from the plate OUTLINE, so every tab pocket left a
+  tab-shaped bite in the ring; the reviewer probed all 8 pad centres VOID
+  at z 6.2 AND 7.5 (the cover's pads were decorative). Fix: the cover's
+  interior is the PCB rim + RIM_CLEAR (0.5) now, NOT the outline — the
+  ring bridges every tab zone at the lip plane and presses the top poron
+  at the designed 16.7% (6.5 uncompressed vs 6.0 ring underside).
+  `cav_poly` still drives `magnet_stations`/`pocket_layout`, so
+  tub↔cover station identity is untouched (band 6.48/6.49, mirror
+  1.29). New gate: every pad centre must be ring material at 6.2 and
+  7.5 — it FAILS in the bite state, so this exact bug can't return.
+  Measured after: cover 8.9/8.9 cm³ (bites backfilled, +1.2), census
+  wall_min 5.85 (was 1.49, measured against the bites — the census now
+  measures the rim-based ring), volumes well inside the tripwire band.
+  Fix in `gen_cover.py` + docs (case.md stack/retention, first-article
+  dry-fit now plate-in/foam-mark based, case/README, this log).
+- **Encoder hole 12.5 → 12.7** (`plate/gen_plate.py`): the vendored
+  EC11 STEP measures 12.30 wide in the plate band (z 2.0..3.5) — the
+  old "~11.7 body" premise was wrong (0.4/side claimed vs 0.20/side
+  real). Both halves re-generated + re-gated CLEAN; predicted enc↔SW17
+  web ~3.55 (was 3.75 at 12.5) — still ≥2.5 target. Docs: README plate
+  row, layout.yaml, first-article (hole refs + bullet rewritten to the
+  measured margins + explicit §1 pre-order order), case.md
+  plate-openings, bom.md knob/plate rows.
+- **Words batch (findings C/D/E)**: TRRS drop-in narrative corrected —
+  the 0.99 mouth face is RECESSED behind the board edge (typo "prooud"
+  also fixed), so NOTHING of the jack crosses the wall band; the bore
+  probes stand as conservative bounds (params/probe_bores/case.md/
+  notes q+a entry). USB socket stack corrected to ~4.5 → module
+  4.5..7.7 (receptacle mid ~6.1 unchanged; params/case.md/notes v3.4
+  entry). Notch depth states the measured 6.3–10.3 below the LOCAL rim
+  (case.md; "~5.45" was a one-point figure). "Module pokes ~0.2" → the
+  plug's overmold pokes, module tops 7.7 (case.md/first-article/
+  case/README/notes v3.5 entry). PWR slot 4.3 is a SILL 0.7 below the
+  body top (first-article). Magnet mirror documented ≤1.3 (1.29
+  measured; exact-mirror generation deferred). `PWRSW_COVER_IN = 1.6`
+  replaces the derived t_web in gen_cover. first-article gained a
+  print-orientation note (PETG/ASA, no supports as oriented except
+  possibly the mouth arc bridges on a poor bridger).
+- Deferred (recorded, not done): PWR pad shift 2mm west (slice-test
+  lever sweep item; the current margin stands), exact-mirror station
+  generation (1.29 documented instead), poron pad shift to root+2.5
+  (burns 1.0 of the tip spare for a 0.5 sliver → rev-2 only), wrl
+  envelope touch-up (datasheet supersedes).
