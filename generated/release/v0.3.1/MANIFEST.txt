@@ -1,43 +1,43 @@
 Hojicha44 release manifest
 spec version: 0.3.1
-git commit: 48c79c1f07c6a5b7dd246df77e7dc7b73cc4bb68
-git tag: pcb-baseline-r10-52-g48c79c1-dirty
+git commit: 38c6910c195d67760d868b53980b50e2e29d32d6
+git tag: pcb-baseline-r10-52-g38c6910-dirty
 router: gen_route.py r13
 kicad-cli: 10.0.6
 ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)
 DRC: 0 non-waived (exact W1 set of 28/half asserted); unconnected NOT waived; PTH/NPTH-in-courtyard = error
 
 [Left] 16 files
-  5aa67acd2520  Hojicha44-Left-B_Cu.gbl
-  c1c53d9744ba  Hojicha44-Left-B_Mask.gbs
-  b61577d1ea6f  Hojicha44-Left-B_Paste.gbp
-  8fd3238bf05f  Hojicha44-Left-B_Silkscreen.gbo
-  e03a71e82951  Hojicha44-Left-Edge_Cuts.gm1
-  62f1cf04373d  Hojicha44-Left-F_Cu.gtl
-  9769260d35c0  Hojicha44-Left-F_Mask.gts
-  1fcdde1876dd  Hojicha44-Left-F_Paste.gtp
-  13eec1372955  Hojicha44-Left-F_Silkscreen.gto
+  1edcc03f4b72  Hojicha44-Left-B_Cu.gbl
+  22325314d905  Hojicha44-Left-B_Mask.gbs
+  452ca39f3632  Hojicha44-Left-B_Paste.gbp
+  230319034bd1  Hojicha44-Left-B_Silkscreen.gbo
+  ada7770fe56d  Hojicha44-Left-Edge_Cuts.gm1
+  b4878d10dca6  Hojicha44-Left-F_Cu.gtl
+  e4569fd71de5  Hojicha44-Left-F_Mask.gts
+  ef514e409db4  Hojicha44-Left-F_Paste.gtp
+  0731c97299ab  Hojicha44-Left-F_Silkscreen.gto
   d7004fc2c22e  Hojicha44-Left-drc.rpt
   06b8783390fd  Hojicha44-Left-erc.rpt
-  5055edfa62c0  Hojicha44-Left-job.gbrjob
-  af73f37c9e7f  Hojicha44-Left.drl
+  117f319c041d  Hojicha44-Left-job.gbrjob
+  deade3dabe73  Hojicha44-Left.drl
   9688cbb777f0  bom.csv
   bd807069be10  pos-smt.csv
   d8114ff6f2db  pos.csv
 [Right] 16 files
-  ff0830da5175  Hojicha44-Right-B_Cu.gbl
-  dc41be4a7941  Hojicha44-Right-B_Mask.gbs
-  14fc6423d7f0  Hojicha44-Right-B_Paste.gbp
-  0d1056e645e8  Hojicha44-Right-B_Silkscreen.gbo
-  539fb61053ee  Hojicha44-Right-Edge_Cuts.gm1
-  e63aa6db5fcf  Hojicha44-Right-F_Cu.gtl
-  aa36c6390026  Hojicha44-Right-F_Mask.gts
-  e491878c8774  Hojicha44-Right-F_Paste.gtp
-  e12d308e1c21  Hojicha44-Right-F_Silkscreen.gto
+  c02ca8c7f77c  Hojicha44-Right-B_Cu.gbl
+  536c5f3c2e45  Hojicha44-Right-B_Mask.gbs
+  e307e70a8041  Hojicha44-Right-B_Paste.gbp
+  4f8c810daf66  Hojicha44-Right-B_Silkscreen.gbo
+  4ab1e2de9744  Hojicha44-Right-Edge_Cuts.gm1
+  d1b039dd6c0e  Hojicha44-Right-F_Cu.gtl
+  73a15a0cb9e5  Hojicha44-Right-F_Mask.gts
+  ee463d5526c5  Hojicha44-Right-F_Paste.gtp
+  1c68b90c7331  Hojicha44-Right-F_Silkscreen.gto
   01e348e09078  Hojicha44-Right-drc.rpt
   f1cb3ffd0819  Hojicha44-Right-erc.rpt
-  663832470d55  Hojicha44-Right-job.gbrjob
-  f6558ff8204e  Hojicha44-Right.drl
+  bc52f78e4219  Hojicha44-Right-job.gbrjob
+  d7661b64c7cf  Hojicha44-Right.drl
   f34d2926ee1c  bom.csv
   64ec3dfb72a5  pos-smt.csv
   58dd745c8ead  pos.csv
