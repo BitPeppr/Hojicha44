@@ -1039,7 +1039,9 @@ deferred, tolerance documented). Result: 8/half, band min 6.48/6.49,
   the poron preload stays geometric (uncompressed 6.5 vs ring 6.0).
 - **Ring cover v1 shipped** (`case/gen_cover.py`): skin prism 6.0..9.0
   minus the cavity prism — outer face flush with the tub skin
-  (intentional lid seam), inner edge = cavity line. Passages via
+  (intentional lid seam), inner edge = cavity line. [HISTORICAL — the
+  v3.5 review round below moved the interior to the PCB rim + 0.5 so
+  the ring bridges the tabs; numbers superseded there.] Passages via
   `compute_ports` verbatim: W1 full-depth (the plug's overmold pokes ~0.2 past the top at ~9.2
 abs — the module tops 7.7; wording corrected in review), TRRS = the
   same Ø9.5 cylinder as a BLIND tunnel in
@@ -1050,7 +1052,8 @@ abs — the module tops 7.7; wording corrected in review), TRRS = the
   were wrong for the wider bite outline — replaced by a port-agnostic
   skin-hug battery (resume solid 0.6mm inside every skin sample hugging
   a port rect). Measured: cover 7.7/7.7 cm³, wall_min 1.49/1.50,
-  station bands 6.48/6.49. Shared helpers now live in gen_case
+  station bands 6.48/6.49. [HISTORICAL pre-review numbers; the review
+  round re-measured cover 9.0/9.0 cm³ (T4 pockets), census wall 5.85.] Shared helpers now live in gen_case
   (compute_ports / pocket_layout (extracted adaptive-nose rule) /
   magnet_stations); `pocket_layout` reused for station SAT.
 - **Case v3.5 — census + gates**: per-port census prints every tub run
@@ -1111,3 +1114,88 @@ abs — the module tops 7.7; wording corrected in review), TRRS = the
   generation (1.29 documented instead), poron pad shift to root+2.5
   (burns 1.0 of the tip spare for a 0.5 sliver → rev-2 only), wrl
   envelope touch-up (datasheet supersedes).
+
+## Multi-model review round 2 on plate + case v3.5 (2026-10-18)
+Six free models fanned out read-only, four reported; every finding
+re-verified against 1a93095 before acting. One BLOCKER, one HIGH, eight
+MEDIUM, a LOW doc cluster. What was done:
+
+- **B1 (BLOCKER, verified in code before touching anything)** — the tab
+  pillar fuse (`gen_case.py`) re-added a 1.5mm strip of cavity material
+  (rim−1.0..rim+0.5, FLOOR_Z..SHELF_Z) under the PCB at all 8 stations:
+  the board would rest ~1.05mm high on 8 pillar strips and unload the
+  bottom pads. First fix attempt (delete the fuse as "redundant") was
+  WRONG — the gates caught it immediately (shelf void at root+4.0: the
+  tab lobes are cavity in v3.1's no-bulge dilation, the wall over a tab
+  tip is only 1.5 wide, the fuse IS the shelf). Correct fix: keep the
+  fuse, clamp its inboard edge to +0.3 outboard of the rim (PCB-edge
+  fab tolerance; the foam pad spans rim..rim+4 so the 0.3 sliver just
+  bridges). New gates: "pcb footprint clear" (air at root−0.5, z
+  −1.0/−0.7, per tab) + a plan-wide sweep of the PCB rim footprint at
+  z −1.0 (3mm grid, rim-edge 0.3 exclusion; the sweep initially false-
+  positive on tab lobes — the footprint is the PCB RIM, not the plate
+  outline). Tub 68.0 → 67.4 cm³ (exactly the removed strips), all else
+  unchanged.
+- **T4 (M4, user-picked over thickening)** — cover magnets Ø4×2 →
+  Ø4×1.5 (16 pcs), cover pocket depth 1.7, floor 0.8 → 1.3mm. Faces
+  still meet at the lip plane; tub keeps its 2.0s. Cover 8.9 → 9.0 cm³,
+  wall/stations unchanged. BOM rows added (both magnet sizes were
+  MISSING from the BOM entirely — caught while writing this up).
+  First-article pull test added: ≥1.5 kg straight lift with plate in.
+- **M2 (3-source) — pwrsw actuator reach**: footprint shifted 2mm WEST
+  (ergogen pwrsw shift [9,14] → [7,14], mirror follows) so the blade
+  band sits under the SAT-constrained mouth window (mouth stays at
+  106.3/185.2 — it cannot move). Cascade, honestly larger than a
+  constant change:
+  - Left: the two hand-routed pwrsw stubs' pad-side endpoints moved
+    (104→102, 101.46→99.46).
+  - Right: 25 hand-routed pwrsw chain segments + 6 hand vias were tuned
+    to the OLD router output and pad positions — deleted as stale; the
+    router re-routed both stubs fresh.
+  - Router upgrades (generator-owned, all gate-verified): (a) the
+    dangle/keepout checker now sees the MERGED board copper with
+    dangle-reporting restricted to PRESERVED items (the preserved-only
+    view false-flagged GUI junctions that meet router copper; the
+    router-only view cannot see stale GUI breaks); (b) the router's
+    obstacle model is now seeded with the preserved GUI copper at
+    EXACT clearance (no MARGIN) — the MARGIN-inflated seed rejected the
+    legal COL5_R corridor past the GND GUI via (0.85mm centerline,
+    0.825 needed) and produced a detour with a dangling end; (c) router
+    vias co-locating with GUI vias are dropped (DRC co-location
+    warning).
+  - Final: gen_pcb exit 0, DRC both halves clean modulo the W1 set
+    (28 lib mismatches), GUI items stable {L 9, R 12}.
+- **M1 — floor derivation rewritten to the measured ruler** (the hotswap
+  sockets are TOP-side; they never provisioned the floor): encoder legs
+  −3.65 (vendored ROT_EC11E STEP maps 1:1 into the PCB frame — rotate 0,
+  no z offset), TRRS pins −3.0, socket bump −1.25, slide-switch legs
+  ≤−3.5 (family), JST ~−2.5 (family). Deepest −3.65 → FLOOR_Z −5.6
+  keeps ~1.95mm; NO geometry change. params.py + spec/case.md floor
+  text rewritten; first-article keeps a caliper item for the family
+  bounds.
+- **H1 — Choc cutout stays 15.0, wording fixed**: the PG1350 lower body
+  passes at 13.8 square (the 15.0 outline includes the clip wings) →
+  ~0.6/side at 15.0 and the clips never engage — coherent with the 1.5
+  PC plate anyway (clips need ~1.3mm plate gap; 1.2mm-class plates
+  click). "Friction fit" replaced with the real mechanism; rev-2 option
+  (~14.0 + 1.2mm plate) decided by the §1 laser coupon A/B, not before.
+- **M6/M7/M8 — gate hardening**: gen_cover.py added to checks.yml (it
+  was committed ungated); stack-ties check in spec_checks.cjs (GAP ==
+  PLATE_UNDER, TOP_LIP_Z == PLATE_UNDER+PLATE_THICK+2.5, cover pocket
+  floor ≥1.2); plate tab-eligibility now excludes the pwrsw mouth rect
+  (regen diff: both DXFs byte-identical — today's placement clears it
+  for real, now enforced); gen_plate prints definitive encoder webs
+  (cutouts 9.15 / windows 3.65 / ports 4.92–5.35 — the disputed
+  "~3.55 vs 1.75" pair confusion resolved: neither was the cutout web).
+- **LOW doc cluster, one pass**: TRRS cover chord ≤4.82 → the honest
+  6.42-at-lip figure (conclusion unchanged via the 1.75 roof); encoder
+  neighbor rationale 18.18 (footprint origin) → 24.04 (shaft center);
+  stale pre-fix cover rows annotated HISTORICAL in notes + case/README;
+  DXF layer docstring GASKET → PORON (matches the emitted layer);
+  v3.4 changelog TRRS axis z 2.4 → measured 2.5 noted; USB notch-to-pad
+  0.78 loupe item already present in first-article §4 (no change).
+- **No-action, for the record**: M3 (poron 0.35 corner margin) stays the
+  documented measure-first rev-2 trigger; M5 (wall 1.49/1.50 vs 1.40
+  gate floor) stays informational — the census prints it every run.
+- Deferred: none new; M2's printed-slice flick test remains the
+  first-article confirmation of the shifted footprint.

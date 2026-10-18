@@ -55,7 +55,9 @@ Blender visualises.
   build (housing/boot/lever margins, breach, SAT) + magnet band/ant
   line. Measured: tub 68.0/68.0 cm³ (magnets+pwrsw −0.3), cover
   7.7/7.7 cm³, wall_min 1.49/1.50, webs 1.25/1.15, magnet band min
-  6.48/6.49, stations mirrored 1.29mm (measured). `probe_bores.py` gained a
+  6.48/6.49, stations mirrored 1.29mm (measured). [HISTORICAL — the
+  v3.5 review round 2 below re-measured: tub 67.4 (B1 pillar fix),
+  cover 9.0 (T4 pockets), census wall 5.85.] `probe_bores.py` gained a
   7-probe pwrsw group per half (below/flank/fillet/wall-resumed/top/
   sills).
 
@@ -75,6 +77,31 @@ Blender visualises.
   magnet mirror documented 1.29, print-orientation note. Measured
   after: cover 8.9/8.9 cm³, census wall_min 5.85, stations unchanged.
 
+- v3.5 review round 2 (multi-model sweep, 2026-10-18): **B1 blocker
+  fixed** — the tab pillar fuse reached 1.0mm inboard of the rim,
+  putting solid case material under the PCB at all 8 stations (board
+  would rest ~1.05mm high, bottom pads unloaded); the pillar now starts
+  0.3 outboard of the rim (the shelf under the tab tongue survives —
+  my first attempt deleted the fuse entirely and the gates caught it:
+  the tab lobes are cavity, the fuse IS the shelf). New footprint-
+  clear gates (per-tab + plan-wide rim sweep). **T4**: cover magnets
+  Ø4×1.5 (16 pcs), pocket depth 1.7, floor 0.8 → 1.3mm; pull test
+  ≥1.5 kg added to first-article. **M2**: pwrsw footprint shifted 2mm
+  west (ergogen) so the blade band sits under the fixed mouth window;
+  Left stub endpoints moved, Right's 31 stale hand-routed pwrsw items
+  deleted (router re-routes fresh); the router now seeds its obstacle
+  model with preserved GUI copper at exact clearance and the copper
+  checker sees the merged board (both DRC-clean, W1-only). **M1**:
+  floor derivation rewritten to the measured below-PCB ruler (encoder
+  legs −3.65 from the vendored STEP — deepest — FLOOR_Z −5.6 keeps
+  ~1.95mm; sockets are top-side, they never provisioned the floor).
+  **M6/M7/M8**: gen_cover in CI, stack-ties check, pwrsw in plate tab
+  eligibility (DXFs byte-identical), encoder web print (cutouts 9.15 /
+  windows 3.65 / ports 4.92–5.35). Choc 15.0 kept with honest
+  clip-never-engage wording; LOW doc cluster done. Measured after:
+  tub 67.4/67.4 cm³, cover 9.0/9.0 cm³, wall_min 1.49/1.50 (tub) /
+  5.85 (cover census), stations unchanged.
+
 - v3.4 (user review round): **ports became shaped bores** — the
   v3.2-3.3 wall slots cut the FULL wall band (14×11.6 USB / 9.5×11.6
   TRRS rectangles the user rightly called "big gaping"). v3.4 sizes
@@ -83,8 +110,10 @@ Blender visualises.
   z 2.0..top** (plug axis rides at the lip plane — overmold bottom
   ~2.8; the neck above the lip exits through the open top, which is
   the cover's duty), **TRRS = Ø9.5 round bore on the jack-axis estimate
-  z 2.4** (≤8.5 ball swings freely inside; margins hold for ±0.5mm
-  axis drift; clipped flat by the lip only where it passes the top).
+  z 2.4** (the v3.4 estimate; the vendored STEP later measured the
+  mouth-face centre vertex at z **2.5** — the v3.5 bores use 2.5;
+  the ≤8.5 ball swings freely inside, margins hold for ±0.5mm
+  axis drift, clipped flat by the lip only where it passes the top).
   Measured breach unchanged (the march is z-independent): usb out=19.00,
   trrs out=9.50. Material returns: volumes 66.7/66.8 → **68.3 cm³**
   both halves; wall_min 1.49/1.50 and pocket webs 1.25/1.15 unchanged.

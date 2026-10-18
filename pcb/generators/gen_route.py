@@ -487,14 +487,52 @@ def normalize(blk):
     return blk
 
 
-def plan(tag, pts, placements, nets, pin_net):
+def plan(tag, pts, placements, nets, pin_net, avoid_segs=None, avoid_vias=None):
     """Route one half. Returns (board, tracks, vias).
 
     tracks: [(net, layer, width, [(x,y),...])]; vias: [(net, x, y)].
+
+    avoid_segs/avoid_vias: raw kicad blocks of PRESERVED GUI copper —
+    seeded into the obstacle model so fresh routes de-conflict against
+    hand-tuned tracks (M2 round: the router previously saw only its own
+    output and its re-routed stubs crossed GUI GND segments).
     """
     board = Board(tag, pts, placements, nets, pin_net)
     board.nets_inv = {n: c for c, n in nets}
+    code2name = {c: n for c, n in nets}
     tracks, vias = [], []
+    routed = {"F.Cu": [], "B.Cu": []}  # (polyline, width, cls) per layer
+    seed_vias = []
+    if avoid_segs or avoid_vias:
+        for blk in (avoid_segs or []):
+            m = re.search(r"\(start ([\d.-]+) ([\d.-]+)\)\s*"
+                          r"\(end ([\d.-]+) ([\d.-]+)\)", blk)
+            ml = re.search(r'\(layer "([FB])\.Cu"\)', blk)
+            mn = re.search(r"\(net (\d+)\)", blk)
+            mw = re.search(r"\(width ([\d.-]+)\)", blk)
+            if not (m and ml and mn):
+                continue
+            nm = code2name[int(mn.group(1))]
+            routed_layer = f"{ml.group(1)}.Cu"
+            # 5th element = seeded-GUI flag: blocks at EXACT clearance
+            # (no MARGIN) — this copper already coexists legally with the
+            # pre-M2 routes; the robustness margin would reject corridors
+            # the hand tuning deliberately squeaked through (COL5_R rail
+            # past the GND GUI via at 0.85mm centerline).
+            routed[routed_layer].append(
+                (nm, [(float(m.group(1)), float(m.group(2))),
+                      (float(m.group(3)), float(m.group(4)))],
+                 float(mw.group(1)) if mw else 0.5, pclass(nm), True))
+        for blk in (avoid_vias or []):
+            m = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", blk)
+            mn = re.search(r"\(net (\d+)\)", blk)
+            ms = re.search(r"\(size ([\d.-]+)\)", blk)
+            md = re.search(r"\(drill ([\d.-]+)\)", blk)
+            if m and mn:
+                seed_vias.append((code2name[int(mn.group(1))],
+                                  float(m.group(1)), float(m.group(2)),
+                                  float(ms.group(1)) if ms else 1.0,
+                                  float(md.group(1)) if md else 0.5))
     grids = {}
 
     def grid(layer, cls):
@@ -503,27 +541,30 @@ def plan(tag, pts, placements, nets, pin_net):
             grids[key] = Grid(board, layer, cls)
         return grids[key]
 
-    routed = {"F.Cu": [], "B.Cu": []}  # (polyline, width, cls) per layer
-
     def block_routed(layer, cls, net):
         """Fresh copy of base grid with already-routed other-net copper."""
         g = grid(layer, cls).copy()
-        for (qn, pl, w0, c0) in routed[layer]:
+        for entry in routed[layer]:
+            qn, pl, w0, c0 = entry[:4]
+            seeded = len(entry) > 4 and entry[4]
             if qn == net:
                 continue  # own copper is connectable, not obstacle
             clr = 0.25 if (c0 == "p" or cls == "p") else 0.20
+            mg = 0.02 if seeded else MARGIN
             for a, b in zip(pl, pl[1:]):
                 length = math.hypot(b[0] - a[0], b[1] - a[1])
                 steps = max(1, int(length / (GRID / 2)))
                 for k in range(steps + 1):
                     x = a[0] + (b[0] - a[0]) * k / steps
                     y = a[1] + (b[1] - a[1]) * k / steps
-                    g._disc(x, y, w0 / 2 + clr + W[cls] / 2 + MARGIN)
-        for (vn, vx, vy, size, drill) in vias:
+                    g._disc(x, y, w0 / 2 + clr + W[cls] / 2 + mg)
+        for (vn, vx, vy, size, drill) in list(vias) + seed_vias:
             if vn == net:
                 continue
             clr = 0.25 if cls == "p" else 0.20
-            g._disc(vx, vy, size / 2 + clr + W[cls] / 2 + MARGIN)
+            g._disc(vx, vy, size / 2 + clr + W[cls] / 2 +
+                    (0.02 if (vn, vx, vy) in
+                     [(s[0], s[1], s[2]) for s in seed_vias] else MARGIN))
         return g
 
     def own_pads(net, layer, inflate=False):
@@ -605,7 +646,8 @@ def plan(tag, pts, placements, nets, pin_net):
         """Stub from point t=(x, y, layerset) to nearest same-net copper."""
         best, bestd = None, 1e18
         for layer in ("F.Cu", "B.Cu"):
-            for (qn, pl, w0, c0) in routed[layer]:
+            for entry in routed[layer]:
+                qn, pl, w0, c0 = entry[:4]
                 if qn != net:
                     continue
                 for a, b in zip(pl, pl[1:]):

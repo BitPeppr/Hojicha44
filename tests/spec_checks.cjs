@@ -246,5 +246,36 @@ try {
   fail("zmk-structure", e.message);
 }
 
+// N. case<->plate stack ties (M7 review: these constants live in two
+// generators and could drift apart silently)
+{
+  const rd = (f, re) => {
+    const m = fs.readFileSync(path.join(REPO, f), "utf8").match(re);
+    if (!m) throw new Error(`${f}: /${re.source}/ not found`);
+    return parseFloat(m[1]);
+  };
+  try {
+    const gap = rd("plate/gen_plate.py", /^GAP = ([\d.]+)/m);
+    const pt = rd("plate/gen_plate.py", /^PLATE_THICK = ([\d.]+)/m);
+    const under = rd("case/params.py", /^PLATE_UNDER = ([\d.]+)/m);
+    const lip = rd("case/params.py", /^TOP_LIP_Z = ([\d.]+)/m);
+    const ct = rd("case/params.py", /^COVER_T = ([\d.]+)/m);
+    const cmd = rd("case/params.py", /^COVER_MAG_DEPTH = ([\d.]+)/m);
+    const problems = [];
+    if (Math.abs(gap - under) > 1e-9)
+      problems.push(`GAP ${gap} != PLATE_UNDER ${under}`);
+    if (Math.abs(lip - (under + pt + 2.5)) > 1e-9)
+      problems.push(`TOP_LIP_Z ${lip} != PLATE_UNDER+PLATE_THICK+2.5 ` +
+        `(${(under + pt + 2.5).toFixed(2)})`);
+    if (ct - cmd < 1.2)
+      problems.push(`cover pocket floor ${ct - cmd} < 1.2 (M4 fix)`);
+    if (problems.length) fail("stack-ties", problems.join("; "));
+    else ok(`stack-ties (GAP=${gap}, plate ${pt}, lip ${lip}, ` +
+      `cover floor ${(ct - cmd).toFixed(1)})`);
+  } catch (e) {
+    fail("stack-ties", e.message);
+  }
+}
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nall static checks pass");
 process.exit(failures ? 1 : 0);

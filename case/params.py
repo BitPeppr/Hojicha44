@@ -18,11 +18,18 @@ PLATE_TOP = PLATE_UNDER + PLATE_T          # +3.5
 # Tab-support shelf: bottom foam compressed under the tab.
 # SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 2.0 - 2.55 = -0.55
 SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -0.55
-# Floor under the PCB zone: PCB bottom (-1.6) + sockets (~3.0) + 1.0 clear.
-# A flat floor at sandwich depth collides — the tub MUST step down here
-# (spec/case.md audit trail). -5.6 abs = -7.6 rel. plate underside.
-FLOOR_Z = -5.6  # floor top surface (spec-derived: -1.6 PCB, ~3.0 sockets,
-# 1.0 clearance; first-article measures pin/socket protrusion)
+# Floor under the PCB zone: provisioned by the BELOW-PCB protrusions
+# (M1, review-corrected: the hotswap SOCKETS are top-side — module
+# 4.5..7.7 — and never hang below the board). Measured ruler: encoder
+# legs -3.65 (vendored ROT_EC11E STEP; footprint maps it 1:1 into the
+# PCB frame — rotate 0, no z offset), TRRS THT pin tips -3.0 (vendored
+# PJ-320A STEP), Choc socket bump -1.25 (Kailh datasheet), slide-switch
+# legs <=-3.5 (WS-SLTV family bound; caliper on first article), JST PH
+# ~-2.5 (family bound). Deepest known -3.65 -> -5.6 keeps ~1.95mm
+# clearance. A flat floor at sandwich depth still collides (the PCB
+# bottom is -1.6); the tub MUST step down here (spec/case.md).
+FLOOR_Z = -5.6  # floor top surface (spec-derived, see ruler above;
+# first-article caliper re-measures the family bounds)
 
 # ---- outer skin (v3: uniform dilation, Sofle/Corne/Lily lesson) ----
 # ONE constant offset of the PCB RIM (gen_case.py). Notches shallower
@@ -136,7 +143,14 @@ PWRSW_LEVER_SWEEP = 3.6     # actuator blade ~2.0 + travel 1.6 (verify)
 # by the band-face contact, NOT by crushing the foam. 4x2 N52 pairs:
 # ~0.4-0.6 kg/pair x 8 >= 3 kg vs a ~200 g half; nothing pokes outside.
 MAG_DIA = 4.2          # pocket bore for a 4.0 magnet + glue film
-MAG_DEPTH = 2.2        # pocket depth per side (magnet 2.0 + glue line)
+MAG_DEPTH = 2.2        # TUB pocket depth (2.0 magnet + glue line)
+COVER_MAG_DEPTH = 1.7  # COVER pocket depth (T4, review M4): cover-side
+#   magnets are Ø4x1.5 -> pocket floor 3.0-1.7 = 1.3mm (was 0.8 over a
+#   2.2 pocket = 2 FDM passes). Faces still meet exactly at the lip
+#   plane; Ø4x2 vs Ø4x1.5 is an asymmetric-tolerant pair (force drops
+#   to ~0.7-0.85x/face, 8 pairs still >= 2 kg vs a ~200 g half — the
+#   rigid zero-gap stop is the face plane, not the pull; first-article
+#   pull test gates the change).
 MAG_STATION_BAND = 6.4 # local band needed: pocket + >=1.1 web both faces
 MAG_MIN_SEP = 14.0     # arc separation between stations
 MAG_MAX_STATIONS = 8
@@ -150,7 +164,7 @@ MAG_MIN_STATIONS = 6   # retention gate on station count
 # its chord in the 6..9 slice stays <=4.82 so the ring is NOT split),
 # the pwrsw flick slot, and the magnet pockets. Outer face = the skin
 # face FLUSH (an intentional lid seam).
-COVER_T = 3.0          # 6.0..9.0; 0.8 floor over the 2.2 magnet pockets
+COVER_T = 3.0          # 6.0..9.0; 1.3 floor over the 1.7 magnet pockets
 SLOT_PAST_TOP = 0.5    # bore cut extends past the case top plane so the
 #   mouth's top face is the solid's own face, not a coincident-face seam
 SLOT_IN = 2.0          # bore starts inside the cavity (anchored in material)

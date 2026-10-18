@@ -138,14 +138,18 @@ points:
         ref: mcu
         shift: [0, -25]
     # WS-SLTV slide SPDT on the north edge, west of the USB notch; the case
-    # needs a slot over the actuator (CAD phase).
+    # needs a slot over the actuator (CAD phase). M2 review (2026-10-18):
+    # shifted 2mm WEST (9 -> 7) so the actuator blade band sits under the
+    # case's fixed mouth window (centre x 106.3, SAT-constrained: it
+    # cannot move — pocket >=3.2 / USB ~1.8 margins); at the old x the
+    # blade rode ~0mm visible at one end of its throw.
     pwrsw:
       key:
         tags:
           - helper
       anchor:
         ref: matrix_inner_top
-        shift: [9, 14]
+        shift: [7, 14]
     # PJ-320A TRRS at the inner edge, south of the encoder, plug facing the
     # split gap (east). `trrs` is the jack centre; the `_trrs` outline is 17mm
     # wide. Measured on placed boards (KiCad CW-positive rot; J_L1 at

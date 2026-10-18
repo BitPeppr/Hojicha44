@@ -126,10 +126,14 @@ def build_cover(tag):
     base = (ox + ux * t_web, oy + uy * t_web)
     solid = solid.cut(G.fillet_slot(base, pr["v"], pr["u"], pr["w"],
                                     z0 - 0.5, z1 + 0.5, pr["r"], travel))
-    # magnet pockets: cut UP from the underside (faces flush at z0)
+    # magnet pockets: cut UP from the underside (faces flush at z0).
+    # T4 (review M4): cover-side magnets are Ø4x1.5 (tub keeps 2.0s —
+    # the pair is asymmetric-tolerant, faces still meet exactly at the
+    # lip plane), so the pocket is shallower and the floor over the
+    # pocket grows 0.8 -> 1.3mm (COVER_T - COVER_MAG_DEPTH).
     for (cx, cy) in stations:
         solid = solid.cut(cq.Solid.makeCylinder(
-            P.MAG_DIA / 2, P.MAG_DEPTH,
+            P.MAG_DIA / 2, P.COVER_MAG_DEPTH,
             gp_Pnt(cx, cy, z0), gp_Dir(0, 0, 1)))
 
     return solid, {"skin": skin, "cav_poly": cav_poly,
@@ -244,7 +248,7 @@ def check_cover(tag, solid, info):
         expect("cover magnet pocket void", cx, cy,
                P.TOP_LIP_Z + 0.9, False)
         expect("cover magnet pocket floor", cx, cy,
-               P.TOP_LIP_Z + P.MAG_DEPTH + 0.4, True)
+               P.TOP_LIP_Z + P.COVER_MAG_DEPTH + 0.4, True)
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             expect("cover magnet pocket web",
                    cx + dx * (P.MAG_DIA / 2 + 0.3),

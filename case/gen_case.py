@@ -194,14 +194,17 @@ def rect_in_frame(origin, u, v, a0, a1, b0, b1):
 #         (gen_pcb.py TRRS rot-90 dX) + footprint mouth y 12.1
 #         -> 134.55 (L) / 156.95 (R), rounded.
 # pwrsw = the ACTUATOR MOUTH centre on the north rim plateau, NOT the
-#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 104/187.5, 51
-#         inside the cavity). The plateau is the raw Edge.Cuts line
+#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 102/189.5, 51
+#         after the M2 review shift — the footprint moved 2mm WEST so
+#         the actuator blade band sits under this fixed window; the
+#         mouth itself cannot move: SAT-constrained, pocket >=3.2 /
+#         USB ~1.8 margins). The plateau is the raw Edge.Cuts line
 #         y=58.0 across x 97.5..110.5 (mirror 181..194), so the frame
 #         is axis-aligned EXACT (no resample-phase wobble): a wobbly
 #         +/-.5 anchor x swings the slot into tab-4's pocket (east edge
 #         x=100.59; SAT floor 3 wants west edge >= 103.6) or onto the
 #         notch shoulder (110.5). The mouth centre 106.3 clears both;
-#         blade/throw stays exposed (body spans x 99..109).
+#         blade/throw stays exposed (body now spans x 97..107).
 # Slots are explicit rects whose outer extent is measured to actually
 # breach the skin.
 PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),
@@ -518,7 +521,24 @@ def build_half(tag):
     pocket_rects = pocket_layout(tabs, sksegs_b, P)
     pocket_centers = []
     for t, rect in zip(tabs, pocket_rects):
-        solid = solid.fuse(prism(rect, P.FLOOR_Z, P.SHELF_Z))
+        o, u, v = tab_frame(t)
+        # B1 (multi-model review, blocker): the pillar shelf IS needed
+        # under the tab tongue (the tab lobes are cavity in v3.1's
+        # no-bulge dilation — the wall over a tab tip is only 1.5 wide),
+        # but the fused rect reached 1.0mm INBOARD of the rim, putting
+        # solid case material inside the PCB footprint (z -1.6..-0.55)
+        # at every station: the board would rest ~1.05mm high on 8
+        # pillar strips and unload the bottom pads. The shelf now starts
+        # 0.3 outboard of the rim (PCB-edge fab tolerance; the foam pad
+        # spans rim..rim+4, so the 0.3 sliver just bridges), and the
+        # pocket VOID keeps its full -1.0 inboard clearance for the
+        # tab-root fillets. Gates: "pcb footprint clear" (air at
+        # root-0.5, z -1.0/-0.7) + "pillar solid" (root+4.0).
+        nose = max((p[0] - o[0]) * u[0] + (p[1] - o[1]) * u[1]
+                   for p in rect)
+        hw = t["width"] / 2 + P.POCKET_CLEAR
+        pillar = rect_in_frame(o, u, v, 0.3, nose, -hw, hw)
+        solid = solid.fuse(prism(pillar, P.FLOOR_Z, P.SHELF_Z))
         solid = solid.cut(prism(rect, P.POCKET_BOT, P.POCKET_TOP))
         o, u, v = tab_frame(t)
         pocket_centers.append((o[0] + u[0] * (t["protrusion"] / 2),
@@ -647,6 +667,31 @@ def check_half(tag, solid, info):
         tx, ty = o[0] + u[0] * 4.0, o[1] + u[1] * 4.0
         expect("pocket void", tx, ty, 2.75, False)
         expect("pillar solid", tx, ty, (P.SHELF_Z + P.FLOOR_Z) / 2, True)
+        # B1 regression: nothing solid may exist INSIDE the PCB footprint
+        # below z=0 (the deleted pillar fuse lived exactly at root-0.5,
+        # mid-PCB-band). Probed at two depths per tab...
+        for dz in (-1.0, -0.7):
+            expect("pcb footprint clear",
+                   o[0] - u[0] * 0.5, o[1] - u[1] * 0.5, dz, False)
+    # ...plus a coarse plan-wide sweep of the PCB FOOTPRINT at z=-1.0 so
+    # the same bug class cannot return through another path. Footprint =
+    # the PCB rim (NOT the plate outline — the tab-tongue lobes hold the
+    # legitimate pillar shelf); points within 0.3mm of the rim edge are
+    # excluded as boundary tolerance. (Port bores and pocket voids are
+    # air here too, so only rogue solids can fail the sweep.)
+    rim = info["rim"]
+    rimsegs = list(zip(rim, rim[1:] + rim[:1]))
+    _xs = [p[0] for p in rim]
+    _ys = [p[1] for p in rim]
+    _gx = min(_xs) + 2.0
+    while _gx <= max(_xs) - 2.0:
+        _gy = min(_ys) + 2.0
+        while _gy <= max(_ys) - 2.0:
+            if point_in_poly((_gx, _gy), rim) and \
+                    min(segd((_gx, _gy), a, b) for a, b in rimsegs) > 0.3:
+                expect("cavity sweep z-1", _gx, _gy, -1.0, False)
+            _gy += 3.0
+        _gx += 3.0
     # bore cross-section half-width at height z (ground truth for the
     # probe battery below — must mirror exactly what build_half cut:
     # "circle" = round TRRS bore, "fillet" = bottom-filleted USB slot

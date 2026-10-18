@@ -61,11 +61,14 @@ poor bridger.
   `case/gen_case.py` BEFORE the case order). The window sits east of
   the switch centre by design (SAT ≥3 to tab-4's pocket, ~1.8 web to
   the USB mouth — check the lever shows through, not centred).
-- [ ] Magnets (16× 4×2×2mm N52 per both halves' pockets): the tub has
-  8 × Ø4.2×2.2 recesses in the band top, faces flush at the lip plane;
-  the ring cover mirrors them face-down. Glue: tub magnets FACE-UP
-  flush, cover magnets FACE-DOWN flush (the 0.2mm glue seat in the
-  2.2 pocket decides the zero-gap stop). Station coordinates print in
+- [ ] Magnets — 16× Ø4×2×2mm N52 (TUB pockets) + 16× Ø4×1.5mm N52
+  (COVER pockets, T4 review fix: shallower cover pocket -> 1.3mm floor
+  over the magnet; the Ø4×2/Ø4×1.5 pair is asymmetric-tolerant, faces
+  still meet exactly at the lip plane): the tub has 8 × Ø4.2×2.2
+  recesses in the band top, faces flush at the lip plane; the ring
+  cover mirrors them face-down with 8 × Ø4.2×1.7 recesses. Glue: tub
+  magnets FACE-UP flush, cover magnets FACE-DOWN flush (the 0.2mm glue
+  seat decides the zero-gap stop). Station coordinates print in
   the gen_case/gen_cover census lines each run (PCB frame; e.g. Left
   tub (129.96,57.2), (135.97,12.8), …) — cross-check one per half in
   the slicer against the STEP. Tests: dry-fit the cover with NO
@@ -75,9 +78,12 @@ poor bridger.
   tab zone is a reject (the foam compression mark check), and the
   stack rides ~0.5mm lower than the no-plate seat (uncompressed top
   pads 6.5 vs the 6.0 ring underside = the designed 16.7% preload);
-  then with magnets it
-  must snap-seat without rocking and hold a firm pull; poron must not
-  stick to either case part.
+  then with magnets it must snap-seat without rocking; poron must not
+  stick to either case part. **Pull test (M4 gate): with the plate
+  installed, a straight lift must hold ≥1.5 kg before the ring lifts**
+  (8 mixed pairs ≈ 2–2.8 kg predicted; the glue lap is the weak link,
+  not the 1.3mm pocket floor — the floor's rim shear is ~10mm² of
+  perimeter at FDM in-plane strength, orders above the pull).
 - [ ] Ring cover dry-fit: outer face FLUSH with the tub skin (lid seam
   visible but flush — fingernail probe), inner edge = PCB rim + 0.5
   (key field clear; the ring BRIDGES the tabs and presses the top

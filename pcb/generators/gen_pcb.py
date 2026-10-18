@@ -853,18 +853,25 @@ def copper_pieces(copper, code_name):
     return segs, vias
 
 
-def check_copper(tag, copper, placements, code_name, pts):
-    """Preserved copper must attach to copper and avoid the antenna keepout.
+def check_copper(tag, copper, placements, code_name, pts, dangle_items=None):
+    """Copper must attach to copper and avoid the antenna keepout.
 
     Keepout is edge-based (spec: no copper within 5.0mm): track centerlines
-    must clear 5.0 + width/2, via centres 5.0 + drill/2.
+    must clear 5.0 + width/2, via centres 5.0 + drill/2. Touch/dangle
+    accounting runs on the MERGED board (router + preserved) — a GUI chain
+    may legitimately junction into router-generated segments.
 
-    Catches the invisible break: move a footprint, regenerate, and the old
-    track now ends in the middle of nowhere. KiCad reports that only as an
-    unconnected item — indistinguishable from the pre-routing state, so the
-    DRC waiver would hide it.
+    `dangle_items` (default: all of `copper`) restricts which items the
+    DANGLING check reports on. It must stay the preserved/GUI set: the
+    invisible break this gate exists for ("move a footprint, regenerate,
+    the old track now ends in the middle of nowhere") can only happen to
+    copper that SURVIVES regeneration; router output is rebuilt from the
+    current placements every run and its stub-ends near vias connect by
+    copper overlap, not coordinate coincidence.
     """
     segs, vias = copper_pieces(copper, code_name)
+    dsegs, dvias = copper_pieces(dangle_items, code_name) \
+        if dangle_items is not None else (segs, vias)
     pads = {}
     for p in placements:
         kind, lib, name, ref, value, x, y, rot = p[:8]
@@ -879,20 +886,22 @@ def check_copper(tag, copper, placements, code_name, pts):
         return math.hypot(a[0] - b[0], a[1] - b[1]) < 0.01
 
     bad = []
-    for name, ss in segs.items():
+    for name, ss in dsegs.items():
+        all_ss = segs.get(name, [])
         plist, vlist = pads.get(name, []), vias.get(name, [])
         for i, seg in enumerate(ss):
             for pt in (seg[:2], seg[2:4]):
                 touch = (sum(same(pt, q) for q in plist)
                          + sum(same(pt, q[:2]) for q in vlist)
-                         + sum(1 for k, o in enumerate(ss)
-                               if k != i and (same(pt, o[:2]) or same(pt, o[2:4]))))
-                touch += sum(1 for k, o in enumerate(ss)
-                             if k != i and seg_dist(pt[0], pt[1], o[:2], o[2:4]) < 0.01)
+                         + sum(1 for k, o in enumerate(all_ss)
+                               if o is not seg and (same(pt, o[:2]) or same(pt, o[2:4]))))
+                touch += sum(1 for o in all_ss
+                             if o is not seg and
+                             seg_dist(pt[0], pt[1], o[:2], o[2:4]) < 0.01)
                 if touch == 0:
                     bad.append(f"{name}: dangling track end at "
                                f"({r2(pt[0])}, {r2(pt[1])})")
-    for name, vs in vias.items():
+    for name, vs in dvias.items():
         plist = pads.get(name, [])
         ends = [e for s in segs.get(name, []) for e in (s[:2], s[2:4])]
         for vx, vy, _drill, _out in vs:
@@ -1073,14 +1082,45 @@ def build_board(tag, pts):
 
     # --- route (deterministic; generator-owned copper) ---
     import gen_route as router
-    _board, _tracks, _vias = router.plan(tag, pts, placements, nets, pin_net)
-    _segs, _vv = router.emit(_board, _tracks, _vias)
-    route_blocks = _segs + _vv
-    fresh = {router.normalize(b) for b in route_blocks}
+    # phase 1: unseeded plan, only to classify preserved copper (items the
+    # router reproduces exactly are regenerated; the rest are GUI-tuned)
+    _b0, _t0, _v0 = router.plan(tag, pts, placements, nets, pin_net)
+    _s0, _w0 = router.emit(_b0, _t0, _v0)
+    fresh = {router.normalize(b) for b in _s0 + _w0}
     kept = [(k, b) for k, b in copper if router.normalize(b) not in fresh]
     if len(kept) != len(copper):
         print(f"  copper {tag}: {len(copper) - len(kept)} regenerated "
               f"(dedupe), {len(kept)} GUI items kept")
+    # phase 2: seeded plan — fresh routes de-conflict against the GUI
+    # copper they will share the board with (M2 round fix)
+    _board, _tracks, _vias = router.plan(
+        tag, pts, placements, nets, pin_net,
+        avoid_segs=[b for k, b in kept if k == "segment"],
+        avoid_vias=[b for k, b in kept if k == "via"])
+    _segs, _vv = router.emit(_board, _tracks, _vias)
+    # drop router vias that duplicate preserved GUI vias (same net, same
+    # spot — emit's dedupe only sees its own list; co-located drills are
+    # a DRC warning)
+    gui_vias = []
+    for k, b in kept:
+        if k == "via":
+            m = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", b)
+            mn = re.search(r"\(net (\d+)\)", b)
+            if m and mn:
+                gui_vias.append((int(mn.group(1)), float(m.group(1)),
+                                 float(m.group(2))))
+
+    def _gui_dup(via_block):
+        m = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", via_block)
+        mn = re.search(r"\(net (\d+)\)", via_block)
+        if not (m and mn):
+            return False
+        code, x, y = int(mn.group(1)), float(m.group(1)), float(m.group(2))
+        return any(c == code and math.hypot(x - gx, y - gy) < 0.1
+                   for c, gx, gy in gui_vias)
+
+    _vv = [b for b in _vv if not _gui_dup(b)]
+    route_blocks = _segs + _vv
 
     with open(path, "w") as f:
         f.write(head)
@@ -1090,7 +1130,16 @@ def build_board(tag, pts):
           f"{len(nets)} nets, {len(gfx)} edge segments, "
           f"{len(route_blocks)} routed + {len(kept)} preserved copper items")
     check_containment(tag, placements)
-    check_copper(tag, kept, placements, {c: n for c, n in nets}, pts)
+    # M2 round: the dangle/keepout check must see the FINAL board copper
+    # (routed + preserved). Preserved-only was a false-positive machine:
+    # GUI-tuned chains legitimately junction into router-generated
+    # segments (e.g. the pwrsw stubs meet the router's trunk at a
+    # mid-board point no pad claims), and the isolation view flagged
+    # those junctions as dangling. The gate's contract ("preserved track
+    # must still terminate on real copper") is about the merged board.
+    merged = kept + [(b.split()[0].strip("()"), b) for b in route_blocks]
+    check_copper(tag, merged, placements, {c: n for c, n in nets}, pts,
+                 dangle_items=kept)
     return path
 
 

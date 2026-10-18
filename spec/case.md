@@ -34,12 +34,18 @@ Encoder push over the window zone stays soft by design.
 | Bottom gaskets | Same 8×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
 
-- **Bottom-case floor (case design):** floor under the PCB zone must sit
-  ≥7.6mm below the plate underside (FLOOR_Z −5.6 = bottom-gasket plane,
-  i.e. ≈5mm below the tab-support shelf at SHELF_Z −0.55, both measured
-  from the PCB-top frame — PCB bottom hangs 3.6mm below plate underside
-  (2.0 gap + 1.6 PCB) and sockets reach ~6.6mm, so a flat floor at
-  sandwich depth collides; built with ~1.0mm clearance (FLOOR_Z = −5.6,
+- **Bottom-case floor (case design):** floor under the PCB zone sits at
+  FLOOR_Z −5.6 (PCB-top frame), provisioned by the BELOW-PCB protrusions
+  (M1, review-corrected 2026-10-18: the hotswap SOCKETS are top-side —
+  they never hang below the board and do not provision the floor):
+  encoder legs **−3.65** (measured off the vendored ROT_EC11E STEP,
+  which the footprint maps 1:1 into the PCB frame — rotate 0, no z
+  offset), TRRS THT pin tips **−3.0** (vendored PJ-320A STEP), Choc
+  socket bump **−1.25** (Kailh datasheet), slide-switch legs ≤**−3.5**
+  (WS-SLTV family bound — caliper on the first article), JST PH ~**−2.5**
+  (family bound). Deepest known = −3.65 → FLOOR_Z −5.6 keeps ~1.95mm
+  clearance; the tab-support shelf at SHELF_Z −0.55 is a separate
+  feature (foam sets tab height, floor depth is separate —
   `case/params.py`).
 
 ## Sources (suppliers, verified)
@@ -208,8 +214,10 @@ exterior.
     and pokes ~0.2 past the top face (~9.2 abs; the module itself tops
     at 7.7, below the ring).
   - W2 TRRS: the SAME Ø9.5 cylinder. In the 6..9 slice it is a BLIND
-    tunnel topping at 7.25 > boot swing 6.75, and its chord (≤4.82)
-    never reaches the local band width (7.0) — the ring is NOT split.
+    tunnel topping at 7.25 > boot swing 6.75, and its widest chord in
+    that slice (6.42 at the lip plane) never reaches the local band
+    width (7.0) — the ring is NOT split (the old "≤4.82" was the
+    bore's chord below the lip, not the slice's).
   - PWR: full-depth 5.0 slot BUT starting 1.6 outboard, leaving a 1.1
     web next to the cavity edge: W1 must remain the ring's ONLY full
     radial severance or the cover falls into two pieces (the
@@ -261,7 +269,14 @@ against crack initiation in every material.
 
 ## Plate openings (both halves)
 
-- 22× 15×15mm Choc cutouts at switch centers/rotations (friction fit).
+- 22× 15×15mm Choc cutouts at switch centers/rotations — **body
+  clearance, not a clip fit**: the PG1350 lower body passes at 13.8
+  square (common plate-footprint datum; the 15.0 outline includes the
+  clip wings), so 15.0 gives ~0.6/side and the side clips never touch.
+  With the 1.5mm PC plate this is coherent anyway — Choc clips need a
+  ~1.3mm plate gap to click (1.2mm-class plates), so retention here is
+  friction + the hotsockets. Rev-2 option (laser coupon A/B at §1 of
+  first-article decides): ~14.0 cutout + 1.2mm plate.
 - 12.7×12.7mm square encoder hole (instance rot 0, body axis-aligned).
   Sized off the vendored ROT_EC11E STEP: the body measures **12.30 wide
   in the plate band (z 2.0..3.5)** (12.00 up to z 4.0), so 12.7 gives
@@ -269,12 +284,16 @@ against crack initiation in every material.
   class" — the real part is wider; bench-verify with the real encoder
   before the plate order).
   The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
-  the hole. A 17mm round hole was rejected: the encoder center sits only
-  18.18mm from the nearest switch center (SW_L17 — the "18.2mm pitch"
-  cited by earlier revs), so a 17mm hole plus that neighbour's 15mm
-  key cutout leaves next to no web once the rows' splay is accounted;
-  the 12.7mm square keeps a manufacturable gap (enc↔neighbour web
-  ~3.55mm, gate ≥2.5 target).
+  the hole. A 17mm round hole was rejected: the encoder SHAFT center
+  sits 24.04mm from the nearest switch center (SW_L17; the old "18.18"
+  was the raw EC11 footprint origin, not the shaft center — the "18.2
+  pitch" cited by earlier revs is the same off-center figure), so a
+  17mm hole plus that neighbour's 15mm key cutout leaves next to no
+  web once the rows' splay is accounted. The generator now prints the
+  definitive webs each run (`gen_plate.py`): **enc↔cutouts 9.15,
+  enc↔windows 3.65, enc↔port rects 4.92..5.35** (Left; Right symmetric)
+  — the old "~3.55" figure was approximately the window web, not the
+  cutout web.
 - W1 windows: slide-switch strip + MCU/cell/USB core (tall top-side parts).
 - W2 window + channel to the split-gap edge: TRRS mouth must exit; the
   plug overlaps plate-top height, so no solid edge allowed there.

@@ -32,7 +32,7 @@ Usage:
 
 Outputs (gitignored scratch, like out/fit):
   plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
-      OUTLINE/CUTOUT/GASKET[reference-only])
+      OUTLINE/CUTOUT/PORON[reference-only])
   plate/Hojicha44-{Left,Right}-plate.svg   (preview, lands hatched)
   plate/Hojicha44-{Left,Right}-lands.json  (gasket map for case design)
 
@@ -636,12 +636,19 @@ def build_half(tag):
     openings.append(expand_poly(enc_poly, 0.0))
     openings += [expand_poly(wpoly, 0.0) for wpoly in win_rects]
     # port mouths the cables exit through (measured from the outline)
+    # + the pwrsw actuator slot (v3.5; M8 review: was missing, a future
+    # tab retune could park a pocket on the flick channel — today's
+    # placement clears it by the case-side SAT margin only)
+    port_rects = []
     if tag == 'Left':
-        openings.append(rect_poly(111.0, 45.0, 125.0, 60.0))
-        openings.append(rect_poly(129.0, -27.0, 138.0, -17.0))
+        port_rects.append(rect_poly(111.0, 45.0, 125.0, 60.0))
+        port_rects.append(rect_poly(129.0, -27.0, 138.0, -17.0))
+        port_rects.append(rect_poly(103.8, 52.0, 108.8, 64.0))
     else:
-        openings.append(rect_poly(167.0, 45.0, 181.0, 60.0))
-        openings.append(rect_poly(154.0, -27.0, 163.0, -17.0))
+        port_rects.append(rect_poly(167.0, 45.0, 181.0, 60.0))
+        port_rects.append(rect_poly(154.0, -27.0, 163.0, -17.0))
+        port_rects.append(rect_poly(182.7, 52.0, 187.7, 64.0))
+    openings += port_rects
 
     def fillet_arc(corner, u_away, o_out, r, n=6):
         # 90° concave fillet joining the rim (direction u_away from the
@@ -890,9 +897,20 @@ def build_half(tag):
         poron.append(pad)
     lands = [('tab', 0, None) for _ in tabs]
 
+    # M-review: definitive encoder-neighborhood webs (the spec's "~3.55"
+    # and a reviewer's "1.75" measured different pairs — print every
+    # pair that matters, from the real geometry)
+    enc_open = expand_poly(enc_poly, 0.0)
+    enc_web = {
+        'cutouts': min(web_poly(enc_open, c) for c in cuts),
+        'windows': min((web_poly(enc_open, w) for w in win_rects),
+                       default=float('inf')),
+        'ports': min(web_poly(enc_open, r) for r in port_rects),
+    }
+
     return {'half': tag, 'loop': loop, 'outline': new_loop, 'cuts': cuts,
             'sw': sw, 'enc': enc_hole, 'wins': wins, 'tool': tool,
-            'tabs': tabs, 'poron': poron}, bad
+            'tabs': tabs, 'poron': poron, 'enc_web': enc_web}, bad
 
 
 # ---- DXF R12 writer ----
@@ -1008,6 +1026,9 @@ def main():
                     'w'), indent=1)
         print(f'{tag}: 22 cutouts + enc {ENC_SQ}sq + {len(res["wins"])} '
               f'windows + {len(res["tabs"])} gasket tabs — CLEAN')
+        ew = res['enc_web']
+        print(f'{tag}: encoder web — cutouts {ew["cutouts"]:.2f}, '
+              f'windows {ew["windows"]:.2f}, ports {ew["ports"]:.2f}')
     sys.exit(1 if failed else 0)
 
 

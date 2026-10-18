@@ -42,6 +42,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 |---|---|---|
 | 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.7² encoder hole, component windows, 8 gasket tabs (NO screws/holes beyond openings) |
 | ~2 | Poron gasket stock, 4701-30 Very Soft 240kg/m³, 3mm adhesive (sheet/strip cut to 90×4; Keebox 32-pack -40 strips are the drop-in fallback) | per half: 16 pads (8 tabs × 2 faces) cut 8×4; swap ladder -30-15 → -40 → -50, no CAD change |
+| 16 | N52 disc magnet Ø4×2×2mm (nickel-plated) | TUB magnet pockets (8 per half, Ø4.2×2.2 recess, face-UP flush at the lip plane) |
+| 16 | N52 disc magnet Ø4×1.5mm (nickel-plated) | COVER magnet pockets (8 per half, Ø4.2×1.7 recess, face-DOWN flush — T4 review fix: 1.3mm pocket floor; asymmetric pair with the tub's 2.0s is fine, faces meet at the lip plane); supermagnete/GK-class stocked size |
 
 ## Cell — locked to orderable stock (was TBD)
 
