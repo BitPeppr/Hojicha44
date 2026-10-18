@@ -49,5 +49,5 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "SW_L19","K19","SW_Hotswap_Kailh_Choc_V1_1.00u",79.300000,20.000000,13.500000,top
 "SW_L20","K20","SW_Hotswap_Kailh_Choc_V1_1.00u",100.000000,27.700000,27.500000,top
 "SW_L21","K21","SW_Hotswap_Kailh_Choc_V1_1.00u",119.200000,40.100000,41.500000,top
-"SW_LPWR1","PWR_SW","SW_Slide-03_Wuerth-WS-SLTV_10x2.5x6.4_P2.54mm",104.000000,-51.000000,0.000000,top
+"SW_LPWR1","PWR_SW","SW_Slide-03_Wuerth-WS-SLTV_10x2.5x6.4_P2.54mm",102.000000,-51.000000,0.000000,top
 "U_L1","nice!nano v2","Socket_Strips_2x12_P2.54mm_NiceNano",110.380000,-45.470000,180.000000,top
