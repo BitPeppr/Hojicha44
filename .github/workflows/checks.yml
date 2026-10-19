@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # full history: board_commit() and the release-currency gate
+          # read git log -- <paths>; on a depth-1 checkout every path
+          # "changes" at the tip commit and the manifest stamp fails
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -32,6 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # full history: board_commit() and the release-currency gate
+          # read git log -- <paths>; on a depth-1 checkout every path
+          # "changes" at the tip commit and the manifest stamp fails
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -44,6 +54,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # full history: board_commit() and the release-currency gate
+          # read git log -- <paths>; on a depth-1 checkout every path
+          # "changes" at the tip commit and the manifest stamp fails
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -58,6 +73,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          # full history: board_commit() and the release-currency gate
+          # read git log -- <paths>; on a depth-1 checkout every path
+          # "changes" at the tip commit and the manifest stamp fails
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

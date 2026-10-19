@@ -36,9 +36,10 @@ PROJECT = {"L": "Hojicha44-Left", "R": "Hojicha44-Right"}
 HALVES = ("L", "R")
 MIRROR_AXIS = 145.75  # (x_left + x_mirror)/2 for every ergogen pair
 
-KICAD_CLI = (
+KICAD_CLI = os.environ.get(
+    "KICAD_CLI",
     shutil.which("kicad-cli")
-    or "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+    or "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli",
 )
 STOCK_FP = "/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints"
 
@@ -135,18 +136,35 @@ def key_points(pts, tag):
 # ---------------------------------------------------------------- netlist
 
 def load_nets(tag):
-    """Run kicad-cli netlist export; return (nets, pin_net).
+    """Schematic netlist -> (nets, pin_net).
+
+    Exported by kicad-cli straight into pcb/kicad/<project>-<tag>.net,
+    a TRACKED artifact: the export is deterministic (byte-stable like
+    the boards), and CI's check_board has no KiCad — it parses the
+    committed bytes and is the only net source when kicad-cli is
+    absent.
 
     nets: [(code, name)]; pin_net: {(ref, pin): (code, name)}.
     """
+    netpath = os.path.join(PCB_DIR, PROJECT[tag] + ".net")
     sch = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_sch")
-    tmp = f"/tmp/hojicha-nets-{tag}.net"
-    r = subprocess.run(
-        [KICAD_CLI, "sch", "export", "netlist", "--format", "kicadsexpr",
-         "-o", tmp, sch], capture_output=True, text=True)
-    if r.returncode != 0:
-        raise RuntimeError(f"netlist export failed for {tag}:\n{r.stderr}")
-    s = open(tmp).read()
+    if os.path.exists(KICAD_CLI):
+        r = subprocess.run(
+            [KICAD_CLI, "sch", "export", "netlist", "--format",
+             "kicadsexpr", "-o", netpath, sch],
+            capture_output=True, text=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"netlist export failed for {tag}:\n{r.stderr}")
+        # KiCad stamps the header (date "…") — the only non-deterministic
+        # bytes in the export. Neutralize it so consecutive builds commit
+        # identical files (same hygiene as the board uuid/date churn).
+        body = open(netpath).read()
+        open(netpath, "w").write(
+            re.sub(r'\(date\s*"[^"]*"\)', '(date "")', body))
+    elif not os.path.exists(netpath):
+        raise RuntimeError(f"{tag}: kicad-cli absent and {netpath} missing "
+                           "(the committed netlist is CI's only source)")
+    s = open(netpath).read()
     nets = [(0, "")]
     pin_net = {}
     for m in re.finditer(

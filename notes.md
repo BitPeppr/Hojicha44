@@ -1384,3 +1384,24 @@ Ordering-readiness facts confirmed en route: plate DXF `$INSUNITS = 4`
 (mm), and `make_release --check` stays green for non-board commits
 (`board_commit()` scopes pcb/kicad + generators + spec/electronics.yaml,
 so the @ab06523 stamp stays current until boards change).
+
+Round 2 on 0db0399's CI — three surfaces cropped out of one symptom
+class, "CI has no KiCad":
+
+- `make_release --check` failed first on CI-only state: the deferred
+  fetch-depth fix turned out load-bearing — on depth-1 checkouts
+  `board_commit()` diffs the tip against the empty tree, so every board
+  path counts as touched at HEAD and the manifest stamp can never
+  match. Fix: `fetch-depth: 0` on all four Static-repo checkouts.
+- `check_board` died in `G.load_nets` — the schematic netlist came
+  from a kicad-cli runtime call (macOS path hardcoded). Fix:
+  `load_nets` exports straight into tracked
+  `pcb/kicad/Hojicha44-{Left,Right}.net` (kicadsexpr; the header
+  `(date …)` line neutralized — it was the export's only
+  nondeterministic bytes), and when kicad-cli is absent it parses the
+  committed file. The `KICAD_CLI` env override enables local testing
+  of the KiCad-absent path: verified 3× byte-identical exports and
+  `KICAD_CLI=/nonexistent check_board` CLEAN.
+- The gen_pcb change is board-affecting by the currency gate's own
+  definition, so a full release re-cut rides it (release commit
+  touches only generated/release).
