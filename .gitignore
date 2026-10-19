@@ -5,15 +5,18 @@ node_modules/
 .DS_Store
 
 # reproducible outputs (regenerate via README; sources are the truth)
-# points.yaml is the tracked exception: it is gate INPUT — check_board +
-# plate/gen_plate --check read the usb anchors on CI, where nothing
-# regenerates it. Keep the verified geometry committed so CI checks the
-# same numbers the boards were cut from; a regen that moves points
-# dirties the tree visibly and must ride the next commit.
+# Two tracked exceptions: they are gate INPUT — board.dxf (the outline,
+# fed to build_placements) + points.yaml (the usb anchors check_board +
+# plate/gen_plate --check referee) are read on CI, where nothing
+# regenerates layout outputs. Keep the verified geometry committed so
+# CI checks the same numbers the boards were cut from; a regen that
+# moves either dirties the tree visibly and must ride the next commit.
 layout/generated/**
 !layout/generated/v2/
 !layout/generated/v2/points/
 !layout/generated/v2/points/points.yaml
+!layout/generated/v2/outlines/
+!layout/generated/v2/outlines/board.dxf
 *.log
 
 # KiCad working-tree noise (release reports go to generated/release/)

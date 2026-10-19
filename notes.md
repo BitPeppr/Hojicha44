@@ -1404,4 +1404,7 @@ class, "CI has no KiCad":
   `KICAD_CLI=/nonexistent check_board` CLEAN.
 - The gen_pcb change is board-affecting by the currency gate's own
   definition, so a full release re-cut rides it (release commit
-  touches only generated/release).
+  touches only generated/release). Round 3: the copper-reconstruction
+  path also reads `board.dxf` (via build_placements → pick_fiducials)
+  — tracked now too (5.5 KB, same negation), completing the "CI checks
+  the committed duo of layout outputs" set (points.yaml + board.dxf).
