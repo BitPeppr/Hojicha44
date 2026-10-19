@@ -194,17 +194,19 @@ def rect_in_frame(origin, u, v, a0, a1, b0, b1):
 #         (gen_pcb.py TRRS rot-90 dX) + footprint mouth y 12.1
 #         -> 134.55 (L) / 156.95 (R), rounded.
 # pwrsw = the ACTUATOR MOUTH centre on the north rim plateau, NOT the
-#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 102/189.5, 51
-#         after the M2 review shift — the footprint moved 2mm WEST so
-#         the actuator blade band sits under this fixed window; the
-#         mouth itself cannot move: SAT-constrained, pocket >=3.2 /
-#         USB ~1.8 margins). The plateau is the raw Edge.Cuts line
-#         y=58.0 across x 97.5..110.5 (mirror 181..194), so the frame
-#         is axis-aligned EXACT (no resample-phase wobble): a wobbly
-#         +/-.5 anchor x swings the slot into tab-4's pocket (east edge
-#         x=100.59; SAT floor 3 wants west edge >= 103.6) or onto the
-#         notch shoulder (110.5). The mouth centre 106.3 clears both;
-#         blade/throw stays exposed (body now spans x 97..107).
+#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 106.3/185.2, 51 after
+#         M3 — origins centred on this fixed window, band = origin +/-1.8
+#         vs the 5.0-wide mouth = 0.70/side; M2's "2mm WEST" shift had run
+#         the WRONG way and left the band wholly behind the west/east
+#         wall). The mouth itself cannot move: SAT-constrained,
+#         pocket >=3.2 / USB ~1.8 margins. The plateau is the raw
+#         Edge.Cuts line y=58.0 across x 97.5..110.5 (mirror 181..194,
+#         frozen in the ergogen outline), so the frame is axis-aligned
+#         EXACT (no resample-phase wobble): a wobbly +/-.5 anchor x
+#         swings the slot into tab-4's pocket (east edge x=100.59; SAT
+#         floor 3 wants west edge >= 103.6) or onto the notch shoulder
+#         (110.5). The mouth centre 106.3 clears both; blade/throw stays
+#         exposed (body spans x 101.3..111.3 / 180.2..190.2).
 # Slots are explicit rects whose outer extent is measured to actually
 # breach the skin.
 PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),

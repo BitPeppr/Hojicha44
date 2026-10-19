@@ -109,9 +109,12 @@ TRRS_MOUTH_ZC = 2.5    # jack axis: mouth-face centre vertex z=2.5 in the
 # 10x2.5x6.4): body 10 x 2.5, body top z 5.0 above the PCB, red
 # actuator 1.4 tall on top (z 5.0..6.4), slide travel 0.8/side along
 # the 10mm axis, flick = fingernail entering the aperture from above.
-# Placement: footprint at (104,51); the north rim runs a STRAIGHT
-# plateau y=58 across x 97.5..110.5, so the whole switch (its most
-# outboard point y=52.25) sits >=6.25mm INSIDE the cavity — no body or
+# Placement: footprint at (106.3,51) Left / (185.2,51) Right (M3:
+# origin centred on this window; the M2 "2mm WEST" shift ran the wrong
+# way and left the blade band wholly behind the wall); the north rim
+# runs a STRAIGHT plateau y=58 across x 97.5..110.5 (frozen in the
+# ergogen outline — does not follow the switch), so the whole switch
+# (its most outboard point y=52.25) sits >=6.25mm INSIDE the cavity — no bodyor
 # pin ever crosses the wall band. The mouth is therefore only the
 # actuator aperture, and it must NOT span the 7.0 wall band fully: a
 # full-width cut breaks the ring into two disconnected arcs (2 solids).

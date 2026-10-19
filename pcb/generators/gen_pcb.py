@@ -283,13 +283,16 @@ def krot(erg_r):
 
 
 def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
-          ref_on_fab=False, strip_silk=False, cathode_tick=False):
+          ref_on_fab=False, strip_silk=False, cathode_tick=False,
+          ref_shift=(0.0, 0.0)):
     """Embed a .kicad_mod as a board instance.
 
     Keeps all local geometry; sets the instance position, reference/value,
     per-pad nets, and fresh uuids (instances must not share uuids).
     hide_ref hides the silk reference designator; ref_on_fab moves it to
     Fab instead (dense matrix: silk refs sit on neighbour silk/pads);
+    ref_shift offsets the Reference field's local coordinates (per-half
+    silk-collision dodge; PWR uses mirrored x signs across the halves);
     strip_silk drops F.SilkS graphics (SOD-123: the cathode bar sits 0.2mm
     from the pad and trips angle-dependent DRC noise; Fab keeps polarity).
     cathode_tick re-adds a minimal cathode tick for stripped SOD-123s:
@@ -304,6 +307,22 @@ def embed(src, libref, ref, value, x, y, rot, pin_nets, hide_ref=False,
                s, count=1)
     s = re.sub(r'\(property "Reference" "[^"]*"',
                f'(property "Reference" "{ref}"', s, count=1)
+    # ref_shift nudges the silk Reference field off the stock position
+    # (M3: the PWR switch moved +4.3 inboard; the 8-char ref string is
+    # left-justified and pronounced into the nice!nano socket's silk
+    # spill at x>=109.05, y~48.07 — M2 avoided this only because the
+    # switch sat 4.3mm further west). Keeps the ref on-board and clear.
+    if ref_shift[0] or ref_shift[1]:
+        def ref_at(m):
+            toks = m.group(2).split()
+            rest = toks[2:] if len(toks) > 2 else []
+            at = (f"{r2(float(toks[0]) + ref_shift[0])} "
+                  f"{r2(float(toks[1]) + ref_shift[1])}")
+            if rest:
+                at += " " + " ".join(rest)
+            return f"{m.group(1)}{at}{m.group(3)}"
+        s = re.sub(r'(\(property "Reference" "[^"]*"\n\t\t\(at )([^)]*)(\))',
+                   ref_at, s, count=1)
     if hide_ref:
         s = re.sub(r'(\(property "Reference" "[^"]*"\n\t\t\(at [^)]*\)\n'
                    r'\t\t\(layer "[^"]*"\))',
@@ -1059,9 +1078,18 @@ def build_board(tag, pts):
     body = []
     for kind, lib, name, ref, value, x, y, rot, hide, fab, strip, pn in placements:
         src = fp_source(lib, name)
+        if kind == "PWR":
+            # M3: the switch moved +4.3 inboard; the stock left-justified
+            # 8-char ref string now pronounces past the body end. Shift it
+            # away from that half's inner bite wall (mirrored signs), keeping
+            # the two halves' silk mirror-images of each other.
+            ref_shift = (-3.0, 0.0) if tag == "L" else (3.0, 0.0)
+        else:
+            ref_shift = (0.0, 0.0)
         body.append(embed(src, f"{lib}:{name}", ref, value, x, y, rot, pn,
                           hide_ref=hide, ref_on_fab=fab, strip_silk=strip,
-                          cathode_tick=(kind == "DIODE")))
+                          cathode_tick=(kind == "DIODE"),
+                          ref_shift=ref_shift))
 
     # antenna keepout marking + JST pin-1 "+" (placement review aids; the
     # copper-pour keepout is enforced at routing — no pours exist yet).

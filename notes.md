@@ -1199,3 +1199,74 @@ MEDIUM, a LOW doc cluster. What was done:
   gate floor) stays informational — the census prints it every run.
 - Deferred: none new; M2's printed-slice flick test remains the
   first-article confirmation of the shifted footprint.
+
+## M3: power-switch relocation — origins centred on the windows (2026-10-18)
+
+**Trigger**: multi-model re-verification (grok 4.7 + gemini + space-bunny +
+nvidia deepseek-v4.1 + muse reflection; all vector-extracted from the
+450301014042 drawing) overturned the M2 chirality theory. The M3-attempted
+artwork rotation is withdrawn.
+
+- **Corrected actuator model**: the neutral lever band = footprint origin
+  ±1.8 (2.0 blade + 1.6 travel), centred on the COM pin / footprint
+  origin in both files' frames; the drawn nub (3.21..5.21 from the pin-②
+  end) is one travel *extreme*, not the neutral. The ±4.2 "offset" the
+  M2-era audit chased is the pin-③ end cell's ~Ø1.0 flush indicator dot
+  (at +4.265 local), not the lever. Consequence: assembly rotation is a
+  geometric no-op for visibility, and rot-180 artwork would swap
+  pad2/pad3 board holes under nets 20 (/VBAT_SW) / 47 (NC-Pad3) — the
+  hand stub at (99.46,51) would land on the NC pad (short + floating
+  rail pad). Rejected.
+- **Real defect found**: both origins sat 4.3mm OUTBOARD of their
+  SAT-pinned windows (Left 102 vs 106.3; Right 189.5 vs 185.2) → swept
+  bands touched the window edges exactly, zero visible blade on both
+  halves. M2's "shift 2mm WEST" had the right magnitude but the wrong
+  sign (the pre-M2 remedy was +2.3 EAST); the audit's ±0.8-based
+  arithmetic then hid it.
+- **Fix**: ergogen pwrsw anchor shift [7,14] → [11.3,14] (Left origin
+  102 → 106.3; mirror follows to 185.2). Bands now 104.5..108.1 /
+  183.4..187.0 vs windows = 0.70/side both halves. Mirror-pure, no
+  asymmetric fallback needed.
+- **Plateau frozen BEFORE the move**: the board outline's two plateau
+  corners re-referenced from pwrsw/mirror_pwrsw to
+  matrix_inner_top/mirror_matrix_inner_top (95,37 / 196.5,37 — the
+  mirrored half needs PLAIN shifts, ergogen negates shift.x for
+  mirror_ refs, and the mirrored corner ORDER (181 before 194) matters
+  for the shoulder fillets). Freeze values = the COMMITTED boards'
+  Edge.Cuts (97.5..110.5 / 181..194 at y53.5), NOT "today's
+  pwrsw(102) corners" (95.5..108.5) — archaeology: M2 moved the switch
+  points and the boards but never re-cut the ergogen board.dxf, so the
+  whole v3.5 mouth/SAT math silently assumed the pre-M2 outline; the
+  freeze pins that outline permanently (the plateau never moves with
+  the switch again). board.dxf regenerated 71/71 entities identical.
+- **Routing**: nets 20 (VBAT_SW) and 45 (J_2-Pin_1 pack+) are now
+  100% router-owned on both halves (Right kept 0 GUI items; Left kept
+  9 — the committed file carried TWO parallel net-20/45 route
+  families; the zero-indent family ended at the moved-away pads and
+  was deleted as stale). Left pad-side endpoints were first retargeted
+  +4.3 (103.76/106.3) per the M2 hand-stub precedent; gen_pcb's
+  re-route superseded them with fresh corridor beams and the dedupe
+  keeps both co-existing — DRC-clean either way.
+- **Silk ref**: the SW ref field (left-justified 8-char string at local
+  (0,−2.54)) began at the footprint origin, so at the inboard
+  positions its glyphs ran into the nice!nano socket's silk spill
+  (x≥109.05, y≈48.07) and, on the Right, westward into the bite
+  shoulder at x=179. New gen_pcb hook `ref_shift` moves it away from
+  the inner bite wall with MIRRORED signs: −3 on L (→103.3), +3 on R
+  (→188.2); DRC clean both halves.
+- **Case/plate**: plate regen = the pwrsw pass-through window follows
+  the switch (committed cut was still 104-centred — pre-M2 stale —
+  first time placed at 102 or 106.3); window now 100.05..112.55 /
+  178.95..191.45 (13-wide; exact mirrors about x 145.75); north-edge
+  outline + all other cutouts
+  unchanged, plate gates CLEAN. Case regen (gen_case.py) = ZERO diff
+  (mouth 103.8..108.8 × z4.3 is SAT-absolute, never referenced the
+  switch point); census now reports lever sweep 3.6 vs slot 5.0 =
+  0.70/side; cover regen unchanged (stations/z/wall_min as before).
+- **Gates**: gen_pcb exit 0, ERC 0, DRC both halves only the 28
+  W1-waived lib_footprint_mismatch; npm test all-pass (w1-gate exact
+  28/half, zmk-structure, stack-ties). Body clears the side cavity
+  walls by 1.20mm both halves (112.5/179.0 walls vs body ends
+  111.3/180.2).
+- **First-article additions**: caliper the lever-vs-COM at both detents
+  (band interpretation, not a gate) — see spec/first-article.md §2.

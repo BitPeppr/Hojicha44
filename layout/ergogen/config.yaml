@@ -138,18 +138,25 @@ points:
         ref: mcu
         shift: [0, -25]
     # WS-SLTV slide SPDT on the north edge, west of the USB notch; the case
-    # needs a slot over the actuator (CAD phase). M2 review (2026-10-18):
-    # shifted 2mm WEST (9 -> 7) so the actuator blade band sits under the
-    # case's fixed mouth window (centre x 106.3, SAT-constrained: it
-    # cannot move — pocket >=3.2 / USB ~1.8 margins); at the old x the
-    # blade rode ~0mm visible at one end of its throw.
+    # needs a slot over the actuator (CAD phase). Datasheet-measured (M3,
+    # 2026-10-18, vector-extracted 450301014042 drawing): the actuator is a
+    # 2.0mm blade on 1.6mm travel CENTRED on the COM pin, and the COM pin IS
+    # the footprint origin — the drawn nub is one travel extreme, not the
+    # neutral; the +/-4.2mm "offset" an earlier read chased is the pin-3
+    # end cell's ~Ø1.0 flush indicator dot (centre ~+4.27 local, no
+    # silhouette bump in the front view), NOT the lever. Consequence: the
+    # swept band = origin +/-1.8, rotation-invariant; the M2 "2mm WEST"
+    # shift moved the band OUT of reach (window sat at origin+4.3) and both
+    # halves had zero visible blade. Fix per SAT-ready window plan: put the
+    # origin on the window centre (Left 106.3, mirror follows to 185.2) —
+    # shift 11.3 = 7 + 4.3. Windows immovable: tab-4 pocket >=3.2 / USB ~1.8.
     pwrsw:
       key:
         tags:
           - helper
       anchor:
         ref: matrix_inner_top
-        shift: [7, 14]
+        shift: [11.3, 14]
     # PJ-320A TRRS at the inner edge, south of the encoder, plug facing the
     # split gap (east). `trrs` is the jack centre; the `_trrs` outline is 17mm
     # wide. Measured on placed boards (KiCad CW-positive rot; J_L1 at
@@ -194,11 +201,20 @@ outlines:
           shift: [9.5, 9.5]
         - ref: matrix_index_top
           shift: [9.5, 9.5]
-        # power-switch body, so the case slot over the actuator stays on-board
-        - ref: pwrsw
-          shift: [-6.5, 2.5]
-        - ref: pwrsw
-          shift: [6.5, 2.5]
+        # power-switch body corners on the plateau, FROZEN to the committed
+        # boards' Edge.Cuts (Left 97.5..110.5, Right 181..194, at y 53.5;
+        # rim process -> line y=58). Refs are decoupled from the pwrsw
+        # anchor so the M3 switch move cannot drag the north rim — the
+        # case window geometry (tab-4 web 3.21 / USB shoulder web 1.7) is
+        # computed against THIS plateau. Archaeology: M2 moved the switch
+        # points but never re-cut the ergogen board DXF (the whole v3.5
+        # mouth math silently assumed the pre-M2 outline); this decouple
+        # makes the pin-law explicit: the plateau never moves with the
+        # switch again. matrix_inner_top = (95,37); mirror anchor 196.5.
+        - ref: matrix_inner_top
+          shift: [2.5, 16.5]
+        - ref: matrix_inner_top
+          shift: [15.5, 16.5]
         - ref: matrix_inner_top
           shift: [9.5, 9.5]
         - ref: mcu
@@ -231,10 +247,10 @@ outlines:
           shift: [9.5, 9.5]
         - ref: mirror_matrix_index_top
           shift: [9.5, 9.5]
-        - ref: mirror_pwrsw
-          shift: [6.5, 2.5]
-        - ref: mirror_pwrsw
-          shift: [-6.5, 2.5]
+        - ref: mirror_matrix_inner_top
+          shift: [15.5, 16.5]
+        - ref: mirror_matrix_inner_top
+          shift: [2.5, 16.5]
         - ref: mirror_matrix_inner_top
           shift: [9.5, 9.5]
         - ref: mirror_mcu

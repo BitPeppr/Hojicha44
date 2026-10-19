@@ -58,9 +58,13 @@ poor bridger.
   the lever blade across the 10mm body (design assumed ~2.0 blade +
   ±0.8 travel = ~3.6 sweep, 0.7/side margin in `params.py` — if the
   real sweep is wider, widen `PWRSW_MOUTH_W` and re-run
-  `case/gen_case.py` BEFORE the case order). The window sits east of
-  the switch centre by design (SAT ≥3 to tab-4's pocket, ~1.8 web to
-  the USB mouth — check the lever shows through, not centred).
+  `case/gen_case.py` BEFORE the case order). The window is centred on
+  the switch origin (M3: the neutral lever band = origin ±1.8 sits
+  centred in the 5.0 mouth at 0.7/side; the M2-era "window east of the
+  switch centre" premise was a datasheet misread of the drawn nub — it
+  is one travel extreme, the neutral lever is centred on the COM
+  pin/footprint origin). SAT stands: mouth ≥3 to tab-4's pocket, ~1.8
+  web to the USB mouth.
 - [ ] Magnets — 16× Ø4×2×2mm N52 (TUB pockets) + 16× Ø4×1.5mm N52
   (COVER pockets, T4 review fix: shallower cover pocket -> 1.3mm floor
   over the magnet; the Ø4×2/Ø4×1.5 pair is asymmetric-tolerant, faces
