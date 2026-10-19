@@ -59,8 +59,13 @@
          * (index 2, spec/layout.yaml thumbs "L2"). Contents are the
          * open_points decision (Fn chord = L1+L2 provisional); ships
          * all-transparent so the FP gate can verify reachability without
-         * inventing L2 keys. Raise sensor unbound (&trans), mirroring
-         * the lower layer shape.
+         * inventing L2 keys. Row sensors mirror the base volume pair —
+         * NOT &trans: the pinned ZMK v0.3 build rejects transparent in
+         * sensor-bindings ("/behaviors/transparent lacks
+         * #sensor-binding-cells"), and a layer with no sensor-bindings
+         * would eat sensor events while L2 is held. Caveat pending the
+         * layer decision: during the L1+L2 chord, rotation reads volume
+         * rather than L1's scroll.
          */
         raise_layer {
             bindings = <
@@ -73,7 +78,7 @@
                 &trans &trans &trans &trans &none &none
                 &trans &trans &trans &trans
             >;
-            sensor-bindings = <&trans &trans>;
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
     };
 

@@ -1355,3 +1355,32 @@ npm test / audit_silk; the release re-cut follows the Stage-2 commit
 (`make_release.py` refuses dirty trees and gates the ERC/DRC
 reports). Evidence logs retained under `opencode/` (pcb_runE/F/G2,
 capture, plate_run2, case_run3, cover_run2, probe_mags.py).
+
+### CI verdict on the pushed v0.3.1 (d19dab7)
+
+First push verdict came back same-day with two failures — both real,
+both fixed in place:
+
+- Static checks died on `layout/generated/v2/points/points.yaml`
+  missing: an untracked generator output that TWO gates read for the
+  usb anchors (`check_board.py` notch gate, `plate/gen_plate --check`
+  mouth scan). The board-gates CI job only started running in this
+  push, so the dependency shipped untested. Fix: track the file
+  (3.5k lines / 55 KB) via gitignore negation — it is gate input, and
+  committed geometry should be certified geometry. A regen that moves
+  points now dirties the tree visibly and must ride the next commit.
+- ZMK failed on both halves: `devicetree error: /behaviors/
+  transparent lacks #sensor-binding-cells` — the L2 raise layer's
+  `sensor-bindings = <&trans &trans>` (net-new in the batch, never
+  compile-validated locally; spec_checks excluded sensor lines from
+  every check). Fix: mirror the base volume pair
+  (`&inc_dec_kp C_VOL_UP C_VOL_DN`) — a layer without sensor-bindings
+  would eat sensor events while L2 is held; caveat documented in the
+  keymap (L1+L2 chord reads volume instead of scroll, provisional).
+  spec_checks now rejects &trans/&none in sensor-bindings and wants
+  one sensor-bindings per layer.
+
+Ordering-readiness facts confirmed en route: plate DXF `$INSUNITS = 4`
+(mm), and `make_release --check` stays green for non-board commits
+(`board_commit()` scopes pcb/kicad + generators + spec/electronics.yaml,
+so the @ab06523 stamp stays current until boards change).

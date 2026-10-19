@@ -219,6 +219,22 @@ try {
   for (const lg of [...legends.thumbs.right].reverse())
     exp.push(mkBinding(lg));
   const problems = [];
+  // Sensor bindings may reference only sensor-capable behaviors: the
+  // pinned ZMK v0.3 build-user-config workflow rejects &trans there
+  // ("/behaviors/transparent lacks #sensor-binding-cells" — this killed
+  // CI on the first v0.3.1 push). Structure checks stop short of
+  // devicetree semantics, so guard the class most likely to recur.
+  const sensorLines = body.match(/^\s*sensor-bindings.*$/gm) || [];
+  if (sensorLines.length !== layerBlocks.length) {
+    problems.push(`want one sensor-bindings per layer ` +
+      `(${layerBlocks.length}), got ${sensorLines.length}`);
+  }
+  for (const sl of sensorLines) {
+    if (/&(?:trans|none)(?![\w-])/.test(sl)) {
+      problems.push(`sensor-bindings &trans/&none rejected by ZMK v0.3 ` +
+        `(its node "lacks #sensor-binding-cells"): ${sl.trim()}`);
+    }
+  }
   if (layerBlocks.length !== 3) {
     problems.push(`want exactly 3 layers (default + lower + L2 raise ` +
       `placeholder), got ${layerBlocks.length}`);
