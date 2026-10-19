@@ -1385,8 +1385,8 @@ Ordering-readiness facts confirmed en route: plate DXF `$INSUNITS = 4`
 (`board_commit()` scopes pcb/kicad + generators + spec/electronics.yaml,
 so the @ab06523 stamp stays current until boards change).
 
-Round 2 on 0db0399's CI — three surfaces cropped out of one symptom
-class, "CI has no KiCad":
+Round 2 on 0db0399's CI — one symptom class ("CI lacks KiCad / full
+history"):
 
 - `make_release --check` failed first on CI-only state: the deferred
   fetch-depth fix turned out load-bearing — on depth-1 checkouts
@@ -1408,3 +1408,10 @@ class, "CI has no KiCad":
   path also reads `board.dxf` (via build_placements → pick_fiducials)
   — tracked now too (5.5 KB, same negation), completing the "CI checks
   the committed duo of layout outputs" set (points.yaml + board.dxf).
+  Round 4: pick_fiducials then resolved pad geometry from the STOCK
+  KiCad footprint libs (machine macOS path) — `pcb/stock/` now vendors
+  byte-identical copies of the six non-project footprints in FP_SRC
+  (Diode/Encoder/JST/PwrSw/Fiducial/MountingHole, cmp-verified against
+  the 10.0.6 install; fp-lib-table untouched so KiCad sees nothing
+  new); `fp_source` prefers the vendored copy. With that, the
+  `KICAD_CLI=/nonexistent` check_board simulation is CLEAN end to end.

@@ -291,10 +291,20 @@ def outline_graphics(side):
 # ---------------------------------------------------------------- footprints
 
 def fp_source(lib, name):
+    """Footprint definition text.
+
+    Hojicha44 = the project's own lib. Anything else must be a stock
+    KiCad lib resolve from pcb/stock/<lib>.pretty (byte-identical
+    vendored copies — KiCad-free CI has no install; see pcb/stock/
+    README.md), falling back to the local install for anything missing.
+    """
     if lib == "Hojicha44":
         p = os.path.join(PCB_DIR, "Hojicha44.pretty", name + ".kicad_mod")
     else:
-        p = os.path.join(STOCK_FP, lib + ".pretty", name + ".kicad_mod")
+        v = os.path.join(REPO, "pcb", "stock", lib + ".pretty",
+                         name + ".kicad_mod")
+        p = v if os.path.exists(v) else \
+            os.path.join(STOCK_FP, lib + ".pretty", name + ".kicad_mod")
     return open(p).read()
 
 
