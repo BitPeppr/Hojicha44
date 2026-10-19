@@ -36,7 +36,9 @@ ROUTER_VERSION = 13  # bump when routing behavior changes: stale generator
 # copper is preserved only within the same revision.
 W = {"s": 0.25, "p": 0.5}
 CLR = {"s": 0.2, "p": 0.25}
-VIA = {"s": (0.6, 0.3), "p": (1.0, 0.5)}
+VIA = {"s": (0.65, 0.3), "p": (1.0, 0.5)}  # coincidence-annular bump: 0.65
+                                           # pad lands (0.65-0.30)/2 = 0.175
+                                           # vs 0.15 DRC floor (P0-7)
 EDGE_CLR = 0.15
 HOLE_CLR = 0.25
 KEEP_R = 5.0
@@ -306,7 +308,8 @@ POP_CAP = 300000
 
 
 def astar2(gF, gB, s_xy, s_layers, t_xy, t_layers, ownF, ownB,
-           otherF, otherB, keep, via_r, via_cost=4.0, holes=()):
+           otherF, otherB, keep, via_r, via_cost=4.0, holes=(),
+           own_via_pts=(), other_via_pts=(), via_drill=0.3, via_pad=0.65):
     """Dual-layer A*. Layers: 0=F.Cu, 1=B.Cu. Via transitions cost extra.
 
     ownF/ownB: [(x,y,hw,hh,ang)] carved free. otherF/otherB: other-net pads
@@ -316,7 +319,15 @@ def astar2(gF, gB, s_xy, s_layers, t_xy, t_layers, ownF, ownB,
     Start/goal cells are still forced free, so pins stay escapable; only
     the shared slivers become walls, steering exits to truly free sides.
     keep=(kx,ky): no via within 5mm+via_r of it. holes=[(x,y,r)]: no via
-    within r+via_drill/2+0.25. Returns runs+vias.
+    within r+via_drill/2+0.25. own_via_pts=[(x,y,drill)]: same-net vias
+    already placed — KiCad hole_to_hole measures EDGE distance, so a new
+    drill must sit >= drill/2+d0/2+0.25 from them even though same-net
+    copper is otherwise connectable (r14: two drills 0.25 apart = DRC
+    error, actual edge gap 0.0). other_via_pts=[(x,y,pad)]: other nets'
+    vias — the blocked-grid disc prices the new net's TRACK width, not
+    its via pad, so a 0.65 signal via could land 0.0143 inside a 1.0
+    power via's clearance; enforce pad/2+pad0/2+0.25 explicitly.
+    Returns runs+vias.
     """
     import heapq
     import math as _m
@@ -367,6 +378,12 @@ def astar2(gF, gB, s_xy, s_layers, t_xy, t_layers, ownF, ownB,
             return False
         for hx, hy, hr in holes:
             if _m.hypot(x - hx, y - hy) < hr + via_r + 0.25 - 1e-9:
+                return False
+        for x9, y9, d9 in own_via_pts:
+            if _m.hypot(x - x9, y - y9) < via_drill / 2 + d9 / 2 + 0.25 - 1e-9:
+                return False
+        for x9, y9, s9 in other_via_pts:
+            if _m.hypot(x - x9, y - y9) < via_pad / 2 + s9 / 2 + 0.25 - 1e-9:
                 return False
         return True
 
@@ -616,6 +633,12 @@ def plan(tag, pts, placements, nets, pin_net, avoid_segs=None, avoid_vias=None):
         w = W[cls]
         gF = block_routed("F.Cu", cls, net)
         gB = block_routed("B.Cu", cls, net)
+        # via adjacency (see astar2 docstring): same-net = drill edge rule,
+        # cross-net = pad clearance rule (the grid disc under-prices pads)
+        own_via_pts = [(vx, vy, d) for (n, vx, vy, _z, d)
+                       in list(vias) + seed_vias if n == net]
+        other_via_pts = [(vx, vy, z) for (n, vx, vy, z, _d)
+                         in list(vias) + seed_vias if n != net]
         try:
             runs, found_vias = astar2(
                 gF, gB, (pa[0], pa[1]), pa[2], (pb[0], pb[1]), pb[2],
@@ -624,7 +647,9 @@ def plan(tag, pts, placements, nets, pin_net, avoid_segs=None, avoid_vias=None):
                 other_pads(net, "F.Cu"),
                 other_pads(net, "B.Cu"),
                 board.keep, VIA[cls][0] / 2, 4.0,
-                holes=[(x, y, r) for (x, y, r) in board.holes])
+                holes=[(x, y, r) for (x, y, r) in board.holes],
+                own_via_pts=own_via_pts, via_drill=VIA[cls][1],
+                other_via_pts=other_via_pts, via_pad=VIA[cls][0])
         except RuntimeError as e:
             raise RuntimeError(f"{net} ({pa[0]:.2f},{pa[1]:.2f}) -> "
                                f"({pb[0]:.2f},{pb[1]:.2f}): {e}")

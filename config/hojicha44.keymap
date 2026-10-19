@@ -6,9 +6,13 @@
  * both halves per row — position 0-5 = left row0 C0-5, 6-11 = right row0,
  * 12-17 = left row1, ... so each layer lists L0 L1 L2 | R0 R1 R2 row by
  * row. Left hand: 22 keys + 2 &none for unpopulated R3C4-C5 (floating row
- * reads low through the pull-down); right mirrors per spec/layout.yaml.
- * L1 positions, Backspace/Delete, and combos (Fn chord, Tab) are still
- * open keymap decisions — this file proves the scan/spatial mapping only.
+ * reads low through the pull-down).
+ * Mirror per spec/layout.yaml (the export_kle mirror maps Ctrl->Shift,
+ * Cmd->Opt): right thumbs Shift/Opt/L2/Enter, right inner column
+ * backslash/brace/Esc. L2 (raise) is a transparent placeholder until the
+ * open_points decisions land — this file proves the scan/spatial mapping
+ * only, and tests/spec_checks.cjs derives its signature FROM the spec.
+ * Combos (Fn chord = L1+L2, Tab via L1+Space) are still open decisions.
  */
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
@@ -22,13 +26,13 @@
         default_layer {
             bindings = <
                 &kp Q &kp W &kp E &kp R &kp T &kp GRAVE
-                &kp P &kp O &kp I &kp U &kp Y &kp BSPC
+                &kp P &kp O &kp I &kp U &kp Y &kp BSLH
                 &kp A &kp S &kp D &kp F &kp G &kp LBKT
-                &kp SCLN &kp L &kp K &kp J &kp H &kp SQT
+                &kp SCLN &kp L &kp K &kp J &kp H &kp RBKT
                 &kp Z &kp X &kp C &kp V &kp B &kp TAB
-                &kp SLASH &kp DOT &kp COMMA &kp M &kp N &kp ENTER
+                &kp SLASH &kp DOT &kp COMMA &kp M &kp N &kp ESC
                 &kp LCTRL &kp LGUI &mo 1 &kp SPACE &none &none
-                &kp RCTRL &kp RALT &mo 1 &kp SPACE
+                &kp RSFT &kp RALT &mo 2 &kp ENTER
             >;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
@@ -49,6 +53,27 @@
              * if hosts ignore them, switch to &im wheel_* after adding
              * CONFIG_ZMK_POINTING. */
             sensor-bindings = <&inc_dec_kp C_AC_SCROLL_UP C_AC_SCROLL_DOWN>;
+        };
+
+        /* L2 (raise) placeholder — right thumb mo 2 targets this layer
+         * (index 2, spec/layout.yaml thumbs "L2"). Contents are the
+         * open_points decision (Fn chord = L1+L2 provisional); ships
+         * all-transparent so the FP gate can verify reachability without
+         * inventing L2 keys. Raise sensor unbound (&trans), mirroring
+         * the lower layer shape.
+         */
+        raise_layer {
+            bindings = <
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &none &none
+                &trans &trans &trans &trans
+            >;
+            sensor-bindings = <&trans &trans>;
         };
     };
 

@@ -626,8 +626,9 @@ def check_half(tag, solid, info):
     # wall-thickness census (v3.2 strength review): thinnest skin->cavity
     # distance must clear the design floor. Design value: tab tips are
     # the closest cavity points (rim+TAB_L+RIM_CLEAR = rim+5.5 vs skin
-    # rim+CASE_OUTSET) -> 1.5 uniform at every tab; elsewhere walls run
-    # 6.5. Resample chord sag costs <=0.03, so 1.40 leaves real margin.
+    # rim+CASE_OUTSET) -> 1.6 uniform at every tab; elsewhere walls run
+    # 6.6 (= the magnet station band). Resample chord sag costs <=0.03,
+    # so 1.40 leaves real margin.
     cav = info["cav_poly"]
     cavsegs = list(zip(cav, cav[1:] + cav[:1]))
     wall_min = min(min(segd(sp, a, b) for a, b in cavsegs)

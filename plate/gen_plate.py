@@ -88,7 +88,12 @@ WEB_MIN = {            # min solid web (mm) per plate material, 1.5mm stock.
                        # only by construction — verify at assembly
 }[MATERIAL]
 DIODE_CLEAR = 0.3      # min diode-to-cutout-edge (diodes stay under solid plate)
-WIN_TRRS_WEST_MARGIN = 0.5  # asymmetric: body coverage vs encoder-hole web
+WIN_TRRS_WEST_MARGIN = 1.0  # mirror-exact with the right half's outboard
+                            # tpad: 0.5 made the left window 17.55 wide vs
+                            # 18.05 for a cosmetic-but-real asymmetry
+WIN_FILLET = 0.5            # inside-corner relief on the big windows and
+                            # the encoder hole (crack initiators); kerf
+                            # rounds the cut, the FILE must not stay square
 
 CHOC_RE = re.compile(r'SW_[LR]\d+$')
 DIODE_RE = re.compile(r'D_[LR]\d+$')
@@ -136,6 +141,31 @@ def xform_rect(x0, y0, x1, y1, cx, cy, rot):
     xs = [p[0] + cx for p in pts]
     ys = [p[1] + cy for p in pts]
     return (min(xs), min(ys), max(xs), max(ys))
+
+
+def chamfer(poly, r):
+    """Cut every vertex back by r along both adjacent edges (relief).
+
+    Big window/encoder corners are the plate's crack initiators: a 0.5mm
+    back-cut kills them in the CUT FILE itself. Vertices hanging on
+    short edges (<= 2r+0.2) stay sharp — backing off would produce
+    negative cuts and slivers, which the laser reads worse than the
+    crack risk. (Verified: even a 0.17-corner-radius body clears this.)
+    """
+    out = []
+    n = len(poly)
+    for i, p in enumerate(poly):
+        q = poly[i - 1]
+        s = poly[(i + 1) % n]
+        d1 = math.hypot(p[0] - q[0], p[1] - q[1])
+        d2 = math.hypot(s[0] - p[0], s[1] - p[1])
+        if d1 <= 2 * r + 0.2 or d2 <= 2 * r + 0.2:
+            out.append(p)
+            continue
+        f1, f2 = r / d1, r / d2
+        out.append((p[0] + (q[0] - p[0]) * f1, p[1] + (q[1] - p[1]) * f1))
+        out.append((p[0] + (s[0] - p[0]) * f2, p[1] + (s[1] - p[1]) * f2))
+    return out
 
 
 # ---- board parsing ----
@@ -411,6 +441,20 @@ def union_rects(p, q):
 
 
 # ---- per-half build ----
+def usb_anchor(tag):
+    """(x, y) mouth anchor for the notch, parsed from points.yaml.
+
+    The same anchor check_board uses to referee notch openness; parsing
+    mirrors gen_pcb.load_points to stay yaml-dependency-free.
+    """
+    t = open(os.path.join(
+        REPO, "layout", "generated", "v2", "points", "points.yaml")).read()
+    name = "usb" if tag == "Left" else "mirror_usb"
+    m = re.search(rf"^{name}:\n  x: ([-\d.]+)\n  'y': ([-\d.]+)", t, re.M)
+    assert m, f"points.yaml: no {name} entry"
+    return float(m.group(1)), float(m.group(2))
+
+
 def build_half(tag):
     pcb = os.path.join(PCB_DIR, f'Hojicha44-{tag}.kicad_pcb')
     inst = parse_instances(pcb)
@@ -502,7 +546,42 @@ def build_half(tag):
     else:
         w_trrs = rect_poly(edge_x, ty + tb[1] - tpad,
                            tx + tb[2] + tpad, ty + tb[3] + tpad)
-    wins = [w_sw, w_core, w_trrs]
+    # USB-plug bay (post-audit H1): the plug is 12.35 wide over an 11.0
+    # notch, so its shoulders cut residual plate strips beside the notch
+    # walls at z 2.0..3.5 that neither the switch strip (stops at its own
+    # courtyard) nor the pulled-in core edges cover. The mouth anchor is
+    # the config usb point (notch referee in check_board); the notch floor
+    # is the highest outline point strictly inside the mouth window that
+    # sits below the anchor (an open bite dips under it). The floor flat
+    # spans mouth wall to wall, so subdivide()'s internodes keep its run
+    # contiguous and its x extent IS the notch span. (A fixed-depth
+    # band-min scan grabs the west/east outline edges instead — dead end.)
+    # The bay runs 1.4 past each wall and north of the outline (its top
+    # corners land outside the loop — benign in the window-web gate; the
+    # case-side USB bore is 14.0 wide over the same span by construction).
+    ux, uy = usb_anchor(tag)
+    ymax = max(p[1] for p in loop)
+    win = 5.5  # the config notch subtract is 11.0 wide
+    inwin = [p for p in loop
+             if ux - win + 0.5 < p[0] < ux + win - 0.5 and p[1] < uy - 0.5]
+    yfloor = max(p[1] for p in inwin)
+    fpts = sorted((p for p in loop
+                   if abs(p[1] - yfloor) <= 0.3
+                   and ux - win - 0.5 <= p[0] <= ux + win + 0.5),
+                  key=lambda q: q[0])
+    runs, cur = [], [fpts[0]]
+    for p in fpts[1:]:
+        if p[0] - cur[-1][0] <= 2.2:
+            cur.append(p)
+        else:
+            runs.append(cur)
+            cur = [p]
+    runs.append(cur)
+    cluster = max(runs, key=lambda rr: rr[-1][0] - rr[0][0])
+    fx0, fx1 = cluster[0][0], cluster[-1][0]
+    assert 9.0 <= fx1 - fx0 <= 13.0, \
+        f'{tag}: notch floor span {fx0}..{fx1} unrecognised'
+    bay = rect_poly(fx0 - 1.4, yfloor, fx1 + 1.4, ymax + 2.0)
     # switch strip + core overlap by design (shared tall-part zone): emit
     # ONE union loop instead of two overlapping rects, so the CAD shows a
     # single L opening and no phantom double-cut line. (Laser cuts the
@@ -513,8 +592,20 @@ def build_half(tag):
         if math.hypot(mloop[-1][0] - mloop[0][0],
                       mloop[-1][1] - mloop[0][1]) < 1e-6:
             mloop = mloop[:-1]
-        wins = [mloop, w_trrs]
-    win_rects = [w_sw, w_core, w_trrs]  # conservative keepouts
+        mb = union_rects(mloop, bay)
+        assert len(mb) == 1 and len(mb[0]) >= 6, \
+            f'{tag}: usb bay did not merge into the W1 opening ' \
+            f'({len(mb)} loops)'
+        mloop = mb[0]
+        if math.hypot(mloop[-1][0] - mloop[0][0],
+                      mloop[-1][1] - mloop[0][1]) < 1e-6:
+            mloop = mloop[:-1]
+        # crack audit: the big openings carry no square inside corners
+        mloop = chamfer(mloop, WIN_FILLET)
+        wins = [mloop, chamfer(w_trrs, WIN_FILLET)]
+    else:
+        wins = [w_sw, w_core, w_trrs, bay]
+    win_rects = [w_sw, w_core, w_trrs, bay]  # conservative keepouts
     assert enc[3] == 0, f'{tag}: encoder rotated {enc[3]}, hole assumes 0'
     # stock footprint origin is pad A; the shaft (which must pass through
     # the plate hole) sits at local +(7.5, 2.5) — gen_pcb.py places the
@@ -522,7 +613,9 @@ def build_half(tag):
     # A hole at the raw instance origin would sit 7.9mm off-shaft.
     _osx, _osy = rot_cw(7.5, 2.5, enc[3])
     enc_poly = cut_poly(enc[1] + _osx, enc[2] + _osy, ENC_SQ, ENC_SQ, 0)
-    enc_hole = enc_poly
+    # same crack argument as the windows; verified vs the vendored EC11:
+    # a body corner radius >= 0.17 keeps the body clear of a 0.5 back-cut
+    enc_hole = chamfer(enc_poly, WIN_FILLET)
 
     bad = []
 
@@ -547,14 +640,14 @@ def build_half(tag):
                 fail(f'{sw[i][0]} cutout intersects component window')
 
     ex, ey = enc[1] + _osx, enc[2] + _osy  # shaft center (see above)
-    if web(enc_poly, loop) < WEB_MIN:
+    if web(enc_hole, loop) < WEB_MIN:
         fail(f'encoder hole within {WEB_MIN} of outline')
     for c in cuts:
-        if web(enc_poly, c) < WEB_MIN:
+        if web(enc_hole, c) < WEB_MIN:
             fail(f'encoder hole within {WEB_MIN} of a cutout')
     for wpoly in wins:
         # overlap (dd<0) is a deliberate union; slivers (0<=dd<1) are not
-        dd = web(enc_poly, wpoly)
+        dd = web(enc_hole, wpoly)
         if 0 <= dd < WEB_MIN:
             fail(f'encoder-to-window sliver {dd:.2f} < {WEB_MIN}')
 
@@ -633,7 +726,7 @@ def build_half(tag):
             math.radians(tol_deg)
 
     openings = [expand_poly(c, 0.0) for c in cuts]
-    openings.append(expand_poly(enc_poly, 0.0))
+    openings.append(expand_poly(enc_hole, 0.0))
     openings += [expand_poly(wpoly, 0.0) for wpoly in win_rects]
     # port mouths the cables exit through (measured from the outline)
     # + the pwrsw actuator slot (v3.5; M8 review: was missing, a future
@@ -900,7 +993,7 @@ def build_half(tag):
     # M-review: definitive encoder-neighborhood webs (the spec's "~3.55"
     # and a reviewer's "1.75" measured different pairs — print every
     # pair that matters, from the real geometry)
-    enc_open = expand_poly(enc_poly, 0.0)
+    enc_open = expand_poly(enc_hole, 0.0)
     enc_web = {
         'cutouts': min(web_poly(enc_open, c) for c in cuts),
         'windows': min((web_poly(enc_open, w) for w in win_rects),
@@ -936,6 +1029,14 @@ def dxf_write(path, res):
     closed_poly(res['enc'] + res['enc'][:1], 'CUTOUT')
     for pad in res['poron']:
         closed_poly(pad + pad[:1], 'PORON')
+    # H3: the PORON layer is a knife/punch 1:1 template, not laser
+    # content — say so on the file itself (it travels to vendors without
+    # the repo README). North of the outline: tabs tip out ~2.8 there.
+    oy = max(p[1] for p in res['outline'])
+    ox = min(p[0] for p in res['outline'])
+    A('0\nTEXT\n8\nPORON\n10\n' + str(r2(ox)) + '\n20\n' + str(r2(oy + 6.0))
+      + '\n30\n0.0\n40\n3.0\n1\n'
+      'DO NOT CUT PORON - KNIFE/PUNCH TEMPLATE ONLY, REFERENCE\n')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
 
@@ -994,6 +1095,11 @@ def svg_write(path, res):
     for ref, x, y, _ in res['sw']:
         o.append(f'<text x="{r2((x - x0) * S)}" y="{r2((y1 - y) * S)}" '
                  f'fill="#888" font-size="7" text-anchor="middle">{ref}</text>')
+    o.append(
+        f'<text x="8" y="'
+        f'{r2((y1 - (max(p[1] for p in loop) + 6.0)) * S)}" '
+        f'fill="#ffeb3b" font-size="12" font-weight="bold">'
+        f'DO NOT CUT PORON - KNIFE/PUNCH TEMPLATE ONLY (reference)</text>')
     o.append('</svg>')
     open(path, 'w').write('\n'.join(o))
 

@@ -1,0 +1,48 @@
+# Hojicha44 hand-tuned copper manifest — the authoritative preserve set of
+# the board generators.
+#
+# pcb/generators/gen_pcb.py keeps ONLY copper blocks whose signature (kind,
+# net, layer, geometry) matches a line in this file; every other copper item
+# is router-owned and regenerated wholesale on every run. The router may
+# change freely: the preserve set no longer depends on reproducing it.
+#
+# To hand-tune copper: edit the board, commit it, review the build log's
+# census, and capture the offending items' lines into this file (regen with
+# PCB_KEPT_DEBUG=1 prints dropped items paste-ready). A manifest line the
+# committed board does not contain is a hard error. Sections scope items to
+# a half ([Left]/[Right]); regen refuses nothing, but uncommitted
+# working-board changes are archived to opencode/ first; extraction reads
+# the committed baseline only.
+#
+# Provenance (2026-10-19): the 9 items below are the M2 round's hand-tuned
+# CID copper around the switch bay (nets /VBAT_SW_L and the battery pack-net
+# Net-(J_L2-Pin_1)), carried verbatim through M2 -> M3. Triple-verified:
+# notes.md:1242 record, forensics report, and the M3-board capture census
+# (15 kept, of which these 9 are the genuine hand family).
+
+# (see provenance notes above; Right is covered by its own section below)
+
+[Left]
+segment /VBAT_SW_L F.Cu 103.76,51.00 -> 100.00,51.00
+segment /VBAT_SW_L F.Cu 100.00,51.00 -> 94.75,45.75
+via /VBAT_SW_L 94.75,45.75 1.0,0.5
+segment /VBAT_SW_L B.Cu 94.75,45.75 -> 86.50,37.50
+segment /VBAT_SW_L B.Cu 103.76,51.00 -> 103.80,50.50
+segment /VBAT_SW_L B.Cu 103.80,50.50 -> 86.50,37.50
+segment Net-(J_L2-Pin_1) B.Cu 92.50,36.50 -> 92.50,41.00
+segment Net-(J_L2-Pin_1) B.Cu 92.50,41.00 -> 106.30,50.50
+segment Net-(J_L2-Pin_1) B.Cu 106.30,50.50 -> 106.30,51.00
+
+[Right]
+# none — Right is 100% router-owned per the M3 record.
+
+# Deliberately NOT preserved (router-owned, regenerated): the Left battery
+# west-flank corridor chain J_L2-Pin_1 F (116.5,7)->(99,-10.5)->(78,-10.5) +
+# via (78,-10.5) + B tail to (72,-11.5), and the COL3 stub
+# (76.75,-10.25)->(76.0,-10.25). The router itself produced these at r12/r13
+# (reproduction-stable), so freezing them would pin the exact via-to-via
+# collision (1.0607mm centre distance, 0.0143 inside the 1.075 pad rule)
+# that jammed the corridor under the 0.65-annular via rules. Same for the
+# Right board's 11 drift items (ENC_B_R + GND chains): Right is 100%
+# router-owned per the M3 record ("Right kept 0 GUI items") and converges
+# back to ~100 vias under a pure plan.

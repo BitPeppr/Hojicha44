@@ -40,7 +40,9 @@ FLOOR_Z = -5.6  # floor top surface (spec-derived, see ruler above;
 # over an 11mm span at each of 8 stations; the whole case thickened
 # (user-sanctioned) to close the pockets without creating local
 # swells (v2 sin, rejected).
-CASE_OUTSET = 7.0   # wall over tab tip = 7.0 - TAB_L - RIM_CLEAR = 1.5
+CASE_OUTSET = 7.1   # wall over tab tip = 7.1 - TAB_L - RIM_CLEAR = 1.6;
+                    # band = 7.1 - 0.5 = 6.6 hosts MAG_STATION_BAND exactly
+                    # (retention web 1.15/side, post-audit magnet policy)
 SKIN_MIN = 1.0      # min material between any pocket corner and the skin
 SKIN_STEP = 1.0     # ring resample step for the outer skin (folds gone;
 #                   verified crossing-free at 1.0/0.6/0.4)
@@ -145,7 +147,9 @@ PWRSW_LEVER_SWEEP = 3.6     # actuator blade ~2.0 + travel 1.6 (verify)
 # bottom 6.0 = the designed 16.7%); the ~3-4 kg magnet pull is reacted
 # by the band-face contact, NOT by crushing the foam. 4x2 N52 pairs:
 # ~0.4-0.6 kg/pair x 8 >= 3 kg vs a ~200 g half; nothing pokes outside.
-MAG_DIA = 4.2          # pocket bore for a 4.0 magnet + glue film
+MAG_DIA = 4.3          # pocket bore for a Ø4.0 magnet: 0.15/side glue film
+                       # (post-audit P1 full adoption; Ø4.2 was starved after
+                       # FDM shrink — see spec/case.md retention)
 MAG_DEPTH = 2.2        # TUB pocket depth (2.0 magnet + glue line)
 COVER_MAG_DEPTH = 1.7  # COVER pocket depth (T4, review M4): cover-side
 #   magnets are Ø4x1.5 -> pocket floor 3.0-1.7 = 1.3mm (was 0.8 over a
@@ -154,7 +158,10 @@ COVER_MAG_DEPTH = 1.7  # COVER pocket depth (T4, review M4): cover-side
 #   to ~0.7-0.85x/face, 8 pairs still >= 2 kg vs a ~200 g half — the
 #   rigid zero-gap stop is the face plane, not the pull; first-article
 #   pull test gates the change).
-MAG_STATION_BAND = 6.4 # local band needed: pocket + >=1.1 web both faces
+MAG_STATION_BAND = 6.6 # local band needed: pocket + >=1.15 web both faces
+                       # (Ø4.3 pocket + the band raise; the "web >= 1.6"
+                       # reviewer floor needs a ~7.5 band = OUTSET growth,
+                       # logged as the rev-2 margin item, NOT blockable here)
 MAG_MIN_SEP = 14.0     # arc separation between stations
 MAG_MAX_STATIONS = 8
 MAG_MIN_STATIONS = 6   # retention gate on station count

@@ -216,7 +216,7 @@ exterior.
   - W2 TRRS: the SAME Ø9.5 cylinder. In the 6..9 slice it is a BLIND
     tunnel topping at 7.25 > boot swing 6.75, and its widest chord in
     that slice (6.42 at the lip plane) never reaches the local band
-    width (7.0) — the ring is NOT split (the old "≤4.82" was the
+    width (7.1) — the ring is NOT split (the old "≤4.82" was the
     bore's chord below the lip, not the slice's).
   - PWR: full-depth 5.0 slot BUT starting 1.6 outboard, leaving a 1.1
     web next to the cavity edge: W1 must remain the ring's ONLY full

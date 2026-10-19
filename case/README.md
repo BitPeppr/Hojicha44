@@ -61,6 +61,23 @@ Blender visualises.
   7-probe pwrsw group per half (below/flank/fillet/wall-resumed/top/
   sills).
 
+- v3.5 round 3 (post-PCB-audit P0 batch, first-contact fail): **magnet
+  policy matches the physical band** — the P0 policy (pocket Ø4.3,
+  ≥1.15 webs, band 6.6) ran against a **6.5 physical band**
+  (CASE_OUTSET 7.0 − RIM_CLEAR 0.5): the `d ≥ MAG_STATION_BAND` filter
+  zeroed every ring candidate except the notch pocket, which the USB
+  slot rect kills — "none eligible", both tubs AND the cover (it
+  reuses `G.magnet_stations`). `opencode/probe_mags.py` (per-filter
+  rejection census; dmax 13.2 at the notch) split the two failure
+  layers and closed the 0.1 gap with the minimal raise: **CASE_OUTSET
+  7.0 → 7.1**, band = 6.6 exactly. Census: wall_min 1.60 (tab tips
+  were 1.49-1.50), web min 1.15, band min 6.60, stations 6 (L) / 7 (R)
+  mirrored, volume 68.1/68.2; cover wall_min 5.94, web 1.15, stations
+  6/7. Plate-side in the same batch: the USB-plug bay's notch-floor
+  scan was rewritten onto the config usb anchor (band-min picked the
+  west-edge outline points, x∈[-0.64,0.35] instead of the mouth); all
+  plate gates CLEAN after.
+
 - v3.5 review round (user solo review, findings A–F): **the ring now
   bridges the tabs** — v1 cut its interior from the plate outline,
   which left a tab-shaped bite over every tab pocket so the top poron

@@ -526,6 +526,10 @@
       {
         "pattern": "/VBAT_SW_*",
         "netclass": "POWER"
+      },
+      {
+        "pattern": "Net-(J_*2-Pin_1)",
+        "netclass": "POWER"
       }
     ]
   },

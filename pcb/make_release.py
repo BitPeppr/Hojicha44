@@ -14,6 +14,8 @@ layout/generated/, *-erc.rpt, *-drc.rpt, pcb/kicad/export/, out/ are).
 out/release/ remains scratch.
 """
 import csv
+import glob
+import json
 import hashlib
 import os
 import re
@@ -78,6 +80,20 @@ def export_half(half, outdir):
     subprocess.run(
         [KICAD_CLI, "pcb", "export", "drill", "-o", outdir, pcb],
         check=True, capture_output=True)
+    # KiCad 10 writes Finish: "None"; stamp the decided board finish so
+    # CAM readers don't get a hole (first-article decision: ENIG). The
+    # reader-visible field is GeneralSpecs.Finish — a top-level Finish is
+    # off-spec noise that fab parsers ignore (the point of the stamp).
+    for jb in glob.glob(os.path.join(outdir, "*.gbrjob")):
+        with open(jb) as f:
+            job = json.load(f)
+        gs = job.get("GeneralSpecs") or {}
+        if gs.get("Finish") in (None, "", "None"):
+            gs["Finish"] = "ENIG"
+            job["GeneralSpecs"] = gs
+            with open(jb, "w") as f:
+                json.dump(job, f, indent=2)
+                f.write("\n")
     subprocess.run(
         [KICAD_CLI, "pcb", "export", "pos", "--format", "csv",
          "--units", "mm", "-o", os.path.join(outdir, "pos.csv"), pcb],
@@ -102,6 +118,19 @@ def export_half(half, outdir):
         src = os.path.join(PCB_DIR, f"Hojicha44-{half}{ext}")
         assert os.path.exists(src), f"missing {src}: run gen_schematic/gen_pcb first"
         shutil.copy(src, os.path.join(outdir, f"Hojicha44-{half}{ext}"))
+    # audit P0-1 (export ordering): the cut gates on the SAME reports the
+    # generators produced — a failing or stale report must not ride
+    # beside fresh gerbers just because the file exists
+    sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
+    import gen_pcb as _gp
+    import gen_schematic as _gs
+    drc_rc = _gp.check_drc_report(
+        os.path.join(outdir, f"Hojicha44-{half}-drc.rpt"), half[0])
+    erc_rc = _gs.check_erc_report(
+        os.path.join(outdir, f"Hojicha44-{half}-erc.rpt"), half[0])
+    if drc_rc or erc_rc:
+        sys.exit(f"release cut refused: {half} report gate failed "
+                 f"(drc rc={drc_rc}, erc rc={erc_rc})")
 
 
 def sha12(path):
@@ -217,6 +246,18 @@ def main():
         for b in bad:
             print(f"  !! {b}")
         sys.exit(1 if bad else 0)
+    # refuse a dirty tree: the manifest certifies committed sources only.
+    # Untracked junk cannot be referenced by any generator input, so it
+    # only warrants a note; a modified tracked file would silently ship.
+    st = subprocess.run(["git", "status", "--porcelain"], capture_output=True,
+                        text=True, cwd=REPO).stdout.splitlines()
+    mod = [l for l in st if not l.startswith("??")]
+    if mod:
+        sys.exit("release cut refused: committed tree is dirty "
+                 "(commit first — the manifest certifies committed "
+                 "sources):\n" + "\n".join(mod[:12]))
+    if st:
+        print(f"  note: {len(st)} untracked file(s) present (not certified)")
     # clean cut: no stale artifacts from previous exports can survive
     # beside the new ones (a half-updated tree shipped exactly that way
     # once — drill+manifest refreshed, gerbers not)

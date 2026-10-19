@@ -1031,9 +1031,14 @@ def build_project_file(tag):
     if not ns.get("netclass_patterns"):
         ns["netclass_patterns"] = []
     pat = {"pattern": "/VBAT_SW_*", "netclass": "POWER"}
-    if not any(p.get("pattern") == pat["pattern"]
-               for p in ns["netclass_patterns"]):
-        ns["netclass_patterns"].append(pat)
+    # The JST battery pigtail is the same rail family (B+ pigtail); the
+    # auto-net name is Net-(J_<ref>-Pin_1) and *2 locks the wildcard to the
+    # JSTs (the TRRS is J_<half>1 and must NOT pick the class up).
+    pat2 = {"pattern": "Net-(J_*2-Pin_1)", "netclass": "POWER"}
+    have = {p.get("pattern") for p in ns["netclass_patterns"]}
+    for p in (pat, pat2):
+        if p["pattern"] not in have:
+            ns["netclass_patterns"].append(p)
     with open(pro_path(tag), "w") as f:
         json.dump(pro, f, indent=2)
         f.write("\n")

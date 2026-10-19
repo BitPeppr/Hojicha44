@@ -7,11 +7,14 @@ embeds footprints at their placed positions, and writes both board files.
   python3 pcb/generators/gen_pcb.py        # place + route + DRC
 
 Routed: tracks/vias come from the deterministic router
-(pcb/generators/gen_route.py); GUI-added copper is preserved by normalized
-dedupe. DRC must show zero unconnected (clean modulo waivers W1/W2); what
-this pass must satisfy is outline validity,
-footprint embedding, net assignment parity with the schematic, and courtyard
-sanity.
+(pcb/generators/gen_route.py). Hand-tuned copper is preserved by an explicit
+provenance manifest (pcb/kicad/hand-copper.txt): only items matching a
+manifest signature survive a regen, everything else is router-owned and
+regenerated wholesale — extraction reads the committed baseline (git HEAD),
+so a failed build can never become its own next input. DRC must show zero
+unconnected (clean modulo waivers W1/W2); what this pass must satisfy is
+outline validity, footprint embedding, net assignment parity with the
+schematic, and courtyard sanity.
 
 Right-half rule: the mirror_* points are already mirrored coordinates. Use
 them directly with the SAME layers and the given rotations — no footprint
@@ -155,8 +158,12 @@ def load_nets(tag):
                 r"\(node\s*\(ref \"([^\"]+)\"\)\s*\(pin \"([^\"]+)\"\)",
                 body):
             pin_net[(n.group(1), n.group(2))] = (code, name)
-    if len(nets) <= 1:
-        raise RuntimeError(f"netlist parse found no nets for {tag}")
+    nn = len(nets) - 1  # nets[0] is the (0, "") placeholder
+    if not 30 <= nn <= 70:
+        raise RuntimeError(
+            f"{tag}: {nn} nets parsed — outside the sane 30..70 band "
+            "(a regex/netlist regression used to pass at len==1 with 0 "
+            "pin nets, silently dropping every connectivity gate)")
     return nets, pin_net
 
 
@@ -792,16 +799,32 @@ def top_level_items(s):
     return items
 
 
-def extract_copper(path, name_code):
+def git_track_text(path):
+    """Committed content of path at HEAD; None if the path is not in HEAD.
+
+    Extraction reads the committed baseline, never the working file: a
+    failed build on disk (DRC rejects it after the write) would otherwise
+    become the next run's cut input and compound its damage — the failure
+    mode that churned kept-classification across this week's runs.
+    """
+    rel = os.path.relpath(path, REPO)
+    r = subprocess.run(["git", "cat-file", "-e", f"HEAD:{rel}"],
+                       capture_output=True, cwd=REPO)
+    if r.returncode != 0:
+        return None
+    r = subprocess.run(["git", "show", f"HEAD:{rel}"],
+                       capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0, f"git show HEAD:{rel} failed:\n{r.stderr}"
+    return r.stdout
+
+
+def extract_copper_text(s, name_code, label):
     """[(kind, raw_block)] of existing copper, net codes remapped by name.
 
     A net the new netlist does not know is a hard error: silently renumbering
     would weld a track onto the wrong net, which DRC only notices as an
     unconnected item somewhere else.
     """
-    if not os.path.exists(path):
-        return []
-    s = open(path).read()
     code_name = {int(m.group(1)): m.group(2)
                  for m in re.finditer(r"\n\t\(net (\d+) \"([^\"]*)\"\)", s)}
     out = []
@@ -816,16 +839,121 @@ def extract_copper(path, name_code):
             name = nm.group(1) if nm and nm.group(1) in name_code \
                 else code_name.get(old)
             if name is None:
-                raise RuntimeError(f"{os.path.basename(path)}: copper on net "
+                raise RuntimeError(f"{label}: copper on net "
                                    f"code {old} with no name")
             if name not in name_code:
                 raise RuntimeError(
-                    f"{os.path.basename(path)}: preserved copper is on net "
+                    f"{label}: preserved copper is on net "
                     f"'{name}', which the schematic no longer has — delete or "
                     f"re-route it")
             blk = blk.replace(f"(net {old})", f"(net {name_code[name]})", 1)
         out.append((kw, blk))
     return out
+
+
+HAND_FILE = os.path.join(PCB_DIR, "hand-copper.txt")
+
+
+def parse_hand_manifest(tag):
+    """[(kind, net, layer, coords)] from pcb/kicad/hand-copper.txt for `tag`.
+
+    The authoritative set of hand-tuned copper: only items whose signature
+    matches a line under this half's [Left]/[Right] section are preserved
+    across a regen; everything else is router-owned and regenerated.
+    Coordinates are r2-rounded the way the generators write them. Lines
+    under the other half's section are syntax-checked but not collected.
+    Supported forms:
+
+        segment NET LAYER x1,y1 -> x2,y2
+        via NET x,y size,drill
+        zone NET x1,y1 x2,y2 x3,y3        (first three outline points)
+    """
+    out = []
+    cur = None
+    if not os.path.exists(HAND_FILE):
+        return out
+    for i, ln in enumerate(open(HAND_FILE), 1):
+        s = ln.strip()
+        if not s or s.startswith("#"):
+            continue
+        if s in ("[Left]", "[Right]"):
+            cur = {"[Left]": "L", "[Right]": "R"}[s]
+            continue
+        try:
+            p = s.split()
+            if p[0] == "segment":
+                x1, y1 = (float(v) for v in p[3].split(","))
+                x2, y2 = (float(v) for v in p[5].split(","))
+                item = ("segment", p[1], p[2],
+                        (round(x1, 2), round(y1, 2),
+                         round(x2, 2), round(y2, 2)))
+            elif p[0] == "via":
+                x, y = (float(v) for v in p[2].split(","))
+                size, drill = (float(v) for v in p[3].split(","))
+                item = ("via", p[1], None,
+                        (round(x, 2), round(y, 2),
+                         round(size, 2), round(drill, 2)))
+            elif p[0] == "zone":
+                pts = [tuple(float(v) for v in q.split(",")) for q in p[2:5]]
+                item = ("zone", p[1], None,
+                        tuple(round(c, 2) for pt in pts for c in pt))
+            else:
+                raise ValueError(f"unknown kind {p[0]!r}")
+        except (ValueError, IndexError) as e:
+            sys.exit(f"{HAND_FILE}:{i}: bad line {s!r}: {e}")
+        if cur == tag:
+            out.append(item)
+    return out
+
+
+def copper_signature(kind, blk, n2c):
+    """Manifest-comparable signature of one copper block, or None.
+
+    Same 4-tuple shape as manifest entries: (kind, net, layer, coords).
+    """
+    mn = re.search(r"\(net (\d+)\)", blk)
+    if not mn:
+        return None
+    net = n2c.get(int(mn.group(1)))
+    r2 = lambda x: round(float(x), 2)
+    if kind == "segment":
+        g = re.search(r"\(start ([\d.-]+) ([\d.-]+)\)\s*"
+                      r"\(end ([\d.-]+) ([\d.-]+)\)", blk)
+        mly = re.search(r'\(layer "([^"]+)"\)', blk)
+        if not (g and mly):
+            return None
+        return ("segment", net, mly.group(1),
+                (r2(g.group(1)), r2(g.group(2)),
+                 r2(g.group(3)), r2(g.group(4))))
+    if kind == "via":
+        g = re.search(r"\(at ([\d.-]+) ([\d.-]+)\)", blk)
+        z = re.search(r"\(size ([\d.-]+)\)", blk)
+        d = re.search(r"\(drill ([\d.-]+)\)", blk)
+        if not g:
+            return None
+        return ("via", net, None,
+                (r2(g.group(1)), r2(g.group(2)),
+                 r2(z.group(1)) if z else 0.0,
+                 r2(d.group(1)) if d else 0.0))
+    if kind == "zone":
+        pts = re.findall(r"\(xy ([\d.-]+) ([\d.-]+)\)", blk)
+        if len(pts) < 3:
+            return None
+        flat = [v for a, b in pts[:3] for v in (r2(a), r2(b))]
+        return ("zone", net, None, tuple(flat))
+    return None
+
+
+def manifest_line(item):
+    """Manifest-format text for one signature (paste-ready debug output)."""
+    kind, net, layer, v = item
+    if kind == "segment":
+        return (f"segment {net} {layer} "
+                f"{v[0]:.2f},{v[1]:.2f} -> {v[2]:.2f},{v[3]:.2f}")
+    if kind == "via":
+        return f"via {net} {v[0]:.2f},{v[1]:.2f} {v[2]:.2f},{v[3]:.2f}"
+    pts = " ".join(f"{v[i]:.2f},{v[i+1]:.2f}" for i in range(0, len(v), 2))
+    return f"zone {net} {pts}"
 
 
 def copper_pieces(copper, code_name):
@@ -945,6 +1073,49 @@ def check_copper(tag, copper, placements, code_name, pts, dangle_items=None):
                 bad.append(f"{name}: via {r2(d)}mm from the antenna centre "
                            f"(keepout r={ANT_R_MM} + annular {r2(out_r)})")
 
+    # Zones are copper too: a rev-2 GND pour must never land inside (or
+    # touch) the keepout. Gate on the zone's authored rings — even-odd
+    # inside test for fill-vs-holes plus ring-edge distance, so a pour
+    # with a keepout cutout passes only if the cutout really keeps r out.
+    for k, blk in copper:
+        if k != "zone" or not re.search(r'\(layer "?[FB]\.Cu', blk):
+            continue
+        rings, i = [], 0
+        while True:
+            i = blk.find("(pts", i)
+            if i < 0:
+                break
+            j, depth = i + 4, 1
+            while depth and j < len(blk):
+                if blk[j] == "(":
+                    depth += 1
+                elif blk[j] == ")":
+                    depth -= 1
+                j += 1
+            inner = blk[i + 4:j - 1]
+            rings.append([(float(a), float(b)) for a, b in
+                          re.findall(r"\(xy ([-\d.]+) ([-\d.]+)\)", inner)])
+            i = j
+
+        def _in_ring(pt, ring):
+            s, n = 0, len(ring)
+            for a in range(n):
+                x1, y1 = ring[a]
+                x2, y2 = ring[(a + 1) % n]
+                if (y1 > pt[1]) != (y2 > pt[1]):
+                    s += (pt[0] - x1) * (y2 - y1) < (x2 - x1) * (pt[1] - y1)
+            return s % 2 == 1
+
+        in_fill = sum(_in_ring((ax, ay), r) for r in rings) % 2 == 1
+        dmin = min((seg_dist(ax, ay, ring[a], ring[(a + 1) % len(ring)])
+                    for ring in rings for a in range(len(ring))),
+                   default=1e9)
+        if in_fill:
+            bad.append("zone lands inside the antenna keepout (centre in fill)")
+        elif dmin < ANT_R_MM - 1e-9:
+            bad.append(f"zone edge passes {r2(dmin)}mm from the antenna "
+                       f"centre (keepout r={ANT_R_MM})")
+
     n = sum(1 for k, _ in copper if k == "segment")
     nv = sum(1 for k, _ in copper if k == "via")
     nz = sum(1 for k, _ in copper if k == "zone")
@@ -1058,16 +1229,14 @@ def build_board(tag, pts):
     path = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
     blank = open(path).read()
     name_code = {n: c for c, n in nets}
-    copper = extract_copper(path, name_code)
+    # Copper comes from the committed baseline; the working preamble (same
+    # source-of-truth story as below: setup block survives local edits).
+    track = git_track_text(path)
+    label = "HEAD:" + os.path.relpath(path, REPO)
+    copper = [] if track is None else extract_copper_text(track, name_code,
+                                                          label)
     import gen_route as router
     tag_now = f"placed+routed r{router.ROUTER_VERSION}"
-    mtag = re.search(r'\(comment 2 "([^"]*)"\)', blank)
-    if mtag is None or mtag.group(1) != tag_now:
-        if copper:
-            print(f"  copper {tag}: dropping {len(copper)} items from "
-                  f"older revision ({mtag.group(1) if mtag else 'none'}); "
-                  f"GUI copper must be re-added after router revs")
-        copper = []
     head = blank.split('(net 0 "")')[0] + '(net 0 "")\n'
     head = re.sub(r'\(comment 2 "[^"]*"\)', f'(comment 2 "{tag_now}")', head)
     for code, name in sorted(nets):
@@ -1109,18 +1278,46 @@ def build_board(tag, pts):
         f' (effects (font (size 1 1) (thickness 0.15))))')
 
     # --- route (deterministic; generator-owned copper) ---
-    import gen_route as router
-    # phase 1: unseeded plan, only to classify preserved copper (items the
-    # router reproduces exactly are regenerated; the rest are GUI-tuned)
-    _b0, _t0, _v0 = router.plan(tag, pts, placements, nets, pin_net)
-    _s0, _w0 = router.emit(_b0, _t0, _v0)
-    fresh = {router.normalize(b) for b in _s0 + _w0}
-    kept = [(k, b) for k, b in copper if router.normalize(b) not in fresh]
-    if len(kept) != len(copper):
-        print(f"  copper {tag}: {len(copper) - len(kept)} regenerated "
-              f"(dedupe), {len(kept)} GUI items kept")
-    # phase 2: seeded plan — fresh routes de-conflict against the GUI
-    # copper they will share the board with (M2 round fix)
+    # Hand-copper provenance (pcb/kicad/hand-copper.txt) replaces the old
+    # classify-by-reproduction heuristic: phase 1 was an unseeded plan run
+    # solely to guess which tracked items were hand-tuned ("not reproduced
+    # = GUI"), but the seeded phase-2 plan diverges near its own seeds —
+    # so the next run classified phase-2's output as GUI and churned the
+    # board on every regen (observed: kept oscillated 0 -> 11 -> 15 -> 59
+    # as the same copper was reclassified). Provenance instead: manifest
+    # items are preserved verbatim from the committed board; every other
+    # copper item is regenerated. The router may change freely — the
+    # preserve set no longer depends on reproducing its output, so the
+    # plan is a pure function of (netlist, placements, manifest).
+    import collections
+    want = collections.Counter(parse_hand_manifest(tag))
+    got = collections.Counter()
+    kept, dropped = [], []
+    n2c = {c: n for c, n in nets}
+    for k, b in copper:
+        sig = copper_signature(k, b, n2c)
+        if sig is not None and got[sig] < want[sig]:
+            got[sig] += 1
+            kept.append((k, b))
+        else:
+            dropped.append(sig)
+    miss = [s2 for s2 in want if want[s2] > got[s2]]
+    if miss:
+        sys.exit(f"{PROJECT[tag]}: hand-copper.txt claims {len(miss)} items "
+                 f"the committed board does not contain — the manifest is "
+                 f"authoritative and must match (first: "
+                 + "; ".join(manifest_line(s2) for s2 in miss[:3])
+                 + ")")
+    if dropped:
+        print(f"  copper {tag}: {len(kept)} hand items kept "
+              f"({len(copper)} extracted), {len(dropped)} router-owned "
+              f"regenerated")
+        if os.environ.get("PCB_KEPT_DEBUG"):
+            for sig in dropped:
+                print(f"    drop "
+                      f"{manifest_line(sig) if sig else '(unparseable)'}")
+    # Single seeded plan — fresh routes de-conflict against the hand copper
+    # they will share the board with (M2 round fix).
     _board, _tracks, _vias = router.plan(
         tag, pts, placements, nets, pin_net,
         avoid_segs=[b for k, b in kept if k == "segment"],
@@ -1150,14 +1347,6 @@ def build_board(tag, pts):
     _vv = [b for b in _vv if not _gui_dup(b)]
     route_blocks = _segs + _vv
 
-    with open(path, "w") as f:
-        f.write(head)
-        f.write("\n".join(gfx) + "\n")
-        f.write("\n".join(body + route_blocks + [b for _, b in kept]) + "\n)\n")
-    print(f"{PROJECT[tag]}: {len(placements)} footprints, "
-          f"{len(nets)} nets, {len(gfx)} edge segments, "
-          f"{len(route_blocks)} routed + {len(kept)} preserved copper items")
-    check_containment(tag, placements)
     # M2 round: the dangle/keepout check must see the FINAL board copper
     # (routed + preserved). Preserved-only was a false-positive machine:
     # GUI-tuned chains legitimately junction into router-generated
@@ -1166,8 +1355,18 @@ def build_board(tag, pts):
     # those junctions as dangling. The gate's contract ("preserved track
     # must still terminate on real copper") is about the merged board.
     merged = kept + [(b.split()[0].strip("()"), b) for b in route_blocks]
+    # Gates BEFORE the file hits disk: a failing build no longer leaves a
+    # broken .kicad_pcb in the tree for silent patch-up afterwards.
+    check_containment(tag, placements)
     check_copper(tag, merged, placements, {c: n for c, n in nets}, pts,
                  dangle_items=kept)
+    with open(path, "w") as f:
+        f.write(head)
+        f.write("\n".join(gfx) + "\n")
+        f.write("\n".join(body + route_blocks + [b for _, b in kept]) + "\n)\n")
+    print(f"{PROJECT[tag]}: {len(placements)} footprints, "
+          f"{len(nets)} nets, {len(gfx)} edge segments, "
+          f"{len(route_blocks)} routed + {len(kept)} preserved copper items")
     return path
 
 
@@ -1185,6 +1384,15 @@ def drc(tag):
         capture_output=True, text=True)
     tail = (r.stdout + r.stderr).strip().splitlines()
     print(f"  {tail[-1] if tail else 'drc done'}")
+    if r.returncode != 0:
+        # a crashed/empty report must never read as "clean" — the checker
+        # would pass on the absence of violations. Return 1: main() owns
+        # the exit path so it can revert the rejected board first.
+        print(f"  kicad-cli DRC failed for {tag} (exit {r.returncode}):\n"
+              + "\n".join(tail[-10:]))
+        return 1
+    assert os.path.exists(out) and os.path.getsize(out) > 0, \
+        f"drc wrote no report for {tag}"
     return check_drc_report(out, tag)
 
 
@@ -1253,20 +1461,71 @@ def check_drc_report(path, tag=None):
     return 1 if bad else 0
 
 
+def board_dirty(tag):
+    """True if the working .kicad_pcb differs from HEAD (hand edits?)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain", "--",
+         os.path.join("pcb", "kicad", PROJECT[tag] + ".kicad_pcb")],
+        capture_output=True, text=True, cwd=REPO)
+    return bool(r.stdout.strip())
+
+
 def main():
+    import datetime
     pts = load_points()
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # Pre-regen hygiene: extraction reads HEAD, so uncommitted working-board
+    # edits would be silently overwritten by the regen write. Archive them
+    # first (hand copper flows into gen_pcb via hand-copper.txt, not by
+    # working-file persistence).
+    dirty = {}
+    for tag in HALVES:
+        src = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
+        dirty[tag] = board_dirty(tag)
+        if dirty[tag]:
+            dst = os.path.join(REPO, "opencode",
+                               f"pre-regen-{tag}-{stamp}.kicad_pcb")
+            shutil.copyfile(src, dst)
+            print(f"{PROJECT[tag]}: uncommitted board edits archived to "
+                  f"{os.path.relpath(dst, REPO)} — if these are hand copper, "
+                  f"capture the items into hand-copper.txt; regen cuts from "
+                  f"the committed baseline")
     for tag in HALVES:
         build_board(tag, pts)
     # Artifact gates (committed check_board.py — were /tmp scripts):
     # outline topology, fiducials, notch openness, per built board file.
+    # DRC gate: placement must be clean modulo documented waivers
+    # (W1/W2 only — unconnected is NOT waived).
     import check_board
+    failed = set()
     rc = 0
     for tag in HALVES:
-        rc |= check_board.check(tag, pts)
-    # DRC gate: placement must be clean modulo documented waivers
-    # (W1/W2 only — unconnected is NOT waived). Exit non-zero otherwise.
+        rcg = check_board.check(tag, pts)
+        rc |= rcg
+        if rcg:
+            failed.add(tag)
     for tag in HALVES:
-        rc |= drc(tag)
+        rcg = drc(tag)
+        rc |= rcg
+        if rcg:
+            failed.add(tag)
+    # Self-cleanup: a rejected board must never linger in the worktree to
+    # feed some future tooling by accident. Revert to the committed baseline
+    # (safe: if the tree was dirty pre-regen, the hand edits are archived
+    # above already, so only this run's output is being discarded).
+    for tag in sorted(failed):
+        path = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
+        if dirty[tag]:
+            print(f"{PROJECT[tag]}: build rejected — board left as-built "
+                  f"(pre-regen archive above has the prior state)")
+        else:
+            dst = os.path.join(REPO, "opencode",
+                               f"rejected-{tag}-{stamp}.kicad_pcb")
+            shutil.copyfile(path, dst)
+            subprocess.run(["git", "checkout", "--",
+                            os.path.relpath(path, REPO)], cwd=REPO)
+            print(f"{PROJECT[tag]}: build rejected — reverted to committed "
+                  f"baseline (rejected copy: {os.path.relpath(dst, REPO)})")
     sys.exit(rc)
 
 

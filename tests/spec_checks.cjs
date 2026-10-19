@@ -158,48 +158,81 @@ try {
     else if (km[i] === "}") { depth--; if (!depth) { end = i; break; } }
   }
   const body = km.slice(start, end);
-  // Full token sequence per layer (binding + args, in position order).
-  // Checked against the expected ROW-MAJOR INTERLEAVED signature so the
-  // B1-class bug (bindings listed left-half-first instead of per-row)
-  // can never ship silently again. Update the EXPECT arrays when the
-  // draft legends change — that is the point of the assert.
-  const toks = (s) => s.match(/&[A-Za-z][\w-]*(?:\s+[A-Za-z0-9_+]+)*/g) || [];
-  const layerBlocks = [
-    ...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g),
-  ].map((m) => toks(m[1]));
-  // Row-major interleaved expected lists: 0-5 = left row0, 6-11 = right
-  // row0, 12-17 = left row1, ... (see transform map RC order).
-  const DEFAULT_EXP = [
-    "&kp Q", "&kp W", "&kp E", "&kp R", "&kp T", "&kp GRAVE",
-    "&kp P", "&kp O", "&kp I", "&kp U", "&kp Y", "&kp BSPC",
-    "&kp A", "&kp S", "&kp D", "&kp F", "&kp G", "&kp LBKT",
-    "&kp SCLN", "&kp L", "&kp K", "&kp J", "&kp H", "&kp SQT",
-    "&kp Z", "&kp X", "&kp C", "&kp V", "&kp B", "&kp TAB",
-    "&kp SLASH", "&kp DOT", "&kp COMMA", "&kp M", "&kp N", "&kp ENTER",
-    "&kp LCTRL", "&kp LGUI", "&mo 1", "&kp SPACE", "&none", "&none",
-    "&kp RCTRL", "&kp RALT", "&mo 1", "&kp SPACE",
-  ];
-  const T6 = Array(6).fill("&trans");
-  const LOWER_EXP = [
-    ...T6, ...T6, ...T6, ...T6, ...T6, ...T6, // rows 0-2: 36 trans
+  // Layer-1 (lower) and layer-2 (raise) placeholders: all-transparent
+  // except the deliberately-unbound left R3C4-C5 (&none, floating row).
+  const PLACEHOLDER = [
+    ...Array(36).fill("&trans"),
     "&trans", "&trans", "&trans", "&trans",
     "&none", "&none",                          // unpopulated left R3C4-C5
     "&trans", "&trans", "&trans", "&trans",
   ];
+  // Full token sequence per layer (binding + args, in position order),
+  // checked against the ROW-MAJOR INTERLEAVED signature so the B1-class
+  // bug (bindings listed left-half-first instead of per-row) can never
+  // ship silently again. The default layer's signature is now DERIVED
+  // from spec/layout.yaml's keymap legends — single source, so a legend
+  // edit must ride with a keymap edit or the compare fails. (The old
+  // hardcoded DEFAULT_EXP silently pinned a stale draft binding set.)
+  const toks = (s) => s.match(/&[A-Za-z][\w-]*(?:\s+[A-Za-z0-9_+]+)*/g) || [];
+  const layerBlocks = [
+    ...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g),
+  ].map((m) => toks(m[1]));
+  const kmY = yaml.load(fs.readFileSync(
+    path.join(REPO, "spec", "layout.yaml"), "utf8"));
+  const legends = {
+    left: kmY.keymap.left, right: kmY.keymap.right, thumbs: kmY.thumbs,
+  };
+  const colNames = ["outer", "pinky", "ring", "middle", "index", "inner"];
+  // US-layout composite legends -> UNSHIFTED ZMK keycode (| is shift-\,
+  // } is shift-]; the digits on ":;0" live on L1, still pending).
+  // Thumb/mod legends name side-specific modifiers per export_kle's
+  // mirror map (Ctrl->Shift, Cmd->Opt across the halves).
+  const KP = {
+    Q: "Q", W: "W", E: "E", R: "R", T: "T", Y: "Y", U: "U", I: "I",
+    O: "O", P: "P", A: "A", S: "S", D: "D", F: "F", G: "G", H: "H",
+    J: "J", K: "K", L: "L", Z: "Z", X: "X", C: "C", V: "V", B: "B",
+    M: "M", N: "N",
+    "~`": "GRAVE", "{[_-": "LBKT", "|\\": "BSLH", "}]": "RBKT",
+    ":;0": "SCLN", "<": "COMMA", ">.": "DOT", "?/": "SLASH",
+    Tab: "TAB", Esc: "ESC",
+    Ctrl: "LCTRL", Cmd: "LGUI", Space: "SPACE",
+    Shift: "RSFT", Opt: "RALT", Enter: "ENTER",
+  };
+  const mkBinding = (lg) => {
+    if (lg === "L1") return "&mo 1";
+    if (lg === "L2") return "&mo 2";
+    if (!KP[lg]) throw new Error(
+      `unmapped legend in spec/layout.yaml keymap: "${lg}"`);
+    return `&kp ${KP[lg]}`;
+  };
+  const exp = [];
+  for (let r = 0; r < 3; r++) {
+    for (const c of colNames) exp.push(mkBinding(legends.left[c][r]));
+    for (const c of colNames) exp.push(mkBinding(legends.right[c][r]));
+  }
+  // Thumbs: left list is west->east == position order (outer..inner);
+  // the right list is west->east == inner->outer (gap side), so position
+  // order reads it mirrored end-first. 2 &none close the left row (the
+  // floating R3C4-C5).
+  for (const lg of legends.thumbs.left) exp.push(mkBinding(lg));
+  exp.push("&none", "&none");
+  for (const lg of [...legends.thumbs.right].reverse())
+    exp.push(mkBinding(lg));
   const problems = [];
-  if (layerBlocks.length !== 2) {
-    problems.push(`want exactly 2 layers, got ${layerBlocks.length}`);
+  if (layerBlocks.length !== 3) {
+    problems.push(`want exactly 3 layers (default + lower + L2 raise ` +
+      `placeholder), got ${layerBlocks.length}`);
   }
   for (const [i, got] of layerBlocks.entries()) {
     if (got.length !== rcs.length) {
       problems.push(`layer ${i}: ${got.length} bindings vs ${rcs.length} map positions`);
     }
-    const exp = [DEFAULT_EXP, LOWER_EXP][i];
-    if (exp && got.length === rcs.length) {
-      const want = exp.join("\u0000");
+    const expArr = [exp, PLACEHOLDER, PLACEHOLDER][i];
+    if (expArr && got.length === rcs.length) {
+      const want = expArr.join("\u0000");
       if (got.join("\u0000") !== want) {
         for (let j = 0; j < rcs.length; j++) {
-          if (got[j] !== exp[j]) {
+          if (got[j] !== expArr[j]) {
             problems.push(`layer ${i} position ${j} is RC(${rcs[j][0]},${rcs[j][1]})=` +
               ` got ${got[j]}, want ${exp[j]}`);
             break;
@@ -239,6 +272,19 @@ try {
   if (/SPLIT_WIRED/.test(conf)) problems.push("conf still sets SPLIT_WIRED");
   if (!/CONFIG_ZMK_BLE=y/.test(conf)) problems.push("conf missing BLE");
   if (!/diode-direction/.test(dtsi)) problems.push("dtsi missing diode-direction");
+  // Encoder setup gate (EC11E15244G1: 30 detents = 15 pulses per rev;
+  // ZMK `steps` semantics count PULSES per revolution, not detents —
+  // assert both fields against the vendored part).
+  const steps = /steps\s*=\s*<(\d+)>/.exec(dtsi);
+  if (!steps || +steps[1] !== 15) {
+    problems.push(`dtsi: encoder steps ${steps ? steps[1] : "missing"} ` +
+      "!= 15 (pulses/rev)");
+  }
+  const trig = /triggers-per-rotation\s*=\s*<(\d+)>/.exec(dtsi);
+  if (!trig || +trig[1] !== 30) {
+    problems.push(`dtsi: triggers-per-rotation ${trig ? trig[1] : "missing"}` +
+      " != 30 (detents)");
+  }
   if (problems.length) fail("zmk-structure", problems.slice(0, 4).join("; "));
   else ok(`zmk-structure (${rcs.length} positions, ${layerBlocks.length} layers, ` +
     `binding order verified, BLE-only)`);
@@ -261,7 +307,25 @@ try {
     const lip = rd("case/params.py", /^TOP_LIP_Z = ([\d.]+)/m);
     const ct = rd("case/params.py", /^COVER_T = ([\d.]+)/m);
     const cmd = rd("case/params.py", /^COVER_MAG_DEPTH = ([\d.]+)/m);
+    // Post-audit round: more cross-generator ties that could drift.
+    const tabwP = rd("plate/gen_plate.py", /^TAB_W = ([\d.]+)/m);
+    const tabwC = rd("case/params.py", /^TAB_W = ([\d.]+)/m);
+    const tablP = rd("plate/gen_plate.py", /^TAB_L = ([\d.]+)/m);
+    const tablC = rd("case/params.py", /^TAB_L = ([\d.]+)/m);
+    const antP = rd("pcb/generators/gen_pcb.py", /^ANT_R_MM = ([\d.]+)/m);
+    const antC = rd("case/params.py", /^ANT_R_MM = ([\d.]+)/m);
+    const mag = rd("case/params.py", /^MAG_DIA = ([\d.]+)/m);
+    const band = rd("case/params.py", /^MAG_STATION_BAND = ([\d.]+)/m);
     const problems = [];
+    if (tabwP !== tabwC)
+      problems.push(`TAB_W ${tabwP} (plate) != ${tabwC} (case params)`);
+    if (tablP !== tablC)
+      problems.push(`TAB_L ${tablP} (plate) != ${tablC} (case params)`);
+    if (Math.abs(antP - antC) > 1e-9)
+      problems.push(`ANT_R_MM ${antP} (gen_pcb) != ${antC} (case params)`);
+    if ((band - mag) / 2 < 1.1)
+      problems.push(`magnet web (band ${band} - dia ${mag})/2 = ` +
+        `${((band - mag) / 2).toFixed(2)} < 1.10`);
     if (Math.abs(gap - under) > 1e-9)
       problems.push(`GAP ${gap} != PLATE_UNDER ${under}`);
     if (Math.abs(lip - (under + pt + 2.5)) > 1e-9)

@@ -1270,3 +1270,88 @@ artwork rotation is withdrawn.
   111.3/180.2).
 - **First-article additions**: caliper the lever-vs-COM at both detents
   (band interpretation, not a gate) — see spec/first-article.md §2.
+
+## Hand-copper manifest pipeline + post-audit P0 landing (2026-10-19)
+
+### Why the pipeline changed: the kept-classification never converged
+
+gen_pcb classified "GUI copper" by reproduction — an unseeded phase-1
+plan was run purely to guess which tracked items were hand-tuned
+("not reproduced = GUI"), then a seeded phase-2 plan de-conflicted
+against that guess. But the seeded plan diverges near its own seeds,
+so the NEXT run classified phase-2's output as GUI and churned the
+board on every regen — observed this round: Left kept oscillated
+0 → 11 → 15 → 59 items; Right vias 100 → 117 in one run; idempotency broke wherever the previous run's output fed the next
+extraction (the compounding hazard).
+
+The clean capture against the M3 baseline (PCB_KEPT_DEBUG, evidence:
+opencode/pcb_capture.log) settled the truth once: L had 15 kept, of
+which exactly 9 are genuine hand copper (nets /VBAT_SW_L +
+Net-(J_L2-Pin_1), the M2-round switch-bay family — triple-confirmed:
+notes.md M3 record above, forensics, capture) and 6 are router-owned
+corridor drift; R had 11 (ENC_B_R + GND chains), router-owned per the
+M3 record ("Right kept 0"). The L corridor 6 also carried the exact
+frozen collision that jammed routing (hand via (78.0,−10.5) 1.0607mm
+from the fresh COL3 via spot = 0.0143 inside the cross-net via-pad
+rule 1.075) — preserving them would have baked the jam in.
+
+### The redesign (option C): provenance beats reproduction
+
+- `pcb/kicad/hand-copper.txt` — the authoritative preserve set,
+  scoped per half (`[Left]`/`[Right]`), human-readable signatures
+  (kind, net, layer, geometry, r2). To hand-tune: edit the board,
+  commit, review the census, capture lines from
+  `PCB_KEPT_DEBUG=1` (dropped items print paste-ready). A manifest
+  line the committed board lacks = hard error.
+- `gen_pcb.py`: extraction reads the COMMITTED baseline
+  (`git show HEAD:...`) — a failed build on disk can never become its
+  own next input; gates (containment, copper/dangle/keepout) run
+  BEFORE the write; on DRC rejection main() archives the build to
+  `opencode/rejected-*.kicad_pcb` and reverts the board, so the
+  worktree always lands regen-ready. Uncommitted working-board edits
+  are archived (`opencode/pre-regen-*.kicad_pcb`) before overwrite.
+  The rev-tag drop branch and the via-size migration hook are gone
+  (provenance replaced both); the co-located-via drop pass stays.
+- `gen_route.py` rules stand from the prior half of this session:
+  signal via pads 0.60 → 0.65 (annular floor), ROUTER_VERSION
+  unchanged (r13, no bump); seeded `avoid_vias` now drives
+  via-placement rules — same-net pairs keep the drill rule (0.55
+  center→center), cross-net pairs use the pad rule (1.075 for
+  0.65+1.0) so later nets yield to earlier vias bidirectionally.
+- Hand via kept as authored: (94.75,45.75) Ø1.0/drill 0.5 (POWER).
+
+Proof: three consecutive regens produced byte-identical boards
+(modulo uuid/date) with DRC clean ×2 (`28` W1-waived only): L keeps
+exactly the 9, corridor regenerated fresh and CONVERGED (the jam is
+gone: run E/F/G2 logs, exit 0); R pure-router 590 items.
+
+### First-contact gate failures the new pipelines caught
+
+- `plate/gen_plate.py` — my H1 USB-plug bay derived its span from a
+  14mm band min: the west-edge outline points (x −0.64..0.35) beat
+  the run, the floor cluster was 0.99 wide, the 9.0..13.0 assert
+  fired. Fix: locate the mouth the way check_board referees notch
+  openness — the config `usb`/`mirror_usb` anchor, the in-window
+  below-anchor maximum = floor; the floor flat's run gives the span.
+  Both halves CLEAN (encoder webs 9.15/3.65/5.62 L).
+- `case/params.py` + `gen_case.py` — the P0 magnet policy (pocket
+  Ø4.3, ≥1.15 webs, band 6.6) hit a **6.5 physical band**
+  (CASE_OUTSET 7.0 − RIM_CLEAR 0.5): `d ≥ MAG_STATION_BAND` zeroed
+  every candidate except the notch pocket (USB slot rect kills it) —
+  "none eligible", tubs AND cover. probe (opencode/probe_mags.py)
+  split the failures; minimal fix: **CASE_OUTSET 7.0 → 7.1**, band
+  6.6 exactly. Census: wall_min 1.60 (tab tips were 1.49), web 1.15,
+  band 6.60, stations 6 (L) / 7 (R) mirrored, volume 68.1/68.2; cover
+  wall_min 5.94, web 1.15, stations 6/7. spec/case.md + case/README
+  updated; wall-over-tab-tip is now 1.6.
+- `npm test` all-green throughout (w1-gate negative test included,
+  zmk-structure 46/3, stack-ties); audit_silk symmetric OK; ERC
+  untouched (netlist drives the schematic, copper rounds don't).
+
+### Everything shipped together
+
+Regen order this round: gen_pcb → gen_plate → gen_case → gen_cover →
+npm test / audit_silk; the release re-cut follows the Stage-2 commit
+(`make_release.py` refuses dirty trees and gates the ERC/DRC
+reports). Evidence logs retained under `opencode/` (pcb_runE/F/G2,
+capture, plate_run2, case_run3, cover_run2, probe_mags.py).

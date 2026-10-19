@@ -28,8 +28,9 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | Generator | `pcb/generators/gen_schematic.py` | Spec → `.kicad_sch` + ERC + net audit; never hand-edit the schematic |
 | Left project | `pcb/kicad/Hojicha44-Left.kicad_sch` | One project + one board file per half (a split is two PCBs) |
 | Right project | `pcb/kicad/Hojicha44-Right.kicad_sch` | Same; both share the vendored libs below |
-| Board files | `pcb/kicad/Hojicha44-{Left,Right}.kicad_pcb` | Placed+routed: 54 footprints / 48 nets per half, outline from `board.dxf`. Routed copper survives regeneration |
-| Placement generator | `pcb/generators/gen_pcb.py` | Points + outline + netlist → boards + pad-containment check + DRC gate |
+| Board files | `pcb/kicad/Hojicha44-{Left,Right}.kicad_pcb` | Placed+routed: 54 footprints / 48 nets per half, outline from `board.dxf`. Hand copper is preserved via `hand-copper.txt`; router-owned copper regenerates on every run |
+| Hand-copper manifest | `pcb/kicad/hand-copper.txt` | The authoritative preserve set, scoped per half (`[Left]`/`[Right]`). A regen keeps only items matching manifest signatures; a manifest line the committed board lacks is a hard error |
+| Placement generator | `pcb/generators/gen_pcb.py` | Points + outline + netlist → boards. Extraction reads the committed baseline (git HEAD), gates run before the write, and a DRC-rejected board is reverted so it can never leak into the next build |
 | ZMK firmware | `boards/shields/hojicha44/` + `config/` | Shield dtsi/overlays/Kconfig + keymap/conf; compiled by CI (`.github/workflows/build.yml`), no local `west build` |
 | ZMK evidence | `zmk/gpio-map.md` | Machine-generated GPIO continuity map |
 | Project symbols | `pcb/kicad/Hojicha44.kicad_sym` | Local `nice!nano` (stock libs cover the rest) |

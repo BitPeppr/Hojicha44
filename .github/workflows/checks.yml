@@ -39,6 +39,19 @@ jobs:
       # W1/W2 footprint windows, which are vendored in-repo first)
       - run: python3 plate/gen_plate.py --check
 
+  board_gates:
+    name: PCB board gates (stdlib only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # run against the COMMITTED boards — same gates as `npm test`'s
+      # W1 python probe, without needing KiCad
+      - run: python3 pcb/generators/check_board.py
+      - run: python3 pcb/generators/audit_silk.py
+
   case_gates:
     name: Case geometry gates (CadQuery)
     runs-on: ubuntu-latest

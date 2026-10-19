@@ -179,6 +179,7 @@ keymap:
     outer: [P, ":;0", "?/"]
 
 open_points:
-  - Left-hand Shift chords depend on the right-thumb Shift.
+  # (resolved: left-Shift chords no longer depend on hand gymnastics —
+  #  right thumbs carry RSFT on the third layer; see keymap.thumbs)
   - Backspace/Delete live on layers (unmapped so far): decide L1 positions.
   - Print-test at 1:1, then tag layout baseline in git.

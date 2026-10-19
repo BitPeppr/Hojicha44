@@ -23,9 +23,9 @@
 <polygon points="393.03,398.17 451.37,412.17 465.37,353.83 407.03,339.83" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="471.54,419.56 524.76,447.26 552.46,394.04 499.24,366.34" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="546.45,458.99 591.39,498.75 631.15,453.81 586.21,414.05" fill="#000" stroke="#fff" stroke-width="1"/>
-<polygon points="541.4,102.0 541.4,279.4 626.6,279.4 626.6,95.8 562.2,95.8 562.2,82.0 512.2,82.0 512.2,102.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="591.8,400.0 662.0,400.0 662.0,368.0 591.8,368.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="558.6,353.4 609.4,353.4 609.4,302.6 558.6,302.6" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
+<polygon points="558.4,48.0 556.4,50.0 556.4,80.0 554.4,82.0 514.2,82.0 512.2,84.0 512.2,100.0 514.2,102.0 539.4,102.0 541.4,104.0 541.4,277.4 543.4,279.4 624.6,279.4 626.6,277.4 626.6,97.8 624.6,95.8 613.6,95.8 611.6,93.8 611.6,50.0 609.6,48.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
+<polygon points="589.8,398.0 591.8,400.0 660.0,400.0 662.0,398.0 662.0,370.0 660.0,368.0 591.8,368.0 589.8,370.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
+<polygon points="558.6,351.4 560.6,353.4 607.4,353.4 609.4,351.4 609.4,304.6 607.4,302.6 560.6,302.6 558.6,304.6" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
 <polygon points="56.0,293.62 56.0,325.62 40.0,325.62 40.0,293.62" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="20.0" y="309.6" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T1</text>
 <polygon points="200.67,89.5 169.53,96.88 165.84,81.31 196.98,73.93" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
@@ -69,4 +69,5 @@
 <text x="429.2" y="376.0" fill="#888" font-size="7" text-anchor="middle">SW_L19</text>
 <text x="512.0" y="406.8" fill="#888" font-size="7" text-anchor="middle">SW_L20</text>
 <text x="588.8" y="456.4" fill="#888" font-size="7" text-anchor="middle">SW_L21</text>
+<text x="8" y="12.0" fill="#ffeb3b" font-size="12" font-weight="bold">DO NOT CUT PORON - KNIFE/PUNCH TEMPLATE ONLY (reference)</text>
 </svg>
