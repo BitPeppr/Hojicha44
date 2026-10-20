@@ -26,21 +26,21 @@
 <polygon points="85.0,48.0 83.0,50.0 83.0,93.8 81.0,95.8 70.0,95.8 68.0,97.8 68.0,277.4 70.0,279.4 151.2,279.4 153.2,277.4 153.2,104.0 155.2,102.0 180.4,102.0 182.4,100.0 182.4,84.0 180.4,82.0 140.2,82.0 138.2,80.0 138.2,50.0 136.2,48.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="32.6,398.0 34.6,400.0 102.8,400.0 104.8,398.0 104.8,370.0 102.8,368.0 34.6,368.0 32.6,370.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="85.2,351.4 87.2,353.4 134.0,353.4 136.0,351.4 136.0,304.6 134.0,302.6 87.2,302.6 85.2,304.6" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
-<polygon points="638.6,325.61 638.6,293.61 654.6,293.61 654.6,325.61" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="638.6,323.61 638.6,295.61 654.6,295.61 654.6,323.61" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="674.6" y="309.6" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T1</text>
-<polygon points="525.03,96.87 493.89,89.49 497.58,73.92 528.72,81.3" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="523.08,96.4 495.84,89.95 499.52,74.38 526.77,80.84" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="517.73" y="58.13" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T2</text>
-<polygon points="373.07,56.0 341.07,56.0 341.07,40.0 373.07,40.0" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="371.07,56.0 343.07,56.0 343.07,40.0 371.07,40.0" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="357.08" y="20.0" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T3</text>
-<polygon points="218.0,69.39 186.58,63.33 189.61,47.62 221.04,53.68" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="216.04,69.01 188.55,63.71 191.58,48.0 219.07,53.3" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="209.1" y="31.01" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T4</text>
-<polygon points="56.0,180.94 56.0,212.94 40.0,212.94 40.0,180.94" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="56.0,182.94 56.0,210.94 40.0,210.94 40.0,182.94" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="20.0" y="196.92" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T5</text>
-<polygon points="82.92,507.98 114.68,511.89 112.73,527.77 80.97,523.86" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="84.91,508.22 112.7,511.64 110.74,527.52 82.95,524.1" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="94.4" y="545.65" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T6</text>
-<polygon points="249.32,473.68 279.29,462.44 284.9,477.42 254.94,488.66" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="251.2,472.97 277.41,463.14 283.03,478.13 256.81,487.96" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="276.96" y="501.75" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T7</text>
-<polygon points="413.56,415.05 444.72,407.78 448.35,423.36 417.19,430.63" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
+<polygon points="415.5,414.6 442.77,408.23 446.41,423.82 419.14,430.18" fill="rgba(255,235,59,0.30)" stroke="#ff0" stroke-width="1" stroke-dasharray="2,2"/>
 <text x="437.3" y="446.46" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T8</text>
 <text x="8" y="14" fill="#f0f" font-size="10">T = gasket tab (poron pads top+bottom, yellow)</text>
 <text x="8" y="26" fill="#fff" font-size="10">white square = Choc cutout 15x15</text>

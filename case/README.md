@@ -26,6 +26,38 @@ Blender visualises.
 
 ## Status
 
+(Entries are newest-first. Each older entry keeps the measured
+values of ITS build — those are historical, not current; the v3.6
+entry below is the current truth for every number it quotes.)
+
+- v3.6 (2026-10-20, six-review design audit round): **magnet stations are
+  now SYMMETRIC-BY-CONSTRUCTION** — `magnet_stations()` computes the LEFT
+  set once and mirrors it (`x -> 291.5 - x`) for Right, re-validating
+  every mirrored station against the right boundaries/obstructions/
+  antenna (asymmetric rejection aborts the build). Root cause of the
+  6/7 drift was the per-half slot walk, not real geometry. **Geometry
+  margins raised to the reviewer floors**: CASE_OUTSET 7.1 -> 8.2
+  (wall 1.595 -> 2.62/2.70 — clears the MJF-2.0 pass and the 1.6 design
+  floor), MAG_STATION_BAND 6.6 -> 7.5 (webs 1.15 -> 1.69), MAG_MIN_STATIONS
+  6 -> 8 (the doc chain's 8/half is now BUILT truth — Left had been ON
+  the 1.5 kg pull-test floor at 6/7). Census: tub 75.7/75.7 cm³ (within
+  the widened [55,82] tripwire), stations 8/8 exact mirrors, band min
+  7.68, web 1.69, ant margin 14.15 in-plane + 5.60 floor standoff
+  (both now printed as a `census antenna` line), ports out
+  20.20/10.70/10.70. Cover: 10.7/10.7 cm³ ([6,13] tripwire), ring
+  wall census gate raised 1.40 -> 5.0 (7.20 measured; full-point
+  sampling now, both tub and cover — the old every-2nd-point walk
+  carried a claimed ≤0.03 sag that no longer has to be trusted).
+  Plate: PORON_PAD_L 8.0 -> 7.0 (corner-edge 0.35 -> 0.71 measured,
+  kerf-fragility closed), port keep-rects mirror-derived from the Left
+  literals (usb/trrs carried a +0.5 drafting drift; webs now 5.62 both
+  halves), encoder-hole corner maths documented (0.145 mm relief).
+  PCB gates grown in check_board.py: pad+via containment, antenna
+  keepout at commit level, TRRS crossover pin-map, W1 pad-content
+  equality vs vendored stock, silk-to-edge clearance — all CLEAN on
+  both halves.
+
+
 - v3.5 (user "implement" round: pwrsw + magnets + ring cover): **PWR
   actuator aperture** — the WS-SLTV sits wholly inside the cavity, so
   the wall question was really a mouth: a 5.0-wide slot, z 4.3..top

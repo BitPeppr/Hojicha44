@@ -26,7 +26,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 22 | Kailh PG1350 (Choc v1) switches | top side, seat into sockets — PG1350 names the family/series; builder chooses the exact feel/variant as a kit part (e.g. linear/tactile/clicky) — any PG1350 Choc v1 fits |
 | 22 | Kailh Choc v1 hotswap sockets | SMD bottom (pads part of footprint) |
 | 1 | nice!nano v2 module | socketed, USB end to board notch |
-| 2 | machine-pin SIP strips 2×12, 2.54mm pitch, 4.5–5.0mm stack | socket rows 15.24mm apart; Mill-Max 315 2.11mm banned (needs 3.5mm min for the cell) |
+| 2 | machine-pin SIP strips 2×12, 2.54mm pitch | socket rows 15.24mm apart; ASSEMBLED STACK HEIGHT (socket + pins, no module) must measure 4.5–5.0mm — caliper at first article; the 2.11mm-height Mill-Max 315 variant is banned BY HEIGHT (cannot clear the 3.0 cell); the 43-112-41-003000 3.0-class socket + matching pins are the order |
 | 1 | Alps EC11E15244G1 | vertical, 30 detents / 15 pulses, knob ~10mm proud (trim shaft fallback) |
 | 1 | Knob, 6mm bore, ≤13×13mm square (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | 13×13mm square knob overhangs the 12.7mm square plate hole edges but rides high on the 20mm shaft (bore never enters) — first-article: spin + push clearance vs plate |
 | 1 | XKB PJ-320A TRRS 3.5mm | bring-up/debug link only; 90° cable required |
@@ -41,9 +41,9 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | Qty | Part | Notes |
 |---|---|---|
 | 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.7² encoder hole, component windows, 8 gasket tabs (NO screws/holes beyond openings) |
-| ~2 | Poron gasket stock, 4701-30 Very Soft 240kg/m³, 3mm adhesive (sheet/strip cut to 90×4; Keebox 32-pack -40 strips are the drop-in fallback) | per half: 16 pads (8 tabs × 2 faces) cut 8×4; swap ladder -30-15 → -40 → -50, no CAD change |
-| 16 | N52 disc magnet Ø4×2×2mm (nickel-plated) | TUB magnet pockets (8 per half, Ø4.2×2.2 recess, face-UP flush at the lip plane) |
-| 16 | N52 disc magnet Ø4×1.5mm (nickel-plated) | COVER magnet pockets (8 per half, Ø4.2×1.7 recess, face-DOWN flush — T4 review fix: 1.3mm pocket floor; asymmetric pair with the tub's 2.0s is fine, faces meet at the lip plane); supermagnete/GK-class stocked size |
+| ~2 | Poron gasket stock, 4701-30 Very Soft 240kg/m³, 3mm adhesive (sheet/strip cut to 90×4; Keebox 32-pack -40 strips are the drop-in fallback) | per half: 16 pads (8 tabs × 2 faces) cut 7×4 (audit-round carve, corner-edge 0.71mm); swap ladder -30-15 → -40 → -50, no CAD change |
+| 16 | N52 disc magnet Ø4×2×2mm (nickel-plated) | TUB magnet pockets (8 per half, Ø4.3×2.2 recess, face-UP flush at the lip plane) |
+| 16 | N52 disc magnet Ø4×1.5mm (nickel-plated) | COVER magnet pockets (8 per half, Ø4.3×1.7 recess, face-DOWN flush — T4 review fix: 1.3mm pocket floor; asymmetric pair with the tub's 2.0s is fine, faces meet at the lip plane); supermagnete/GK-class stocked size |
 
 ## Cell — locked to orderable stock (was TBD)
 
@@ -70,7 +70,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 ## Fab limits — confirm with the chosen fab BEFORE ordering
 
 - Confirm minima/cost for this 2-layer 1.6mm stackup: 0.25mm track /
-  0.2mm clearance / 0.8-0.4mm via, plus routed-slot rules for rev-2 flex
+  0.2mm clearance / 0.30-drill-in-0.65-pad signal vias + 0.50-in-1.00
+  power vias, plus routed-slot rules for rev-2 flex
   cuts (typically >=1mm). Do not order until the fab accepts the
   Gerber/drill pack against these limits.
 
@@ -85,8 +86,10 @@ Each half is ~150×115mm — over the 100×100mm value tier at JLCPCB/PCBWay,
 so price both tiers (and panel-by-2 quotes) before ordering. Design-vs-fab
 limits, checked 2026-10-14 against JLCPCB's published 1–2 layer
 capabilities (PCBWay comparable — recheck its page if you use them):
-0.25mm tracks (min 0.10), 0.2mm clearance (min 0.10), 0.3/0.6mm signal
-vias + 0.5/1.0mm power vias (min drill 0.15, annular ≥0.15; ours 0.15/0.25),
+0.25mm tracks (min 0.10), 0.2mm clearance (min 0.10), 0.3/0.65mm signal
+vias + 0.5/1.0mm power vias (min drill 0.3 this tier, annular ≥0.15;
+ours = 0.30 drill in 0.65 pad → annular 0.175 — JLC-verified 2026-10; the
+old "0.15/0.25" line quoted the KiCad template, not the boards),
 150×115mm halves (2-layer max 670×600), 1.6mm/0.3 drill = 5.3:1 aspect
 (max 8:1). Order **tab-routed, not V-scored**: V-cut wants 0.3mm
 copper-to-edge and our measured minimum is 0.29. The outline is concave,

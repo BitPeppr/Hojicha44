@@ -26,8 +26,8 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z 6.0..9.0 across the wall band (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.2 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
-| Top gaskets | Poron pads 8×4mm on each tab (PORON layer in the DXF), 3mm thick |
+| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z 6.0..9.0 across the wall band (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
+| Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), 3mm thick |
 | Plate | 1.5mm (material below), outline = PCB outline + tabs (USB notch included) |
 | Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
@@ -36,8 +36,10 @@ Encoder push over the window zone stays soft by design.
 
 - **Bottom-case floor (case design):** floor under the PCB zone sits at
   FLOOR_Z −5.6 (PCB-top frame), provisioned by the BELOW-PCB protrusions
-  (M1, review-corrected 2026-10-18: the hotswap SOCKETS are top-side —
-  they never hang below the board and do not provision the floor):
+  (M1, review-corrected 2026-10-18 + 2026-10-20 wording: the hotswap
+  SOCKETS seat on the top side — their solder pads are on B.Cu and the
+  body dips only −1.25 below the board, so the floor is provisioned by
+  the deeper protrusions, never by the sockets):
   encoder legs **−3.65** (measured off the vendored ROT_EC11E STEP,
   which the footprint maps 1:1 into the PCB frame — rotate 0, no z
   offset), TRRS THT pin tips **−3.0** (vendored PJ-320A STEP), Choc
@@ -100,7 +102,7 @@ Encoder push over the window zone stays soft by design.
 
 ## Port-bore contract (v3.3 breach + v3.4 shaping + v3.5 pwrsw, gate-enforced)
 
-The 7.0mm rim dilation BRIDGES the USB notch (the notch floor sits
+The rim dilation (CASE_OUTSET 8.2 today; 7.0 when this note was written v3.4) BRIDGES the USB notch (the notch floor sits
 6.3–10.3mm below the local rim line depending on which shoulder you
 measure against — "~5.45 deep" was a one-point figure; the skin
 envelope rides ~17mm north of the rim there
@@ -111,8 +113,8 @@ now structural, not numeric:
 - Every port bore's OUTER FACE must actually exit the skin: `gen_case.py`
   measures the needed extent per port (marches the face outward until the
   whole face clears the skin ring, +1.0mm travel; prints
-  `usb out=19.00 / trrs out=9.50 / pwrsw out=9.50`) — do not hand-pin
-  a depth (the
+  `usb out=20.20 / trrs out=10.70 / pwrsw out=10.70` at OUTSET 8.2) —
+  do not hand-pin a depth (the
   v3.1-v3.2 fixed `SLOT_OUT = 8.5` was the failure). The march is
   z-independent — breach proof and bore shape are separate decisions.
 - Bore z bands are sized to the PLUGS, not to the wall (v3.2 introduced
@@ -155,11 +157,14 @@ now structural, not numeric:
   must stay air at those planes, the slab under each bore stays solid
   (no bottom holes), skin-band probing is bore-aware at z=0 (USB's
   band stays solid below its z0=2.0 bore), wall census minimum is
-  printed (1.49-1.50 measured) with pocket-corner webs (1.15-1.55),
+  printed (2.62 L / 2.70 R measured at OUTSET 8.2) with pocket-corner webs (2.45 / 2.35),
   and SAT keeps every bore ≥3mm from tab pockets (bounding-rect proof
   is conservative: fillet/circle regions are subsets of the rect).
 - **Antenna window: none.** The antenna circle keeps ≥13mm of air
-  (measured **14.15mm**) to the nearest case material on both halves —
+  (measured **14.15mm** in-plane, to the nearest case WALL on both
+  halves; the nearest 3D material is the floor slab below at
+  **5.60mm** — both printed per build by the new `census antenna`
+  line) —
   the 3mm rule (electronics.yaml) is met with margin; plastic beyond
   3mm is not a radio problem. A window would only become required if
   the future COVER had to pass closer than 3mm over the zone, which
@@ -175,20 +180,23 @@ User-approved scheme: ring-cover retention with recessed magnets — no
 snap lips, no heat-set inserts, nothing internal pokes through the
 exterior.
 
-- **Stations** (`gen_case.magnet_stations()`): candidates walk the
-  cavity boundary outward into the wall band; a station centres a
-  Ø4.2×2.2 pocket where the local band is ≥6.4mm (≥1.1 web to BOTH
-  boundaries — the mid-band premise is re-checked against the true
-  boundaries so oblique corners don't eat the webs), ≥5.1mm from every
-  port rect and tab pocket rect (rect-aware distance: a point INSIDE a
-  rect is distance 0 — edge-distance alone once read a deep-inside
-  point as "far" and placed a phantom station over the USB-notch void;
-  the pocket web probes caught it), ≥10.1mm from the antenna centre,
-  and ≥14mm from every other station, snapped at perimeter/8 spacing
-  (8 per half; the gate floor is ≥6). Both halves rotate their
-  candidate ring to the USB anchor so Left/Right pick mirrored
-  stations (measured mirror vs the resample phase: ≤1.3mm — 1.29mm
-  exact; exact-mirrored generation deferred, documented tolerance).
+- **Stations** (`gen_case.magnet_stations()`, symmetric build v3.6):
+  the LEFT half is computed once per build; the RIGHT half is its exact
+  mirror (`x -> 291.5 - x`, the `MIRROR_AX` axis) re-validated against
+  the right boundaries/obstructions/antenna — any asymmetric rejection
+  aborts the build instead of yielding unequal counts (the 2026-10-20
+  six-review audit caught the old per-half walk resolving to 6/7
+  stations and putting Left's retention ON the pull-test gate). A
+  station centres a Ø4.3×2.2 pocket where the local band is ≥7.5mm
+  (web ≥1.6 to BOTH boundaries — the reviewer floor, at OUTSET 8.2 /
+  RIM_CLEAR 0.5 the straight-rim band is 7.7 so the premise holds with
+  slack), ≥5.15mm from every port rect and tab pocket rect (rect-aware
+  distance: a point INSIDE a rect is distance 0 — edge-distance alone
+  once read a deep-inside point as "far" and placed a phantom station
+  over the USB-notch void; the pocket web probes caught it), ≥10.1mm
+  from the antenna centre, and ≥14mm from every other station, snapped
+  at perimeter/8 spacing (8 per half — measured 8/8 exact mirrors at
+  band min 7.68 / web min 1.69; the gate floor is ≥8).
 - **Pockets**: vertical cylinders cut down from the band top, faces
   flush at the lip plane (z 6.0) — the magnet (2.0 thick) glues in
   face-UP. The cover glues its magnets FACE-DOWN opposite, so the
@@ -216,42 +224,41 @@ exterior.
   - W2 TRRS: the SAME Ø9.5 cylinder. In the 6..9 slice it is a BLIND
     tunnel topping at 7.25 > boot swing 6.75, and its widest chord in
     that slice (6.42 at the lip plane) never reaches the local band
-    width (7.1) — the ring is NOT split (the old "≤4.82" was the
+    width (7.7 at OUTSET 8.2) — the ring is NOT split (the old "≤4.82" was the
     bore's chord below the lip, not the slice's).
   - PWR: full-depth 5.0 slot BUT starting 1.6 outboard, leaving a 1.1
     web next to the cavity edge: W1 must remain the ring's ONLY full
     radial severance or the cover falls into two pieces (the
     single-solid gate proves one piece; the lever reaches through, the
     nail enters from above).
-  Magnet pockets cut up from the underside (faces at 6.0, 0.8mm floor
-  above). Gates: bbox z window, single solid, ring census ≥1.40,
+  Magnet pockets cut up from the underside (faces at 6.0, 1.3mm floor
+  above). Gates: bbox z window, single solid, ring census ≥5.0,
   passage voids at real band t, pwrsw inner web solid, trrs ceiling
   solid, pocket void/floor/web battery, station floor, antenna rings +
-  no-plastic-over-antenna, volume tripwire [6,10] cm³, and a
+  no-plastic-over-antenna, volume tripwire [6,13] cm³, and a
   port-agnostic skin-hug battery: the ring must be solid 0.6mm inside
   every skin sample hugging (≤1.6mm from) a port rect — ring resumes
   everywhere a passage meets an outer face, with no hand-placed resume
   coordinates (the USB bite's outline is wider than the mouth frame).
 
-## Poron pad-to-tab margin (rev-1, verified 2026-10-16)
+## Poron pad-to-tab margin (rev-1 verified 2026-10-16; fix adopted 2026-10-20)
 
 Pad orientation from the generator (`hl` scales the transverse vector,
-`hw` the outward one): the **8 mm axis runs LATERAL** across the 10 mm
+`hw` the outward one): the **7 mm axis runs LATERAL** across the 10 mm
 tongue, the **4 mm axis runs ALONG** the 5 mm tongue (pad spans rim-line
-to +4.0 → 1 mm tip spare, no tip overhang). All 16 pad corners test
-on-plate (point-in-poly within 0.1 mm), but the lateral squeeze is tight:
-**tightest corner-edge ≈ 0.35 mm on every tab, both halves** (uniform by
-construction). The 1.5 mm tip chamfers narrow the tongue exactly where
-the pad's outer corners sit. A laser kerf of ≈0.1–0.2 mm on top of ≈0.1 mm
-part tolerance could nibble that margin in the real world. Rev-2:
-slightly narrower pad (6–7 mm wide) or a longer tab. Current geometry is
-plate-safe in CAD.
+to +4.0 → 1 mm tip spare, no tip overhang). All pad corners test
+on-plate (point-in-poly within 0.1 mm). The August-rev 8 mm pad left the
+**tightest corner-edge ≈ 0.35 mm** — a laser kerf of ≈0.1–0.2 mm plus
+≈0.1 mm part tolerance could nibble it. The six-review audit (2026-10-20)
+adopted the rev-2 carve: **7 mm pads, corner-edge 0.71 mm measured on
+both halves** — no longer kerf-fragile; strip stock still cuts 12 pads on
+90 mm.
 - No tip overhang — projection proof over all 8 tabs × both halves: every
   pad spans +0.0→+4.0 along the tongue against the +5.0 tip (1.0 mm spare),
   lateral half-width 4.0 against 5.0 nominal. Support is structural, not
   marginal: tongues splice outward of solid rim, tab eligibility bars any
   opening within web minimum of the tab frame, so solid material sits
-  under every pad — the 0.35 mm is purely a manufacturing-tolerance
+  under every pad — the 0.71 mm is purely a manufacturing-tolerance
   margin, not a support question.
 ## Plate materials (pick one, re-run the generator to re-gate)
 
@@ -282,7 +289,11 @@ against crack initiation in every material.
   in the plate band (z 2.0..3.5)** (12.00 up to z 4.0), so 12.7 gives
   0.20/side nominal (the old 12.5 was spec'd 0.4/side off the "11mm
   class" — the real part is wider; bench-verify with the real encoder
-  before the plate order).
+  before the plate order). Corner relief maths (audit 2026-10-20): body
+  extreme over the diagonal = (12.30/2)·√2 − 0.17·(√2−1) ≈ 8.63 vs the
+  hole's 0.5 fillet-relief reach ≈ 8.77 → 0.145mm nominal corner
+  clearance; tangency would need a 0.85 fillet or the 13.0-hole
+  fallback, both rejected as needless (hand insert).
   The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
   the hole. A 17mm round hole was rejected: the encoder SHAFT center
   sits 24.04mm from the nearest switch center (SW_L17; the old "18.18"
@@ -291,7 +302,8 @@ against crack initiation in every material.
   17mm hole plus that neighbour's 15mm key cutout leaves next to no
   web once the rows' splay is accounted. The generator now prints the
   definitive webs each run (`gen_plate.py`): **enc↔cutouts 9.15,
-  enc↔windows 3.65, enc↔port rects 4.92..5.35** (Left; Right symmetric)
+  enc↔windows 3.65, enc↔port rects 5.62 (both halves — the audit-round
+  mirroring removed the old 5.62 L / 5.21 R asymmetry)**
   — the old "~3.55" figure was approximately the window web, not the
   cutout web.
 - W1 windows: slide-switch strip + MCU/cell/USB core (tall top-side parts).

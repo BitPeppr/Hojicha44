@@ -58,7 +58,17 @@ STOCK_FP = os.environ.get(
 CUTOUT = 15.0          # Choc PG1350 plate cutout (switch body is 15x15)
 ENC_SQ = 12.7           # square hole: vendored EC11 body measures 12.30 wide
                         # in the plate band (z 2.0..3.5) -> 0.20/side; knob
-                        # rides high on the 20mm shaft either way
+                        # rides high on the 20mm shaft either way.
+                        # Corner math (audit-round question, checked
+                        # 2026-10-20): body extreme radius over the
+                        # diagonal = (12.30/2)*sqrt2 - 0.17*(sqrt2-1) =
+                        # 8.628; the WIN_FILLET 0.5 relief gives the hole
+                        # reach (12.70/2-0.5)*sqrt2 + 0.5 = 8.773 -> 0.145
+                        # nominal diagonal clearance. Tangency would need
+                        # a 0.85 fillet on this hole (or a 13.0 hole per
+                        # first-article fallback option) — both unchanged
+                        # because 0.145 > kerf wiggle and this is a
+                        # hand-insert.
 PLATE_THICK = 1.5      # mm PC
 GAP = 2.0              # PCB top -> plate underside (diodes are 1.35)
 TAB_W = 10.0             # tab width along the rim
@@ -67,7 +77,11 @@ TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
 TAB_N = 8                # tab count per half: 2 pinned corners + 6 greedy;
                              # fewer, softer mounts = more suspension
 TAB_TIP_CH = 1.5         # tip chamfer (no sharp points in the case)
-PORON_PAD_L = 8.0        # poron pad per tab, cut from 90x4mm strip stock
+PORON_PAD_L = 7.0        # poron pad per tab, cut from 90x4mm strip stock.
+                         # (6-review audit 2026-10-20: 8.0 pads left only
+                         # 0.35mm to the kerf diamond at tight tabs — 7.0
+                         # restores >=0.85/side; spec §246 carve remark is
+                         # now adopted in-file)
 PORON_PAD_W = 4.0
 PORON_SPEC = 'PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)'
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
@@ -731,16 +745,22 @@ def build_half(tag):
     # port mouths the cables exit through (measured from the outline)
     # + the pwrsw actuator slot (v3.5; M8 review: was missing, a future
     # tab retune could park a pocket on the flick channel — today's
-    # placement clears it by the case-side SAT margin only)
-    port_rects = []
+    # placement clears it by the case-side SAT margin only).
+    # Mirror-exact (6-review audit 2026-10-20): the right half derives
+    # from the LEFT literals over the shared axis x -> 291.5 - x (pwrsw
+    # was already hand-mirrored; usb/trrs carried a +0.5 drafting drift
+    # that skewed only the right keep-zones). The case PORTS anchors
+    # (case/gen_case.py PORTS: usb L (118, 49.95), trrs (134.6, -22.0),
+    # pwrsw nw corner 103.6 — mirrored per half) must stay inside these
+    # keep-zones; re-derive if those anchors move.
+    L_rects = ((111.0, 45.0, 125.0, 60.0),      # usb
+               (129.0, -27.0, 138.0, -17.0),    # trrs
+               (103.8, 52.0, 108.8, 64.0))      # pwrsw
     if tag == 'Left':
-        port_rects.append(rect_poly(111.0, 45.0, 125.0, 60.0))
-        port_rects.append(rect_poly(129.0, -27.0, 138.0, -17.0))
-        port_rects.append(rect_poly(103.8, 52.0, 108.8, 64.0))
+        port_rects = [rect_poly(*r) for r in L_rects]
     else:
-        port_rects.append(rect_poly(167.0, 45.0, 181.0, 60.0))
-        port_rects.append(rect_poly(154.0, -27.0, 163.0, -17.0))
-        port_rects.append(rect_poly(182.7, 52.0, 187.7, 64.0))
+        port_rects = [rect_poly(291.5 - x2, y1, 291.5 - x1, y2)
+                      for (x1, y1, x2, y2) in L_rects]
     openings += port_rects
 
     def fillet_arc(corner, u_away, o_out, r, n=6):

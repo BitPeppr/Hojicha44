@@ -34,8 +34,9 @@ poor bridger.
   bores + v3.5 pwrsw aperture — no fixed depths): **USB = 14.0-wide
   bottom-filleted slot (z 2.0..top, plug axis rides at the lip plane) /
   TRRS = Ø9.5 round bore (axis z 2.5, measured off the vendored STEP)**;
-  all three reach past the skin (printed `out=19.00` USB / `9.50` TRRS /
-  `9.50` pwrsw). Caliper the actual cables at the bore
+  all three reach past the skin (printed `out=20.20` USB / `10.70` TRRS /
+  `10.70` pwrsw at OUTSET 8.2 — re-read the live census line).
+  Caliper the actual cables at the bore
   plane (with the bores open in a printed 1:1 slice — pre-v3.4 slices
   are the "gaping rectangle" and must not be printed): USB-C housing
   must clear **14.0 with margin** and the USB plug must SLIDE FULLY to
@@ -68,13 +69,16 @@ poor bridger.
 - [ ] Magnets — 16× Ø4×2×2mm N52 (TUB pockets) + 16× Ø4×1.5mm N52
   (COVER pockets, T4 review fix: shallower cover pocket -> 1.3mm floor
   over the magnet; the Ø4×2/Ø4×1.5 pair is asymmetric-tolerant, faces
-  still meet exactly at the lip plane): the tub has 8 × Ø4.2×2.2
+  magnets still meet exactly at the lip plane): the tub has 8 × Ø4.3×2.2
   recesses in the band top, faces flush at the lip plane; the ring
-  cover mirrors them face-down with 8 × Ø4.2×1.7 recesses. Glue: tub
+  cover mirrors them face-down with 8 × Ø4.3×1.7 recesses. Glue: tub
   magnets FACE-UP flush, cover magnets FACE-DOWN flush (the 0.2mm glue
   seat decides the zero-gap stop). Station coordinates print in
-  the gen_case/gen_cover census lines each run (PCB frame; e.g. Left
-  tub (129.96,57.2), (135.97,12.8), …) — cross-check one per half in
+  the gen_case/gen_cover census lines each run (PCB frame; LEFT tub at
+  writing time: (130.17,57.76), (136.55,12.92), (133.44,-55.70),
+  (67.30,-43.06), (19.46,-28.91), (-18.35,8.02), (6.74,52.44),
+  (68.42,64.16) — the LEFT set is the SOURCE and Right is its exact
+  mirror x->291.5-x). Cross-check one per half in
   the slicer against the STEP. Tests: dry-fit the cover with NO
   magnets and NO plate — it sits level at the 6.0 lip plane; then drop
   the plate in (pads live on its tabs) and reseat the cover: the ring
@@ -107,7 +111,9 @@ poor bridger.
   the real part is wider) — drop the real (or spec-identical) encoder
   through a laser-cut hole sample before ordering the plate batch:
   ±0.2 fab tolerance can still rub; a further widen to 13.0 costs a
-  ~3.35mm web to SW_L17 (still gate-safe). The 13mm knob RIDES HIGH on
+  ~3.35mm web — but to the W2 TRRS window (3.65 -> 3.35), NOT to
+  SW_L17, whose web stays ~9.15mm (the mislabeled pairing a reviewer
+  caught, fixed 2026-10-20). The 13mm knob RIDES HIGH on
   the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft
   engagement + spin clearance above the plate, not through it).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
@@ -141,6 +147,20 @@ poor bridger.
 
 ## 3. Assembly order (both halves)
 
+- [ ] Diode placement map: diodes carry NO silk references (the 4mm
+  inter-cutout gap fits no text) — the naming is deterministic:
+  **D_Lxx / D_Rxx sits +x of its same-numbered switch (D_Lxx ↔
+  SW_Lxx), 9.5mm in the local +x of the switch centre** (thumb-arc
+  exceptions ride the switch rotation: local deltas (9.50,0.08),
+  (9.24,−2.22), (8.43,−4.39), (7.12,−6.29) — i.e. still the switch's
+  +x side). Solder direction/polarity comes from the cathode tick and
+  the released net list (underline each D's col/row from its switch
+  before soldering). No free-floating "nearest diode" guesses.
+- [ ] Socket stack height caliper: BEFORE the cell goes under, measure
+  the MATED height of the ordered machine-pin socket + pin set
+  (ground pin tip to mating face) — accept 4.5–5.0mm only; reject any
+  set that reads <3.5 (2.11mm-class) or >5.0 (slides under the module
+  body). The stack budget assumes this number — record it in the notes.
 - [ ] Diodes → switch (already done in §2) → sockets → TRRS → JST →
   encoder. Modules last. Cell sandwich goes in AFTER all soldering: Kapton
   (polyimide) tape over the pouch face AND over the nano underside

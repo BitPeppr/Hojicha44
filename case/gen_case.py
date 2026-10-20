@@ -23,7 +23,7 @@ Construction (z=0 is the PCB top; see params.py for sources):
                 round TRRS bore) whose outer extent is measured to
                 actually breach the skin (v3.3) and whose z bands are
                 sized to the real plugs/actuator (v3.4, params.py)
-  6. magnets = Ø4.2x2.2 recessed pockets in the wall-band top face at
+  6. magnets = Ø4.3x2.2 recessed pockets in the wall-band top face at
                 measured-wide stations (v3.5 zero-gap retention stack;
                 the ring cover glues its magnets face-down opposite —
                 adjacent faces meet at TOP_LIP_Z, a rigid stop)
@@ -400,88 +400,156 @@ def rect_d(pt, rect):
                for a, b in zip(rect, rect[1:] + rect[:1]))
 
 
-def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
-    """Recessed-magnet stations on the wall-band top face (v3.5).
+_MIRROR_CACHE = {}
 
-    Candidates walk the CAVITY boundary outward into the band. A station
-    centers a ØMAG_DIA pocket with:
-      - >= (MAG_STATION_BAND - MAG_DIA) / 2 web to BOTH boundaries,
+
+def _station_fit(P, pt, skin, cav, obstructions, ant):
+    """Shared station predicate: the point must host a full recessed
+    pocket — >= MAG_STATION_BAND boundary separation, >= web to BOTH
+    boundaries, >= 3mm beyond the magnet radius from every port rect and
+    tab-pocket rect, >= ANT_R_MM + ANT_CASE_CLEAR beyond the magnet
+    radius from the antenna centre. Returns the local boundary
+    separation (ds + dc) or None. Used both for Left candidate selection
+    and Right mirror-validation (same floors, same rejections)."""
+    web = (P.MAG_STATION_BAND - P.MAG_DIA) / 2
+    if point_in_poly(pt, cav) or not point_in_poly(pt, skin):
+        return None
+    ds = min(segd(pt, a, b) for a, b in zip(skin, skin[1:] + skin[:1]))
+    dc = min(segd(pt, a, b) for a, b in zip(cav, cav[1:] + cav[:1]))
+    if ds + dc < P.MAG_STATION_BAND or min(ds, dc) < web:
+        return None
+    if any(rect_d(pt, r) < P.MAG_DIA / 2 + 3.0 for r in obstructions):
+        return None
+    if math.hypot(pt[0] - ant[0], pt[1] - ant[1]) < \
+            P.ANT_R_MM + P.ANT_CASE_CLEAR + P.MAG_DIA / 2:
+        return None
+    return ds + dc
+
+
+def _mirror_fp(P, skin, cav, pocket_rects):
+    """Geometry fingerprint keying the Left-station cache (per process).
+    Mirror-INVARIANT by design: the Left and Right rings have the same
+    perimeter (mirror preserves arclength), so one key serves both
+    lookups."""
+    return (round(_ring_len(skin)), round(_ring_len(cav)))
+    # (raw vertex counts differ L/R — the cavity ring is NOT resampled,
+    # so only the mirror-invariant perimeters key the cache; tub and
+    # cover share both shapes and live in separate processes, and every
+    # cached station is re-validated against the right-half inputs on
+    # lookup, so a wrong-source hit cannot pass silently)
+
+
+def _ring_len(pts):
+    return sum(math.hypot(pts[i + 1][0] - pts[i][0],
+                          pts[i + 1][1] - pts[i][1])
+               for i in range(-1, len(pts) - 1))
+
+
+def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
+    """Recessed-magnet stations on the wall-band top face (v3.6).
+
+    Alpha audit 2026-10-20 caught the old per-half generation drifting:
+    identical rules resolved to 6 stations on Left but 7 on Right (and
+    Left then sat ON the first-article pull-test gate). Now the LEFT
+    half is computed once per geometry and the RIGHT half is its exact
+    mirror, x -> 2 * MIRROR_AX - x, re-validated against the right
+    boundaries/obstructions/antenna with the same floors: any
+    asymmetric rejection aborts the build instead of yielding unequal
+    counts. (Call order contract: Left before Right in the same
+    process — gen_case.main and gen_cover.build_cover are per-process,
+    each building Left first.)
+
+    A station centers a pocket with (unchanged floors):
+      - >= MAG_STATION_BAND boundary separation,
+      - >= web to BOTH boundaries,
       - >= 3mm beyond the magnet radius from every port rect and every
         tab pocket rect (a recess must never merge with a void),
       - >= ANT_R_MM + ANT_CASE_CLEAR beyond the magnet radius from the
-        antenna centre,
-      - MAG_MIN_SEP arc separation between chosen stations.
-    Candidate rings rotate to start at the USB anchor so mirrored
-    halves pick mirrored stations from identical geometry; slots are
-    snapped at tot/MAG_MAX_STATIONS spacing. Returns ([(cx, cy), ...],
-    [local band width at each station, ...]).
+        antenna centre.
+    Candidate rings rotate to start at the LEFT USB anchor and slots
+    snap at tot/MAG_MAX_STATIONS spacing with MAG_MIN_SEP arc
+    separation. Returns ([(cx, cy), ...], [local band at each, ...]).
     """
-    cav_ring = resample_ring(cav, P.SKIN_STEP)
-    n = len(cav_ring)
-    ua = PORTS[tag]["usb"]
-    bi = min(range(n), key=lambda i: math.hypot(
-        cav_ring[i][0] - ua[0], cav_ring[i][1] - ua[1]))
-    cav_ring = cav_ring[bi:] + cav_ring[:bi]
-    cn = outward_field(cav_ring)
-    arcs = [0.0] * (n + 1)
-    tot = 0.0
-    for i in range(1, n + 1):
-        a, b = cav_ring[i - 1], cav_ring[i % n]
-        tot += math.hypot(b[0] - a[0], b[1] - a[1])
-        arcs[i] = tot
-    sksegs = list(zip(skin, skin[1:] + skin[:1]))
-    cavsegs = list(zip(cav, cav[1:] + cav[:1]))
+    if tag == "Left":
+        cav_ring = resample_ring(cav, P.SKIN_STEP)
+        n = len(cav_ring)
+        ua = PORTS["Left"]["usb"]
+        bi = min(range(n), key=lambda i: math.hypot(
+            cav_ring[i][0] - ua[0], cav_ring[i][1] - ua[1]))
+        cav_ring = cav_ring[bi:] + cav_ring[:bi]
+        cn = outward_field(cav_ring)
+        arcs = [0.0] * (n + 1)
+        tot = 0.0
+        for i in range(1, n + 1):
+            a, b = cav_ring[i - 1], cav_ring[i % n]
+            tot += math.hypot(b[0] - a[0], b[1] - a[1])
+            arcs[i] = tot
+        obstructions = list(pocket_rects) + [
+            ports[k]["rect"] for k in ("usb", "trrs", "pwrsw")]
+        cands = []
+        for i in range(n):
+            c = cav_ring[i]
+            d = min(segd(c, a, b) for a, b in zip(skin, skin[1:] + skin[:1]))
+            if d < P.MAG_STATION_BAND:
+                continue
+            pt = (c[0] + cn[i][0] * d / 2, c[1] + cn[i][1] * d / 2)
+            band = _station_fit(P, pt, skin, cav, obstructions, P.ANTENNA_L)
+            if band is None:
+                continue
+            cands.append((arcs[i], pt, band))
+        taken = []
+        step = tot / P.MAG_MAX_STATIONS
+        for k in range(P.MAG_MAX_STATIONS):
+            want = step * k
+            best = None
+            for s, cpt, d in cands:
+                off = abs(s - want)
+                off = min(off, tot - off)
+                if off > step / 2:
+                    continue
+                clash = False
+                for s2, _, _ in taken:
+                    dd = abs(s - s2)
+                    if min(dd, tot - dd) < P.MAG_MIN_SEP:
+                        clash = True
+                        break
+                if clash:
+                    continue
+                if best is None or off < best[0]:
+                    best = (off, s, cpt, d)
+            if best is not None:
+                taken.append((best[1], best[2], best[3]))
+        res = [((p, d)) for _, p, d in taken]
+        _MIRROR_CACHE[_mirror_fp(P, skin, cav, pocket_rects)] = res
+        return ([p for p, _ in res], [d for _, d in res])
+
+    # Right: exact mirror of the LEFT result, re-validated against the
+    # right geometry (the nine-panel build order asserts Left-first).
+    fp = _mirror_fp(P, skin, cav, pocket_rects)
+    left = _MIRROR_CACHE.get(fp)
+    assert left is not None, (
+        f"{tag}: right half ran without a cached Left-station set "
+        f"(build_half/build_cover must visit Left first in the same "
+        f"process — the right half is its mirror).")
+    mir_x = 2 * P.MIRROR_AX
     obstructions = list(pocket_rects) + [
         ports[k]["rect"] for k in ("usb", "trrs", "pwrsw")]
-    ant = P.ANTENNA_L if tag == "Left" else P.ANTENNA_R
-    ant_lim = P.ANT_R_MM + P.ANT_CASE_CLEAR + P.MAG_DIA / 2
-    web = (P.MAG_STATION_BAND - P.MAG_DIA) / 2
-    cands = []
-    for i in range(n):
-        c = cav_ring[i]
-        d = min(segd(c, a, b) for a, b in sksegs)
-        if d < P.MAG_STATION_BAND:
-            continue
-        pt = (c[0] + cn[i][0] * d / 2, c[1] + cn[i][1] * d / 2)
-        # the station must sit ON the solid band: outside the cavity
-        # region and inside the skin (rejections for notch/channel fjord
-        # walls whose outward normal points INTO the bite's air).
-        if point_in_poly(pt, cav) or not point_in_poly(pt, skin):
-            continue
-        # the mid-band premise (center at d/2) must hold against the
-        # true boundaries, or the pocket webs disappear at obliques
-        if min(segd(pt, a, b) for a, b in sksegs) < web:
-            continue
-        if min(segd(pt, a, b) for a, b in cavsegs) < web:
-            continue
-        if any(rect_d(pt, r) < P.MAG_DIA / 2 + 3.0 for r in obstructions):
-            continue
-        if math.hypot(pt[0] - ant[0], pt[1] - ant[1]) < ant_lim:
-            continue
-        cands.append((arcs[i], pt, d))
-    taken = []
-    step = tot / P.MAG_MAX_STATIONS
-    for k in range(P.MAG_MAX_STATIONS):
-        want = step * k
-        best = None
-        for s, cpt, d in cands:
-            off = abs(s - want)
-            off = min(off, tot - off)
-            if off > step / 2:
-                continue
-            clash = False
-            for s2, _, _ in taken:
-                dd = abs(s - s2)
-                if min(dd, tot - dd) < P.MAG_MIN_SEP:
-                    clash = True
-                    break
-            if clash:
-                continue
-            if best is None or off < best[0]:
-                best = (off, s, cpt, d)
-        if best is not None:
-            taken.append((best[1], best[2], best[3]))
-    return ([p for _, p, _ in taken], [d for _, _, d in taken])
+    stations, bands, fails = [], [], []
+    for (x, y), d_l in left:
+        mir = (mir_x - x, y)
+        d_r = _station_fit(P, mir, skin, cav, obstructions, P.ANTENNA_R)
+        if d_r is None or abs(d_r - d_l) > 0.05:
+            fails.append(((x, y), mir, d_l, d_r))
+        else:
+            stations.append(mir)
+            bands.append(d_r)
+    if fails:
+        raise AssertionError(
+            f"{tag}: mirrored magnet stations fail the right-half "
+            f"validation (geometry is not mirror-symmetric at the band): "
+            + "; ".join(f"left {l} -> right {m}, band {dl} vs {dr}"
+                        for l, m, dl, dr in fails))
+    return (stations, bands)
 
 
 def build_half(tag):
@@ -556,7 +624,7 @@ def build_half(tag):
     for name in ("usb", "trrs", "pwrsw"):
         solid = solid.cut(ports[name].pop("cut"))
 
-    # v3.5 retention: recessed Ø4.2x2.2 magnet pockets in the band top
+    # v3.5 retention: recessed Ø4.3x2.2 magnet pockets in the band top
     # face. Stations are measured by magnet_stations against the SAME
     # skin ring + pocket/port rects just committed to the solid; faces
     # sit flush at TOP_LIP_Z (zero-gap against the cover's opposite
@@ -623,19 +691,22 @@ def check_half(tag, solid, info):
             bad.append(f"skin pinches inside cavity at "
                        f"({r2(sp[0])},{r2(sp[1])})")
             break
-    # wall-thickness census (v3.2 strength review): thinnest skin->cavity
-    # distance must clear the design floor. Design value: tab tips are
-    # the closest cavity points (rim+TAB_L+RIM_CLEAR = rim+5.5 vs skin
-    # rim+CASE_OUTSET) -> 1.6 uniform at every tab; elsewhere walls run
-    # 6.6 (= the magnet station band). Resample chord sag costs <=0.03,
-    # so 1.40 leaves real margin.
+    # wall-thickness census (v3.2 strength review; 2026-10-20 audit
+    # hardening): thinnest skin->cavity distance must clear the design
+    # floor. Design value: tab tips are the closest cavity points
+    # (rim+TAB_L+RIM_CLEAR = rim+5.5 vs skin rim+CASE_OUTSET) -> 2.7
+    # uniform at every tab; elsewhere walls run 7.7 (= the magnet
+    # station band, OUTSET-RIM_CLEAR). Sample every resampled skin
+    # point (chord sag <=0.03 claimed — with full-point sampling the
+    # claim no longer has to be trusted).
     cav = info["cav_poly"]
     cavsegs = list(zip(cav, cav[1:] + cav[:1]))
     wall_min = min(min(segd(sp, a, b) for a, b in cavsegs)
-                   for sp in skin[::2])
-    if wall_min < 1.40:
-        bad.append(f"wall thins to {wall_min:.3f} < 1.40 (tab-tip floor "
-                   f"is OUTSET-TAB_L-RIM_CLEAR)")
+                   for sp in skin)
+    wall_gate = P.CASE_OUTSET - P.TAB_L - P.RIM_CLEAR - 0.3
+    if wall_min < wall_gate:
+        bad.append(f"wall thins to {wall_min:.3f} < {wall_gate:.2f} "
+                   f"(tab-tip floor is OUTSET-TAB_L-RIM_CLEAR)")
     # point-in-solid battery: proves void/solid SEMANTICS (distances alone
     # cannot catch an inside-out build — a flipped normal still measures).
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
@@ -900,8 +971,13 @@ def check_half(tag, solid, info):
               f"+{P.ANT_CASE_CLEAR:.0f}+{P.MAG_DIA / 2:.1f})")
     else:
         print(f"  {tag} census magnets: none eligible")
-    if not (55000 <= vol <= 75000):
-        bad.append(f"volume {vol / 1000:.1f} cm3 outside [55, 75] tripwire")
+    # antenna standoff census (audit 2026-10-20: the "~13mm of air"
+    # claim is the IN-PLANE wall distance; the nearest 3D case material
+    # to the antenna centre is the floor slab below — record it).
+    print(f"  {tag} census antenna: in-plane wall {ant_d:.2f}, "
+          f"floor standoff {-P.FLOOR_Z:.2f} (nearest case materials)")
+    if not (55000 <= vol <= 82000):
+        bad.append(f"volume {vol / 1000:.1f} cm3 outside [55, 82] tripwire")
     return bad
 
 

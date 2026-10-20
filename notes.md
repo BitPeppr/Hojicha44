@@ -1415,3 +1415,121 @@ history"):
   the 10.0.6 install; fp-lib-table untouched so KiCad sees nothing
   new); `fp_source` prefers the vendored copy. With that, the
   `KICAD_CLI=/nonexistent` check_board simulation is CLEAN end to end.
+
+## 2026-10-20 — design-review synthesis round (six reviewers, user-directed)
+
+The review batch (4 first-round + 2 background max-thinking agents —
+beam-free, nemotron-3-ultra ×2, longcat-2.5-preview, GLM-5.3,
+MiniMax-M3.1 — READ-ONLY prompts, spec → generators → artifacts) landed
+12+7+12+12+7 findings net of noise. Six… actually the usable count:
+**31 accepted/discriminated findings** triaged into: implement now,
+verify-at-first-article, reject-with-evidence.
+
+### Implemented (this round, all gates re-run CLEAN)
+
+1. **Magnet stations symmetric-by-construction** (consensus: longcat P1,
+   beam P2, nemotron P1, GLM P1, MiniMax P1): `magnet_stations()` now
+   computes the LEFT set once per geometry, then mirrors for Right
+   (`x -> 291.5 - x` = 2·`MIRROR_AX`) and re-validates every mirrored
+   station against the right boundaries/obstructions/antenna — failure
+   aborts the build instead of drifting counts. Root cause of 6/7 was
+   the per-half slot walk (resample phase + literal drift), not real
+   geometry.
+2. **Case margins to the reviewer floors**: CASE_OUTSET 7.1 → 8.2
+   (wall 1.595 measured → 2.62/2.70; clears the MJF-2.0 floor beam and
+   nemotron both flagged), MAG_STATION_BAND 6.6 → 7.5 (web ≥1.6 floor,
+   measured 1.69), MAG_MIN_STATIONS 6 → 8 (GLM's doc-chain finding: the
+   16+16 BOM and the pull-test math promise 8/half — Left had been ON
+   the ≥1.5 kg gate at 6/7; now 8/8 exact mirrors, band 7.68).
+   Volume tripwires widened [55,82] tub / [6,13] cover (75.7/10.7).
+3. **Wall census sampling**: every resampled skin point instead of
+   every 2nd/4th (GLM P2) — the "chord sag ≤0.03" claim no longer has
+   to be taken on trust; tub gate raised with the wall floor
+   (OUTSET−TAB_L−RIM_CLEAR−0.3), cover ring gate 1.40 → 5.0 (7.20
+   measured; the 7.20 thin spot is the W2/pwrsw shoulder, not a fault).
+4. **Plate**: PORON_PAD_L 8.0 → 7.0 (beam + nemotron + minimax P2
+   consensus; corner-edge 0.35 → 0.71 measured both halves, kerf
+   fragility closed); port keep-rects mirror-DERIVED from the Left
+   literals (GLM P2; usb/trrs carried +0.5 drafting drift — pwrsw was
+   already exact-mirrored; webs 5.62 both halves, was 5.21 right);
+   encoder-hole corner maths written down (GLM#? — body 8.628 extreme
+   vs 0.5-fillet hole reach 8.773 → 0.145 clearance; MiniMax's
+   tangency concern resolves: tangency needs a 0.85 fillet, nowhere
+   near our 0.5).
+5. **check_board gates** (5 new, all CLEAN both halves): pad+via
+   containment (nemotron P0 — a library drift walking TRRS THT pins off
+   the edge now fails the committed gate), antenna keepout re-measured
+   at commit level (GLM P2 — GUI-passing preserved boards can't
+   silently violate the r5 zone; pad edge-distance ≥5.0, via centres
+   ≥5.0), TRRS crossover pin-map (nemotron P1 — L: U pin1 TX→T,
+   pin2 RX→R1; R crossed; jack identity both halves), W1 pad-content
+   equality vs vendored stock for all 28 waived refs (MiniMax P2 — the
+   exact-set gate proved drift, never content; probe found 0 diffs, so
+   the gate starts honest), silk-to-edge floor 0.20 (measured floor:
+   jack outline silk 0.24 is the closest real silk; label silks
+   0.49/0.78).
+6. **gen_pcb build-time guards**: MCU socket pad columns pinned against
+   the vendored source ({−15.24, 0} = 15.24 apart, audit probe) and the
+   SOD-123 co-invariant asserted ("DIODE ⇒ strip_silk must be on — the
+   tick may not double-mark a native bar") (nemotron P2/P1 ×2).
+7. **Doc reconciliation sweep**: electronics.yaml 48→47 nets, via fab
+   lines (0.8-0.4 → 0.3-in-0.65 + 0.5-in-1.0; "ours 0.15/0.25" →
+   "0.175 annular, JLC-verified"), antenna-figure wording (centre
+   13.65 / circle 8.65; "circle ≥13.6" was centre-only), socket
+   height-ban rewrite (ban the 2.11mm height, not the 315 family;
+   first-article caliper item added), case.md Ø4.2→Ø4.3 everywhere +
+   station/pocket/census/tripwire numbers refreshed to the OUTSET-8.2
+   census, antenna claim restated in-plane 14.15 + floor 5.60, encoder
+   corner maths + hole-web relabel (first-article's "3.35mm web to
+   SW_L17" was really the W2-window web; SW_L17 stays ~9.15),
+   case.md gate table current, case/README gets the v3.6 entry,
+   MANUFACTURING.md plate default = PC per spec (POM stays the
+   upgrade) and the phantom "snap lip" wording removed, first-article
+   live-census quotes refreshed (out=20.20/10.70/10.70), diode assembly
+   map added (deterministic: D_xxx ↔ SW_xxx at the switch's +x;
+   thumb-arc exceptions listed), magnet station example coordinates
+   refreshed.
+
+### Rejected / deferred with rationale (recorded, not silently dropped)
+
+- **D_L99 "29th waiver" (nemotron round 2)** — misread: D_L99 is the
+  W1 gate's deliberate negative-test injection (npm test adds a 29th
+  and expects rejection); the committed boards carry exactly 28.
+- **"No antenna gate exists" (nemotron round 2)** — rejected: the gate
+  exists (gen_case.py check_half, envelope rings at 24 azimuths × 4 z
+  planes + ring-boundary distances; the COVER carries it too). What
+  WAS true and is now fixed: the SPEC claim quoted 14.15mm as "to the
+  nearest case material", which is the wall-only in-plane figure — the
+  floor slab stands 5.60mm below in 3D. Document + census line added.
+- **Right overlay `uart0` disabled (beam)** — rejected as misread: the
+  right overlay's own comment documents wired-debug as left-half-only,
+  and electronics.yaml scopes the TRRS as bring-up/debug fallback
+  (BLE primary; splitkb advises against cabling two battery halves).
+  No functional wired split is claimed, so nothing is missing.
+- **Signal via pad 0.65 → 0.7 bump (beam/nemotron/minimax)** —
+  declined after measurement: annular 0.175 is +0.025 in hand vs JLC's
+  finished-hole floor; growing signal pads to 0.7 tightens the harder
+  constraint (cross-net via clearance needs (0.7+1.0)/2+0.25 = 1.10
+  where the current design enforces 1.075) and jeopardizes the L
+  corridor the router only just resolved. Documented as a rev-2
+  trade, not changed.
+- **Reverse-polarity ideal-diode FET (beam)** — deferred to rev-2
+  hardware: the procedural gates exist (pigtail polarity metered
+  BEFORE first plug-in; JST '+' silk; slide switch = charge
+  disconnect). Recorded in electronics.yaml; not cut into this
+  release.
+- **Via "0.15 fab min annular" claim (MiniMax)** — corrected the doc to
+  real values (0.175 measured, ≥0.15 floor ✓) instead of treating it
+  as a board defect.
+
+### Process receipts
+
+- Pre-commit battery: `npm test` (7/7 checks incl. the W1 negative
+  control), `check_board.py` CLEAN ×2, `audit_silk` symmetric OK,
+  `plate --check` CLEAN ×2, `gen_case.py` + `gen_cover.py` gates
+  exit-0 both halves.
+- The fix batch touches pcb/generators (board-affecting by
+  `board_commit()` pathspec) → full release re-cut follows with the
+  manifest stamp recomputed on a CLEAN tree (this also retires the
+  stale `-dirty` tag MiniMax found in MANIFEST.txt — the stamp line
+  was computed before the previous cut's outputs were committed).

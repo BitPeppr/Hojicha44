@@ -1182,6 +1182,20 @@ def build_placements(tag, pts, pin_net):
     mx, my, _ = pts["mcu" if tag == "L" else "mirror_mcu"]
     # socket USB end (local y=0) faces north: rot 180, pad-centre on mcu,
     # shifted 0.5mm south so the silk top clears the USB-notch cutout.
+    # Vendored-source guard (audit 2026-10-20): the 2x12 strip's two pad
+    # COLUMNS must be exactly 15.24 apart (nice!nano standard), at the
+    # pinned local xs {-15.24, 0} (origin on pad column 1 — see
+    # gen_schematic's 15.24 notes; the placement's -7.62 shift + rot 180
+    # then straddles the mcu anchor ±7.62). The W1 content gate compares
+    # committed-vs-vendored and would certify a drifted vendored file,
+    # so the source itself is pinned here.
+    _xcol = sorted({round(float(m.group(1)), 4) for m in re.finditer(
+        r'\(pad "[^"]*" (?:smd|thru_hole) [^)]*?\(at ([-\d.]+) ([-\d.]+)',
+        fp_source(*FP_SRC["MCU"]))})
+    assert len(_xcol) == 2 and \
+        abs((_xcol[1] - _xcol[0]) - 15.24) < 1e-3 and \
+        abs(_xcol[0] + 15.24) < 1e-3, \
+        f"MCU socket pad columns drifted: xs {_xcol} (want {{-15.24, 0}})"
     placements.append(("MCU", *FP_SRC["MCU"], f"U_{tag}1", "nice!nano v2",
                        mx - 7.62, my + 13.97 - 0.5, 180, False, False, False,
                        ref_nets(pin_net, f"U_{tag}1")))
@@ -1283,6 +1297,14 @@ def build_board(tag, pts):
             ref_shift = (-3.0, 0.0) if tag == "L" else (3.0, 0.0)
         else:
             ref_shift = (0.0, 0.0)
+        if kind == "DIODE":
+            # co-invariant (audit 2026-10-20): the stripped SOD-123 must
+            # actually lose its native silk — the cathode tick re-adds
+            # the mark and unstripped native bar + tick would double-mark
+            # the diode polarity (radiant ambiguity for hand-solder).
+            assert strip, \
+                f"{ref}: DIODE without strip_silk — native cathode bar " \
+                f"would double-mark beneath the tick"
         body.append(embed(src, f"{lib}:{name}", ref, value, x, y, rot, pn,
                           hide_ref=hide, ref_on_fab=fab, strip_silk=strip,
                           cathode_tick=(kind == "DIODE"),
@@ -1424,26 +1446,30 @@ def drc(tag):
     return check_drc_report(out, tag)
 
 
-def check_drc_report(path, tag=None):
-    """0 if clean (modulo waivers), 1 otherwise. Prints non-waived items."""
-    import collections
-    if tag is None:
-        tag = "R" if "-Right-" in path or "Right" in path else "L"
-    # Waiver W1: exact expected lib_footprint_mismatch set per half.
-    # 28 = 22x D_SOD-123 (stripped silk + cathode tick) + 4x thumb Choc
-    # (rotated) + MCU socket (reversed column) + TRRS (renamed pads).
-    # NOTE (verified 2026-10-15): (model ...) lines do NOT participate in
-    # the mismatch check — relinking the encoder/slide-switch bodies to
-    # vendored files left the set at exactly 28. Geometry only.
-    # A 29th mismatch (or a missing one) fails the build instead of passing
-    # silently under the old blanket skip.
-    w1_want = (
+def w1_want(tag):
+    """Waiver W1: exact expected lib_footprint_mismatch set per half.
+    28 = 22x D_SOD-123 (stripped silk + cathode tick) + 4x thumb Choc
+    (rotated) + MCU socket (reversed column) + TRRS (renamed pads).
+    NOTE (verified 2026-10-15): (model ...) lines do NOT participate in
+    the mismatch check — relinking the encoder/slide-switch bodies to
+    vendored files left the set at exactly 28. Geometry only.
+    A 29th mismatch (or a missing one) fails the build instead of passing
+    silently under the old blanket skip. Shared with check_board (the
+    content gate compares each waived ref's committed pads here)."""
+    return (
         {("D_SOD-123", f"D_{tag}{i:02d}") for i in range(22)}
         | {("SW_Hotswap_Kailh_Choc_V1_1.00u", f"SW_{tag}{i:02d}")
            for i in (18, 19, 20, 21)}
         | {("Socket_Strips_2x12_P2.54mm_NiceNano", f"U_{tag}1"),
            ("TRRS-PJ-320A", f"J_{tag}1")}
     )
+
+
+def check_drc_report(path, tag=None):
+    """0 if clean (modulo waivers), 1 otherwise. Prints non-waived items."""
+    import collections
+    if tag is None:
+        tag = "R" if "-Right-" in path or "Right" in path else "L"
     s = open(path).read()
     pats = re.findall(r"\[(.*?)\]: (.*?)\n((?:    .*\n)+)", s)
     counts = collections.Counter()
@@ -1474,14 +1500,15 @@ def check_drc_report(path, tag=None):
                             for p in pads) and pads):
                 continue
         bad.append((typ, desc, body))
-    if w1_got != w1_want:
-        print(f"  drc W1 mismatch {tag}: want {len(w1_want)}, got {len(w1_got)}")
-        for m in sorted(w1_want - w1_got)[:10]:
+    if w1_got != w1_want(tag):
+        print(f"  drc W1 mismatch {tag}: want {len(w1_want(tag))}, "
+              f"got {len(w1_got)}")
+        for m in sorted(w1_want(tag) - w1_got)[:10]:
             print(f"  !! W1 missing {m}")
-        for m in sorted(w1_got - w1_want)[:10]:
+        for m in sorted(w1_got - w1_want(tag))[:10]:
             print(f"  !! W1 extra {m}")
         bad.append(("lib_footprint_mismatch", "W1 set drift",
-                    f"want {sorted(w1_want)}\ngot {sorted(w1_got)}\n"))
+                    f"want {sorted(w1_want(tag))}\ngot {sorted(w1_got)}\n"))
     print(f"  drc: {dict(counts)}" +
           ("" if not bad else f" — {len(bad)} NON-WAIVED"))
     for typ, desc, body in bad[:10]:

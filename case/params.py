@@ -40,12 +40,22 @@ FLOOR_Z = -5.6  # floor top surface (spec-derived, see ruler above;
 # over an 11mm span at each of 8 stations; the whole case thickened
 # (user-sanctioned) to close the pockets without creating local
 # swells (v2 sin, rejected).
-CASE_OUTSET = 7.1   # wall over tab tip = 7.1 - TAB_L - RIM_CLEAR = 1.6;
-                    # band = 7.1 - 0.5 = 6.6 hosts MAG_STATION_BAND exactly
-                    # (retention web 1.15/side, post-audit magnet policy)
+CASE_OUTSET = 8.2   # wall over tab tip = 8.2 - TAB_L - RIM_CLEAR = 2.7
+                    # (6-review audit 2026-10-20: 7.1 gave 1.595 measured
+                    # wall — under both the 1.6 design floor and the MJF
+                    # 2.0 pass; 8.2 clears them with margin and grows the
+                    # band to 7.7 so MAG_STATION_BAND 7.5 fits with 0.2
+                    # slack and magnet webs reach 1.6)
 SKIN_MIN = 1.0      # min material between any pocket corner and the skin
 SKIN_STEP = 1.0     # ring resample step for the outer skin (folds gone;
-#                   verified crossing-free at 1.0/0.6/0.4)
+                    # verified crossing-free at 1.0/0.6/0.4)
+MIRROR_AX = 145.75  # shared left/right mirror axis: RIGHT = 2 * MIRROR_AX
+                    # - LEFT in frame coordinates (291.5 - x). Every
+                    # per-half constant below is asserted or derived with
+                    # this (6-review audit 2026-10-20: asymmetric
+                    # derivations produced 6/7 magnet stations and +0.5mm
+                    # plate keep-zone drift; symmetric sources replaced
+                    # them).
 TOP_LIP_Z = 6.0     # lip at plate top +2.5: leaves a 2.5mm gap = 16.7%
 #   preload on the 3.0 top foam ((3.0 - 2.5) / 3.0), matching the ~15%
 #   bottom preload (2.55 of 3.0); receives the future top cover / upper
@@ -158,13 +168,16 @@ COVER_MAG_DEPTH = 1.7  # COVER pocket depth (T4, review M4): cover-side
 #   to ~0.7-0.85x/face, 8 pairs still >= 2 kg vs a ~200 g half — the
 #   rigid zero-gap stop is the face plane, not the pull; first-article
 #   pull test gates the change).
-MAG_STATION_BAND = 6.6 # local band needed: pocket + >=1.15 web both faces
-                       # (Ø4.3 pocket + the band raise; the "web >= 1.6"
-                       # reviewer floor needs a ~7.5 band = OUTSET growth,
-                       # logged as the rev-2 margin item, NOT blockable here)
+MAG_STATION_BAND = 7.5 # local band needed: pocket + >=1.6 web both faces
+                       # (6-review audit 2026-10-20: the web >= 1.6 reviewer
+                       # floor is NOW met in-band — webs (7.5-4.3)/2 = 1.6,
+                       # straight-rim band is 7.7 = OUTSET 8.2 - RIM 0.5)
 MAG_MIN_SEP = 14.0     # arc separation between stations
 MAG_MAX_STATIONS = 8
-MAG_MIN_STATIONS = 6   # retention gate on station count
+MAG_MIN_STATIONS = 8   # retention gate on station count (audit: the doc
+                       # chain promises 8/half — BOM 16+16, first-article
+                       # pull math; the old per-half generation yielded
+                       # 6/7 and Left sat ON the 1.5 kg pull gate)
 
 # ---- ring cover (v3.5: flush bezel ring on the lip) ----
 # Underside = TOP_LIP_Z (presses the top poron), top = +COVER_T (stays

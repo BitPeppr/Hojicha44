@@ -21,6 +21,13 @@ power:
     # host-wired operation = plug USB into either half's module; PCB phase
     # must keep both module USB-C ports exposed at the board edge.
   battery: 301230 LiPo, 3.7V nominal, ~110mAh, JST-PH 2.0mm
+    # rev-2 hardware candidate (6-review audit 2026-10-20): no
+    # reverse-polarity protection on the LiPo path (P-MOSFET ideal diode
+    # or a DMM gate) — risk accepted for rev 1 behind the procedural
+    # gates: pigtail polarity is metered BEFORE first plug-in (first-
+    # article §2), the JST pin-1 '+' silk marks orientation, and a
+    # reversed plug in the field kills board+cell (documented 38).
+    # Rev-2 adds the FET + BOM line; not cut into this release.
       # status: fixed
     # 3x12x30mm with PCM; fits UNDER the socketed nice!nano (12mm cell clears
     # the socket's pin rows). NOTE: 302030 (3x20x30) was the earlier pick and
@@ -171,10 +178,13 @@ mcu_footprint: Hojicha44:Socket_Strips_2x12_P2.54mm_NiceNano
   #    ROW SEPARATION 15.24mm (was 2.54 — module could not fit). Pads 1 (D1)
   #    and 24 (RAW) share the USB end (y=0); 12 (D9)/13 (D10) the antenna end.
   #    check_mcu_footprint() guards pitch + separation + numbering + envelope.
-mcu_socket_height: 4.5mm round machine-pin SIP + 0.6mm pins (or 5.0mm PBS
-  + PLS square pins); 8.5mm Sullins PPTC121LFBN-RC as the roomy fallback.
-  Mill-Max 315 2.11mm is BANNED for the 301230 (needs 3.5mm min, 4.5-5.0
-  comfortable with PCM/tape/wires). JST is the SIDE-entry S2B-PH-K-S
+mcu_socket_height: machine-pin SIP + pins with an ASSEMBLED stack height
+  4.5–5.0mm (caliper the mated set at first article before the cell goes
+  under) or the 5.0mm PBS + PLS square-pin route; 8.5mm Sullins
+  PPTC121LFBN-RC as the roomy fallback. Ban criterion is the HEIGHT — the
+  2.11mm Mill-Max 315 post variant is banned (cannot clear the 3.0mm
+  cell) while longer 315-family heights are fine. JST is the SIDE-entry
+  S2B-PH-K-S
   (matches the placed footprint, wire exits parallel to the PCB, ~5-6mm
   tall) + PHR-2 housing + SPH-002T-P0.5S crimps on the cell pigtail — it
   fits neither under the stack, so it sits BESIDE the cell at the `jst`
@@ -262,7 +272,7 @@ schematic:
 pcb:
   files: >-
     one placed .kicad_pcb per project, generated (never hand-edited):
-    `python3 pcb/generators/gen_pcb.py` — 54 footprints / 48 nets per half
+    `python3 pcb/generators/gen_pcb.py` — 54 footprints / 47 nets per half
     (22 switches + 22 diodes + MCU + encoder + TRRS + JST + PWR + 3 fiducials
     + 2 tooling holes) from points/points.yaml, outline from
     outlines/board.dxf, nets from the per-half netlist export. Routed by the
@@ -270,11 +280,18 @@ pcb:
     copper preserved by normalized dedupe.
   gates: pad-containment self-check (every numbered pad inside its outline —
     would have caught the TRRS mouth-end pads going off-board, which DRC
-    does not check) + DRC clean modulo documented waiver W1 (rotated-part
-    lib_footprint_mismatch quirk, exact 28 asserted) / W2 predicate armed but
+    does not check; now also gated at commit level in check_board.py with
+    via containment, the antenna-keepout re-measure, the TRRS crossover
+    pin-map, W1 pad-content equality vs the vendored stock, and a
+    silk-to-edge clearance floor) + DRC clean modulo documented waiver W1
+    (rotated-part lib_footprint_mismatch quirk, exact 28 asserted, each
+    waived ref's pads content-checked) / W2 predicate armed but
     0 on routed boards (Choc B.SilkS-vs-own-pad2 vendor marginality). gen_schematic.py never clobbers a placed board.
   stackup: 2-layer, 1.6mm, ENIG or HASL lead-free  # status: provisional
-  design_rules: 0.25mm track / 0.2mm clearance / 0.8-0.4mm via (defaults set
+  design_rules: 0.25mm track / 0.2mm clearance / signal vias 0.30mm drill
+    in 0.65mm pads (power vias 0.50 drill in 1.00 — the audit-updated
+    truth; the old "0.8-0.4mm" line advertised the KiCad template, not
+    the boards; annular ring 0.175 JLC-verified) (defaults set
     in both .kicad_pro; the KiCad template's 0-width/0-drill presets are
     corrected by the generator — using them silently breaks DRC)
   ground: >-
@@ -296,7 +313,9 @@ mechanical:
     distance >=14.15mm; the case gate bounds both ring boundaries)
     # PCB-phase rule: module USB end = north board edge (USB notch + plug
     # access), so the ANTENNA end points INBOARD (near the rim but never
-    # edge-open): the antenna circle sits >=13.6mm from every board edge.
+    # edge-open): the antenna CENTRE sits ≥13.65mm from every board edge
+    # (the r=5 CIRCLE itself clears by ≥8.65mm) — state both numbers, the
+    # 13.6 figure alone reads as a circle claim and is wrong.
     # Reserve a 5mm copper-free zone there; the `antenna` point +
     # `antenna_keepout` outline (r=5) mark it in the layout.
   # status: fixed

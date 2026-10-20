@@ -30,17 +30,18 @@ Construction (z=0 is the PCB top; see params.py):
            abs rides through and 0.2 past the top)
        W2  trrs = the SAME Ø9.5 cylinder (axis zc 2.5): a BLIND tunnel
            in the 6..9 slice (tops at 7.25 > boot swing 6.75), whose
-           chord in that slice stays <=4.82 < band 7.0 — the ring is
+           chord in that slice stays <=4.82 < band 7.7 — the ring is
            NOT split
        pwrsw flick slot, full depth BUT starting t=1.6 (inner web 1.1
            to the cavity-side edge): W1 must remain the ONLY full
            radial severance or the ring falls into two pieces
-  4. magnets = Ø4.2x2.2 pockets cut UP from the underside at the SAME
-     magnet_stations the tub pocketed (shared geometry, zero-gap)
+  4. magnets = Ø4.3x1.7 pockets (Ø4x1.5 magnets, COVER_MAG_DEPTH) cut
+     UP from the underside at the SAME magnet_stations the tub pocketed
+     (shared geometry, zero-gap)
 
 Gates (check_cover, exit 0 only if every one passes): bbox z window,
 single solid (2 pieces == a passage split the ring), ring wall census
->= 1.40, per-port passage void probes at real band t, pwrsw inner web
+>= OUTSET-RIM-0.3, per-port passage void probes at real band t, pwrsw inner web
 solid, trrs blind-tunnel ceiling solid, TAB-PAD PRESS (solid ring over
 all 8 top-poron pad centres — the pad-unloading bug can't return),
 magnet pocket void/floor/web probes, station count, antenna rings +
@@ -163,10 +164,15 @@ def check_cover(tag, solid, info):
     # walls that no longer exist)
     cav = info["ring_inner"]
     cavsegs = list(zip(cav, cav[1:] + cav[:1]))
+    # full-point sampling (audit 2026-10-20 hardening — same as the tub)
     wall_min = min(min(G.segd(sp, a, b) for a, b in cavsegs)
-                   for sp in skin[::2])
-    if wall_min < 1.40:
-        bad.append(f"ring wall thins to {wall_min:.3f} < 1.40")
+                   for sp in skin)
+    # nominal ring wall is OUTSET-RIM_CLEAR = 7.7, but the W2/pwrsw
+    # shoulders carve local compressions (7.20 measured, 5.85 on v3.4);
+    # gate well above the 1.40 FDM-print floor but below the features
+    wall_gate = 5.0
+    if wall_min < wall_gate:
+        bad.append(f"ring wall thins to {wall_min:.3f} < {wall_gate:.1f}")
 
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
     from OCP.gp import gp_Pnt
@@ -274,9 +280,9 @@ def check_cover(tag, solid, info):
           f"wall_min {wall_min:.2f}, stations {len(stn)}{bstat}")
     print(f"  {tag} cover magnets: "
           f"[{', '.join(f'({G.r2(x)},{G.r2(y)})' for x, y in stn)}]")
-    if not (6000 <= vol <= 10000):
+    if not (6000 <= vol <= 13000):
         bad.append(f"cover volume {vol / 1000:.1f} cm3 outside "
-                   f"[6, 10] tripwire")
+                   f"[6, 13] tripwire")
     return bad
 
 

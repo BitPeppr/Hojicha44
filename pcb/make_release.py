@@ -258,6 +258,14 @@ def main():
                  "sources):\n" + "\n".join(mod[:12]))
     if st:
         print(f"  note: {len(st)} untracked file(s) present (not certified)")
+    # Capture the tree stamp BEFORE the cut rewrites the release dir.
+    # The cut deletes the tracked generated/release files, which makes
+    # the tree dirty — a stamp taken after that reads "-dirty" and
+    # mislabels a cut that started from a clean tree (found 2026-10-20
+    # by the six-review audit: MANIFEST.txt carried
+    # "pcb-baseline-r10-63-ge67bb0a-dirty" for a clean cut). The
+    # manifest must certify the state the cut STARTED from.
+    _, tree_stamp = git_info()
     # clean cut: no stale artifacts from previous exports can survive
     # beside the new ones (a half-updated tree shipped exactly that way
     # once — drill+manifest refreshed, gerbers not)
@@ -278,7 +286,7 @@ def main():
         # commit the boards were exported from (NOT repo HEAD — case, docs
         # and firmware commits must not flag the release stale)
         f"git commit: {bhead}",
-        f"git tag: {git_info()[1]}",
+        f"git tag: {tree_stamp}",
         f"router: gen_route.py {router}",
         f"kicad-cli: {cli}",
         "ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)",

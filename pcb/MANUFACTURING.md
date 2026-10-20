@@ -73,13 +73,19 @@ but every design-shaped field below has exactly one right answer.
 ## Non-PCB orders (case, plate, magnets)
 
 - **Case tub + ring cover: MJF PA12 nylon.** Best press-fit realism for
-  the Ø4×2 magnets, gasket compression, and snap lip; JLC MJF build
-  ~72h. Generate with `case/.venv/bin/python case/gen_case.py` +
-  `case/gen_cover.py` (STEP out; volumina L 68.1 / R 68.2 cm³).
-- **Plate at 1.5mm: POM (default) or CNC aluminum (firm feel).** The
+  the Ø4.3×2.2 magnet recesses, gasket compression and the magnet
+  zero-gap stop (the retention is recessed magnets — there is NO snap
+  lip in this design; the ring magnet seats against the tub lip
+  plane); JLC MJF build ~72h. Generate with
+  `case/.venv/bin/python case/gen_case.py` +
+  `case/gen_cover.py` (STEP out; volumes 75.7/75.7 cm³ at OUTSET 8.2,
+  audit round 2026-10-20).
+- **Plate at 1.5mm: PC (default, per spec/case.md — the generator's
+  MATERIAL constant) or POM (the firmer upgrade) or CNC aluminum.** The
   plate's W1 windows keep the MCU/battery/USB region clear, so even
-  metal doesn't blanket the module; POM still wins all-round (quiet,
-  flex-tuned, no antenna-second-guessing). Files: `plate/gen_plate.py`
+  metal doesn't blanket the module; PC wins all-round for rev 1 (quiet,
+  cheapest prototype, laser-cut, no antenna-second-guessing). Files:
+  `plate/gen_plate.py`
   (DXF/SVG kept in `plate/`).
 - Acrylic is the anti-recommendation: brittle at the gasket tabs.
 - **Magnets ordered separately** (N52 Ø4×2, axially magnetized) — see

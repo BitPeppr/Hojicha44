@@ -15,6 +15,29 @@ builders that produced it (fix.md §5.1 items 3-5):
     subtract is 11 wide, so ±5.5) sits below the usb anchor — an enclosed
     hole would leave the outer edge above it — and no pad copper comes
     within 0.5mm of that bite floor inside the window (fix.md §2.1).
+ 4. pad/via containment (audit round 2026-10-20): every pad centre and
+    every via centre inside the outline — footprint-library drift that
+    walks a TRRS THT pin past the board edge must fail the committed
+    gate, not just the builders' own asserts.
+ 5. antenna keepout (audit round 2026-10-20): committed pad copper keeps
+    ANT_R_MM clearance (edge-measured) and via centres meet the r=5.0
+    build rule — a preserved board passing GUI DRC (the keepout is not a
+    stock KiCad constraint) must still fail here.
+ 6. TRRS crossover pin-map (audit round 2026-10-20): identical UART
+    pinctrl on both halves means the right half's copper must carry the
+    crossing (D1->RING1, D0->TIP, electronics.yaml split_link_nets) —
+    asserted on the netlist each half committed.
+ 7. W1 content (audit round 2026-10-20): the exact-28 waiver gate proves
+    WHICH refs mismatch, never WHAT — a pad-level hand edit inside an
+    already-waived ref stays 28 and passes silently. Each waived ref's
+    committed pad blocks (number/size/drill/type/layers) must equal the
+    vendored stock source (verification probe 2026-10-20: 0 diffs on all
+    28, both halves).
+ 8. silk-to-edge (audit round 2026-10-20): no F.SilkS graphics nearer the
+    board edge than the floor below — the MCU socket was already shifted
+    0.5mm south once for exactly this reason (its silk would otherwise
+    cross the USB-notch edge), and a future silk edit could undo the
+    0.49/0.78mm walls silently.
 
 Also runs inside gen_pcb.main, so the committed pipeline enforces it.
 """
@@ -34,6 +57,13 @@ NOTCH_HALF_W = 5.5  # config USB subtract size [11, 10.8]
 NOTCH_INNER = 4.5  # strictly inside the bite, clear of the border walls
 FID_EDGE_MM = 3.0
 PAD_NOTCH_MM = 0.5
+SILK_EDGE_MM = 0.20  # measured floor 2026-10-20: TRRS jack outline silk
+                     # runs 0.24 from the Edge.Cuts (the jack aperture is
+                     # the edge there); label silk floors: 0.49 (TRRS
+                     # label) / 0.78 (MCU) — 0.20 catches real undercutting
+                     # (a moved reference/label, drifted notch silk).
+UART_L = ("/TRRS_T", "/TRRS_R1")   # U_L1 pin1 (TX) / pin2 (RX)
+UART_R = ("/TRRS_R1", "/TRRS_T")   # U_R1 pin1 / pin2 — the CROSSED half
 
 
 def edge_segments(txt):
@@ -107,10 +137,119 @@ def fiducials(path):
             if ref.startswith("FID_")}
 
 
+def seg_dist(px, py, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    if L2 == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L2))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def silk_items(proj):
+    """F.SilkS graphics as polylines, placement-transformed for
+    footprint-local items. Returns [(owner, [(x, y), ...]), ...].
+    Unflipped footprints only: a flipped instance renders its silk on
+    B.SilkS (the fp block's local layer token changes with it), so any
+    F.SilkS fp_* item is an unflipped one and the same at/rot transform
+    the builder uses for pads applies. Global arc/rect matches are
+    layer-confirmed inside a bounded tail window (like edge_segments)."""
+    import audit_silk as A
+    txt = proj["txt"]
+    items = []
+    for m in re.finditer(
+            r'\(gr_line \(start ([-\d.]+) ([-\d.]+)\) '
+            r'\(end ([-\d.]+) ([-\d.]+)\) \(layer "F\.SilkS"\)', txt):
+        items.append(("gr_line", [(float(m.group(1)), float(m.group(2))),
+                                  (float(m.group(3)), float(m.group(4)))]))
+    for m in re.finditer(
+            r'\(gr_arc \(start ([-\d.]+) ([-\d.]+)\) \(mid ([-\d.]+) '
+            r'([-\d.]+)\) \(end ([-\d.]+) ([-\d.]+)\)', txt):
+        if '(layer "F.SilkS"' not in txt[m.start():m.start() + 400]:
+            continue
+        items.append(("gr_arc", [(float(m.group(i + 1)), float(m.group(i + 2)))
+                                 for i in range(0, 6, 2)]))
+    for m in re.finditer(
+            r'\(gr_rect \(start ([-\d.]+) ([-\d.]+)\) '
+            r'\(end ([-\d.]+) ([-\d.]+)\)', txt):
+        if '(layer "F.SilkS"' not in txt[m.start():m.start() + 300]:
+            continue
+        x1, y1, x2, y2 = (float(m.group(i)) for i in range(1, 5))
+        items.append(("gr_rect", [(x1, y1), (x2, y2)]))
+    for ref, x, y, rot, blk in A.footprints(proj["path"]):
+
+        def _rel(sub, t):
+            mm = re.search(r'\(' + t + r' ([-\d.]+) ([-\d.]+)\)', sub)
+            return (float(mm.group(1)), float(mm.group(2))) if mm else None
+
+        for kw, sub in A.split_top(blk):
+            if kw not in ("fp_line", "fp_arc", "fp_rect", "fp_circle"):
+                continue
+            lay = re.search(r'\(layer "([^"]+)"', sub)
+            if not lay or lay.group(1) != "F.SilkS":
+                continue
+            if kw == "fp_circle":
+                c, e = _rel(sub, "center"), _rel(sub, "end")
+                if not c or not e:
+                    continue
+                rr = math.hypot(e[0] - c[0], e[1] - c[1])
+                loc = [(rr * math.cos(2 * math.pi * k / 12),
+                        rr * math.sin(2 * math.pi * k / 12)) for k in range(12)]
+            else:
+                sp, mid = _rel(sub, "start"), _rel(sub, "mid")
+                en = _rel(sub, "end")
+                if not sp or not en:
+                    continue
+                loc = [sp] + ([mid] if mid else []) + [en]
+            items.append((f"{ref}.{kw}",
+                          [(x + gx, y + gy)
+                           for gx, gy in (G.cw_rotate(lx, ly, rot)
+                                          for lx, ly in loc)]))
+    return items
+
+
+def w1_pad_texts(src):
+    """{pad_number: (type, size, drill, layers-normalized)} — the
+    placement-independent pad-hour invariants from a footprint source."""
+    out = {}
+    for m in re.finditer(r'\(pad "([^"]*)"\s+(thru_hole|smd|np_thru_hole|connect)',
+                         src):
+        d = 0
+        k = m.start()
+        while True:
+            c = src[k]
+            if c == "(":
+                d += 1
+            elif c == ")":
+                d -= 1
+                if d == 0:
+                    break
+            k += 1
+        pb = src[m.start():k + 1]
+        sz = re.search(r'\(size ([-\d.]+) ([-\d.]+)\)', pb)
+        dr = re.search(r'\(drill ([^)]*)\)', pb)
+        ly = re.search(r'\(layers ([^)]*)\)', pb)
+        inv = (
+            m.group(2),
+            (round(float(sz.group(1)), 4), round(float(sz.group(2)), 4))
+            if sz else None,
+            tuple(sorted(round(float(v), 4) for v in (dr.group(1).split()
+                          if dr else [])
+                         if re.fullmatch(r"[-\d.]+", v))),
+            tuple(sorted(("*" + l[1:] if l[:2] in ("F.", "B.") else l)
+                         for l in (ly.group(1).split() if ly else []))),
+        )
+        out[m.group(1)] = inv
+    return out
+
+
 def check(tag, pts):
     """0 if clean, 1 otherwise. Prints findings."""
     path = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
     txt = open(path).read()
+    proj = {"txt": txt, "path": path}
     bad = []
 
     # 1. outline topology on the artifact
@@ -135,7 +274,7 @@ def check(tag, pts):
     fids = fiducials(path)
     for ref, (x, y) in sorted(fids.items()):
         inside = G.inside_outline([loop], x, y) if loop else False
-        edge = min([G.seg_dist(x, y, a, b) for a, b in segs] or [1e18])
+        edge = min([seg_dist(x, y, a, b) for a, b in segs] or [1e18])
         print(f"  fiducial {ref}: ({x:.2f},{y:.2f}) "
               f"{'inside' if inside else 'OUTSIDE'}, edge {edge:.2f}")
         if not inside:
@@ -161,22 +300,25 @@ def check(tag, pts):
         if not (floor < uy and floor > uy - 10):
             bad.append(f"bite floor {floor:.2f} not an open bite below "
                        f"usb {uy:.2f}")
+    import gen_route as R
+    nets, pin_net = G.load_nets(tag)
+    placements = G.build_placements(tag, pts, pin_net)
+    board = R.Board(tag, pts, placements, nets, pin_net)
     if floor is not None:
-        import gen_route as R
-        nets, pin_net = G.load_nets(tag)
-        placements = G.build_placements(tag, pts, pin_net)
-        board = R.Board(tag, pts, placements, nets, pin_net)
         worst = None
         for (x, y, hw, hh, ang, drill, n, ref, layers, num) in board.pads:
             if n is None:
+                continue
+            xs = []
+            for lx, ly in ((hw, hh), (hw, -hh), (-hw, hh), (-hw, -hh)):
+                gx, gy = G.cw_rotate(lx, ly, ang)
+                xs.append(x + gx)
+            if max(xs) < ux - NOTCH_HALF_W or min(xs) > ux + NOTCH_HALF_W:
                 continue
             corners = []
             for lx, ly in ((hw, hh), (hw, -hh), (-hw, hh), (-hw, -hh)):
                 gx, gy = G.cw_rotate(lx, ly, ang)
                 corners.append((x + gx, y + gy))
-            xs = [c[0] for c in corners]
-            if max(xs) < ux - NOTCH_HALF_W or min(xs) > ux + NOTCH_HALF_W:
-                continue
             top = max(c[1] for c in corners)
             gap = floor - top
             if worst is None or gap < worst[0]:
@@ -187,6 +329,107 @@ def check(tag, pts):
         if worst is not None:
             print(f"  notch copper {tag}: nearest pad {worst[1]}.{worst[2]} "
                   f"gap {worst[0]:.2f}")
+
+    # 4. pad + via containment (audit round 2026-10-20)
+    if loop:
+        nv = 0
+        for (x, y, hw, hh, ang, drill, n, ref, layers, num) in board.pads:
+            if not G.inside_outline([loop], x, y):
+                bad.append(f"pad centre {ref}.{num or '?'} "
+                           f"({x:.2f},{y:.2f}) outside the outline")
+        for m in re.finditer(r'\(via \(at ([-\d.]+) ([-\d.]+)', txt):
+            vx, vy = float(m.group(1)), float(m.group(2))
+            nv += 1
+            if not G.inside_outline([loop], vx, vy):
+                bad.append(f"via ({vx:.2f},{vy:.2f}) outside the outline")
+        print(f"  containment {tag}: {len(board.pads)} pads, {nv} vias")
+
+    # 5. antenna keepout at commit level (audit round 2026-10-20): pad
+    #    copper edge-mesured >= ANT_R_MM from the antenna centre, via
+    #    centres >= ANT_R_MM (the builder's own semantics).
+    ax, ay, _ = pts["antenna" if tag == "L" else "mirror_antenna"]
+    for (x, y, hw, hh, ang, drill, n, ref, layers, num) in board.pads:
+        corners = []
+        for lx, ly in ((hw, hh), (hw, -hh), (-hw, hh), (-hw, -hh)):
+            gx, gy = G.cw_rotate(lx, ly, ang)
+            corners.append((x + gx, y + gy))
+        rsegs = list(zip(corners, corners[1:] + corners[:1]))
+        # distance centre->rect (0 if the centre is inside)
+        if G.inside_outline([corners], ax, ay):
+            d = 0.0
+        else:
+            d = min(seg_dist(ax, ay, a, b) for a, b in rsegs)
+        if d < G.ANT_R_MM:
+            bad.append(f"{ref}.{num} pad copper {d:.2f}mm from the "
+                       f"antenna centre, want >= {G.ANT_R_MM}")
+    for m in re.finditer(r'\(via \(at ([-\d.]+) ([-\d.]+)', txt):
+        vx, vy = float(m.group(1)), float(m.group(2))
+        d = math.hypot(vx - ax, vy - ay)
+        if d < G.ANT_R_MM:
+            bad.append(f"via ({vx:.2f},{vy:.2f}) {d:.2f}mm from the "
+                       f"antenna centre, want >= {G.ANT_R_MM}")
+    print(f"  antenna {tag}: keepout centre ({ax:.2f},{ay:.2f}) "
+          f"pads/vias must clear r={G.ANT_R_MM}")
+
+    # 6. TRRS crossover pin-map (audit round 2026-10-20)
+    jref = f"J_{tag}1"
+    uref = f"U_{tag}1"
+    jmap = {}
+    for (r, p), (c, n) in pin_net.items():
+        if r == jref:
+            jmap[p] = n
+    if jmap.get("T") != "/TRRS_T" or jmap.get("R1") != "/TRRS_R1" \
+            or jmap.get("S") != "GND":
+        bad.append(f"{jref} jack pads not on the split-link nets: {jmap}")
+    u1 = pin_net.get((uref, "1"), (None, None))[1]
+    u2 = pin_net.get((uref, "2"), (None, None))[1]
+    want = UART_L if tag == "L" else UART_R
+    if (u1, u2) != want:
+        bad.append(f"{uref} pins 1/2 = {(u1, u2)} want {want} "
+                   "(split-link crossover)")
+    print(f"  uart {tag}: U pin1 {u1}, pin2 {u2}; jack T/R1 "
+          f"{jmap.get('T')}/{jmap.get('R1')}")
+
+    # 7. W1 content: waived refs' committed pads must equal vendored stock
+    #    (audit round 2026-10-20 — probes found 0 drift on all 28+28)
+    import audit_silk as A
+    committed = {r: blk for r, x, y, rot, blk in A.footprints(path)}
+    libof = {r: (lib, name)
+             for kind, lib, name, r, *rest in placements}
+    ndiffs = 0
+    for fpname, ref in sorted(G.w1_want(tag)):
+        if ref not in committed or ref not in libof:
+            bad.append(f"W1 content: {ref} missing from board/placements")
+            continue
+        lp = w1_pad_texts(G.fp_source(*libof[ref]))
+        bp = w1_pad_texts(committed[ref])
+        if lp != bp:
+            ndiffs += 1
+            onlyl = [k for k in lp if k not in bp][:3]
+            onlyb = [k for k in bp if k not in lp][:3]
+            mag = [k for k in lp if k in bp and lp[k] != bp[k]][:4]
+            bad.append(f"W1 content {ref} ({fpname}): pads differ — "
+                       f"extra-in-lib {onlyl}, extra-on-board {onlyb}, "
+                       f"val-diff {mag}")
+    print(f"  w1 content {tag}: {len(G.w1_want(tag))} waived refs, "
+          f"{ndiffs} pad-diff refs")
+
+    # 8. silk-to-edge clearance (audit round 2026-10-20): a future silk
+    #    edit must not silently undercut the measured 0.49/0.78 walls.
+    items = silk_items(proj)
+    worst, where = 9e9, None
+    for owner, ptsi in items:
+        for p in ptsi:
+            for a, b in segs:
+                d = seg_dist(p[0], p[1], a, b)
+                if d < worst:
+                    worst, where = d, (owner, p)
+    if worst is not None and worst < SILK_EDGE_MM:
+        bad.append(f"F.SilkS {where[0]} at ({where[1][0]:.2f},"
+                   f"{where[1][1]:.2f}) only {worst:.2f}mm from edge, "
+                   f"want >= {SILK_EDGE_MM}")
+    print(f"  silk-edge {tag}: {len(items)} items, min edge distance "
+          f"{worst:.2f} ({where[0] if where else '-'})")
 
     for b in bad:
         print(f"  !! {b}")
