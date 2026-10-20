@@ -47,6 +47,15 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 OUT_DIR = os.path.join(REPO, "plate")
+
+# the case's port anchors (case/params.py) — stdlib-only module, loaded
+# by path so the plate generator keeps its no-casualty-dependency rule
+# (the plate must build without the CadQuery venv).
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location(
+    "case_params", os.path.join(REPO, "case", "params.py"))
+case_params = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(case_params)
 # Stock-footprint search: vendored copies ship in-repo (CI-portable, see
 # plate/vendor_footprints/README.md); fall back to the local KiCad install.
 VENDOR_FP = os.path.join(REPO, "plate", "vendor_footprints")
@@ -761,6 +770,19 @@ def build_half(tag):
     else:
         port_rects = [rect_poly(291.5 - x2, y1, 291.5 - x1, y2)
                       for (x1, y1, x2, y2) in L_rects]
+    # Cross-module drift guard: the keep-rects above must contain the
+    # case's port anchors (case/params.py PORTS is the single source of
+    # truth for both files). If a port moves in the case, the plate
+    # gate fails here until the keep-rects follow \u2014 the two files
+    # cannot drift apart silently.
+    for (name, (ax, ay)), rect in zip(case_params.PORTS[tag].items(),
+                                      port_rects):
+        xs = [p[0] for p in rect]
+        ys = [p[1] for p in rect]
+        if not (min(xs) <= ax <= max(xs) and min(ys) <= ay <= max(ys)):
+            fail(f'case port anchor {name} ({ax:.2f},{ay:.2f}) '
+                 f'outside the plate keep-rect {min(xs):.1f}..{max(xs):.1f} '
+                 f'x {min(ys):.1f}..{max(ys):.1f}')
     openings += port_rects
 
     def fillet_arc(corner, u_away, o_out, r, n=6):

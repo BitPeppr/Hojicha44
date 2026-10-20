@@ -245,6 +245,27 @@ def w1_pad_texts(src):
     return out
 
 
+def seg_seg_dist(a1, a2, b1, b2):
+    """Exact minimum distance between two 2D segments (0.0 if they cross
+    or touch). Vertex sampling is NOT enough here: a silk line running
+    parallel to the board edge is closest along its INTERIOR, and a
+    silk line that crosses the edge has true distance 0 while its
+    endpoints sit far away — both cases would read as clear under a
+    vertex-only scan."""
+    d1x, d1y = a2[0] - a1[0], a2[1] - a1[1]
+    d2x, d2y = b2[0] - b1[0], b2[1] - b1[1]
+    den = d1x * d2y - d1y * d2x
+    if abs(den) > 1e-12:
+        t = ((b1[0] - a1[0]) * d2y - (b1[1] - a1[1]) * d2x) / den
+        u = ((b1[0] - a1[0]) * d1y - (b1[1] - a1[1]) * d1x) / den
+        if -1e-9 <= t <= 1 + 1e-9 and -1e-9 <= u <= 1 + 1e-9:
+            return 0.0
+    return min(seg_dist(a1[0], a1[1], b1, b2),
+               seg_dist(a2[0], a2[1], b1, b2),
+               seg_dist(b1[0], b1[1], a1, a2),
+               seg_dist(b2[0], b2[1], a1, a2))
+
+
 def check(tag, pts):
     """0 if clean, 1 otherwise. Prints findings."""
     path = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
@@ -416,14 +437,17 @@ def check(tag, pts):
 
     # 8. silk-to-edge clearance (audit round 2026-10-20): a future silk
     #    edit must not silently undercut the measured 0.49/0.78 walls.
+    #    Segment-to-segment (exact, crossing = 0) — not vertex sampling.
     items = silk_items(proj)
     worst, where = 9e9, None
     for owner, ptsi in items:
-        for p in ptsi:
+        ssegs = list(zip(ptsi, ptsi[1:])) or \
+            (list(zip(ptsi, ptsi[1:] + ptsi[:1])) if len(ptsi) > 2 else [])
+        for s1, s2 in ssegs:
             for a, b in segs:
-                d = seg_dist(p[0], p[1], a, b)
+                d = seg_seg_dist(s1, s2, a, b)
                 if d < worst:
-                    worst, where = d, (owner, p)
+                    worst, where = d, (owner, s1)
     if worst is not None and worst < SILK_EDGE_MM:
         bad.append(f"F.SilkS {where[0]} at ({where[1][0]:.2f},"
                    f"{where[1][1]:.2f}) only {worst:.2f}mm from edge, "

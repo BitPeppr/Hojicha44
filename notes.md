@@ -1522,6 +1522,60 @@ verify-at-first-article, reject-with-evidence.
   real values (0.175 measured, ≥0.15 floor ✓) instead of treating it
   as a board defect.
 
+### Self-review findings (same round, caught before sign-off)
+
+Re-reading my own diff with fresh eyes turned up three real defects and
+one unverified assumption — all fixed, all with evidence:
+
+1. **The new silk-to-edge gate sampled only polyline VERTICES** — a silk
+   line running parallel to the board edge is closest along its
+   INTERIOR, and a silk line that CROSSES the edge has true distance 0
+   while its endpoints sit far away. Both would have read as clear.
+   Replaced with exact segment-to-segment distance (crossing = 0);
+   negative control: an injected silk line crossing the edge reports
+   0.00mm and fails the gate, where the old scan reported 2.00mm and
+   passed it.
+2. **The station cache was keyed on a rounded ring-perimeter
+   fingerprint** — an unrelated plate-outline tweak could make the
+   Right lookup miss and then blame the CALL ORDER instead of the real
+   cause. Replaced with a single slot (one geometry pair per process)
+   plus an explicit mirror-consistency check (perimeters within 1.0mm)
+   that names the actual problem.
+3. **The plate/case port anchors had two homes** (case/gen_case.py's
+   PORTS dict vs the plate's hand-written keep-rects) — exactly the
+   drift the reviewers flagged, still possible. PORTS moved to
+   case/params.py (stdlib-only) as the single source of truth, and the
+   plate gate now ASSERTS every case port anchor sits inside its
+   keep-rect (negative control: moving the Left trrs anchor to
+   (200,-22) fails the build with the anchor/rect pair named).
+4. **gen_pcb is NOT byte-reproducible** — KiCad mints a random uuid per
+   element, so a rebuild churns ~7800 lines of the board file while the
+   GEOMETRY is identical (verified: uuid/date-stripped files are
+   byte-equal). Two consequences: the committed boards are the
+   certified artifact by definition (the manifest hashes the EXPORTS,
+   not the board), and any local rebuild must be reverted rather than
+   committed. Worth knowing before a future "let me just regenerate"
+   reflex; the board-affecting pathspec treats a generator edit as a
+   board change anyway.
+5. **CI never runs gen_pcb** (no KiCad in the static checks) — so the
+   two new build-time asserts are exercised only locally. Ran the
+   builder explicitly: it completes, the DRC/ERC reports are unchanged,
+   and the boards come out geometry-identical (the asserts are
+   behaviour-neutral). The CI case job runs `gen_case.py` with no
+   arguments, so the Left-before-Right contract of the mirrored
+   station build holds there (verified in the workflow, not assumed).
+
+### Rejected / deferred — continued
+
+- **TRRS mouth widening (beam P2, ±0.34/side chord margin)** —
+  NOT widened, and deliberately: the margin the reviewer measured was
+  the ring's remaining width beside the TRRS bore, and widening the
+  mouth would CONSUME it, not restore it. The band growth (OUTSET
+  7.1 → 8.2, ring wall 7.7) is what restores the margin; the bore
+  stays Ø9.5 (0.50/side over the Ø8.5 boot swing) and the cover's
+  blind-tunnel chord (6.42 at the lip plane) is re-proved by the gates
+  on every build.
+
 ### Process receipts
 
 - Pre-commit battery: `npm test` (7/7 checks incl. the W1 negative

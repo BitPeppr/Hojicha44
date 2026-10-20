@@ -187,32 +187,9 @@ def rect_in_frame(origin, u, v, a0, a1, b0, b1):
             for a, b in ((a0, b0), (a1, b0), (a1, b1), (a0, b1))]
 
 
-# Port anchors (slot frame anchors, KiCad frame):
-# usb   = points.yaml helper usb / mirror_usb (mcu + [0,17.95])
-# trrs  = jack MOUTH centres derived from the layout trrs anchor
-#         (130.5/-22) via the PCB placement chain: anchor ± 8.05
-#         (gen_pcb.py TRRS rot-90 dX) + footprint mouth y 12.1
-#         -> 134.55 (L) / 156.95 (R), rounded.
-# pwrsw = the ACTUATOR MOUTH centre on the north rim plateau, NOT the
-#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 106.3/185.2, 51 after
-#         M3 — origins centred on this fixed window, band = origin +/-1.8
-#         vs the 5.0-wide mouth = 0.70/side; M2's "2mm WEST" shift had run
-#         the WRONG way and left the band wholly behind the west/east
-#         wall). The mouth itself cannot move: SAT-constrained,
-#         pocket >=3.2 / USB ~1.8 margins. The plateau is the raw
-#         Edge.Cuts line y=58.0 across x 97.5..110.5 (mirror 181..194,
-#         frozen in the ergogen outline), so the frame is axis-aligned
-#         EXACT (no resample-phase wobble): a wobbly +/-.5 anchor x
-#         swings the slot into tab-4's pocket (east edge x=100.59; SAT
-#         floor 3 wants west edge >= 103.6) or onto the notch shoulder
-#         (110.5). The mouth centre 106.3 clears both; blade/throw stays
-#         exposed (body spans x 101.3..111.3 / 180.2..190.2).
-# Slots are explicit rects whose outer extent is measured to actually
-# breach the skin.
-PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),
-                  "pwrsw": (106.3, 58.0)},
-         "Right": {"usb": (173.5, 49.95), "trrs": (157.0, -22.0),
-                   "pwrsw": (185.2, 58.0)}}
+# Port anchors live in params.py (shared with the plate generator's
+# cross-check) — the derivation comment moved with them.
+PORTS = params.PORTS
 
 
 def outward_field(outline):
@@ -400,7 +377,13 @@ def rect_d(pt, rect):
                for a, b in zip(rect, rect[1:] + rect[:1]))
 
 
-_MIRROR_CACHE = {}
+# The Left half's station set, held for the Right half's mirror step.
+# One slot per process: gen_case builds the tub (Left then Right),
+# gen_cover builds the cover (Left then Right) — separate processes,
+# each visiting Left first. A dictionary keyed on a geometry
+# fingerprint was tried first and rejected: its key (rounded ring
+# perimeters) could miss after an unrelated outline tweak and then
+_LAST_LEFT = None
 
 
 def _station_fit(P, pt, skin, cav, obstructions, ant):
@@ -424,19 +407,6 @@ def _station_fit(P, pt, skin, cav, obstructions, ant):
             P.ANT_R_MM + P.ANT_CASE_CLEAR + P.MAG_DIA / 2:
         return None
     return ds + dc
-
-
-def _mirror_fp(P, skin, cav, pocket_rects):
-    """Geometry fingerprint keying the Left-station cache (per process).
-    Mirror-INVARIANT by design: the Left and Right rings have the same
-    perimeter (mirror preserves arclength), so one key serves both
-    lookups."""
-    return (round(_ring_len(skin)), round(_ring_len(cav)))
-    # (raw vertex counts differ L/R — the cavity ring is NOT resampled,
-    # so only the mirror-invariant perimeters key the cache; tub and
-    # cover share both shapes and live in separate processes, and every
-    # cached station is re-validated against the right-half inputs on
-    # lookup, so a wrong-source hit cannot pass silently)
 
 
 def _ring_len(pts):
@@ -520,17 +490,27 @@ def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
             if best is not None:
                 taken.append((best[1], best[2], best[3]))
         res = [((p, d)) for _, p, d in taken]
-        _MIRROR_CACHE[_mirror_fp(P, skin, cav, pocket_rects)] = res
+        global _LAST_LEFT
+        _LAST_LEFT = (_ring_len(skin), _ring_len(cav), res)
         return ([p for p, _ in res], [d for _, d in res])
 
     # Right: exact mirror of the LEFT result, re-validated against the
-    # right geometry (the nine-panel build order asserts Left-first).
-    fp = _mirror_fp(P, skin, cav, pocket_rects)
-    left = _MIRROR_CACHE.get(fp)
-    assert left is not None, (
-        f"{tag}: right half ran without a cached Left-station set "
-        f"(build_half/build_cover must visit Left first in the same "
-        f"process — the right half is its mirror).")
+    # right geometry (the build order visits Left first).
+    if _LAST_LEFT is None:
+        raise AssertionError(
+            f"{tag}: right half ran without a Left-station set — "
+            f"build_half/build_cover must visit Left first in the same "
+            f"process (the right half is the Left set's exact mirror).")
+    skin_p, cav_p, left = _LAST_LEFT
+    skin_q, cav_q = _ring_len(skin), _ring_len(cav)
+    if abs(skin_p - skin_q) > 1.0 or abs(cav_p - cav_q) > 1.0:
+        raise AssertionError(
+            f"{tag}: the two halves' rings are not mirror-consistent "
+            f"(skin perimeter {skin_p:.1f} vs {skin_q:.1f}, cavity "
+            f"{cav_p:.1f} vs {cav_q:.1f}, tolerance 1.0mm) — the mirrored-"
+            f"station build needs both halves to be the same shape; check "
+            f"the plate outline and the rim dilation before touching the "
+            f"station code")
     mir_x = 2 * P.MIRROR_AX
     obstructions = list(pocket_rects) + [
         ports[k]["rect"] for k in ("usb", "trrs", "pwrsw")]

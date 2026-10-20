@@ -179,6 +179,36 @@ MAG_MIN_STATIONS = 8   # retention gate on station count (audit: the doc
                        # pull math; the old per-half generation yielded
                        # 6/7 and Left sat ON the 1.5 kg pull gate)
 
+# ---- port anchors (slot frame anchors, KiCad frame) ----
+# SOURCE OF TRUTH for both the case bores and the plate's port
+# keep-rects (plate/gen_plate.py asserts every anchor sits inside
+# its keep-rect — the two files cannot drift apart silently).
+# usb   = points.yaml helper usb / mirror_usb (mcu + [0,17.95])
+# trrs  = jack MOUTH centres derived from the layout trrs anchor
+#         (130.5/-22) via the PCB placement chain: anchor ± 8.05
+#         (gen_pcb.py TRRS rot-90 dX) + footprint mouth y 12.1
+#         -> 134.55 (L) / 156.95 (R), rounded.
+# pwrsw = the ACTUATOR MOUTH centre on the north rim plateau, NOT the
+#         switch footprint (SW_LPWR1/SW_RPWR1 sit at 106.3/185.2, 51 after
+#         M3 — origins centred on this fixed window, band = origin +/-1.8
+#         vs the 5.0-wide mouth = 0.70/side; M2's "2mm WEST" shift had run
+#         the WRONG way and left the band wholly behind the west/east
+#         wall). The mouth itself cannot move: SAT-constrained,
+#         pocket >=3.2 / USB ~1.8 margins. The plateau is the raw
+#         Edge.Cuts line y=58.0 across x 97.5..110.5 (mirror 181..194,
+#         frozen in the ergogen outline), so the frame is axis-aligned
+#         EXACT (no resample-phase wobble): a wobbly +/-.5 anchor x
+#         swings the slot into tab-4's pocket (east edge x=100.59; SAT
+#         floor 3 wants west edge >= 103.6) or onto the notch shoulder
+#         (110.5). The mouth centre 106.3 clears both; blade/throw stays
+#         exposed (body spans x 101.3..111.3 / 180.2..190.2).
+# Slots are explicit rects whose outer extent is measured to actually
+# breach the skin.
+PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),
+                  "pwrsw": (106.3, 58.0)},
+         "Right": {"usb": (173.5, 49.95), "trrs": (157.0, -22.0),
+                   "pwrsw": (185.2, 58.0)}}
+
 # ---- ring cover (v3.5: flush bezel ring on the lip) ----
 # Underside = TOP_LIP_Z (presses the top poron), top = +COVER_T (stays
 # below the keycap field ~9.5-10.5). Openings: W1 = USB plug
