@@ -10,6 +10,23 @@ status: provisional
 
 architecture:
   controller: nice!nano x2          # status: fixed — one per half, ZMK/BLE
+  module_retention: PCB-retained, not module-retained
+      # status: fixed (2026-10-21, module-hold-down research)
+      # The module is NOT independently retained: standard practice for
+      # XIAO/nice!nano boards is to socket the module and retain the
+      # PCB to the case (the PCB hangs on the switch housings and the
+      # plate, the module just sits in its 2x12 socket).  Nothing in
+      # this design clamps the module either, and that is deliberate:
+      # the XIAO is 21 x 17.8mm (NOT 18x18 — that is Pro Micro), the
+      # socket pins already hold it, and a press fit in a nylon (MJF
+      # PA12) pocket would preload the socket.  If a locating pocket is
+      # added later it must be a LOOSE fit (0.2-0.3mm clearance), never
+      # a press fit.  The USB-C plug's lateral load is reacted by the
+      # case's own 14.0mm USB mouth (the plug housing is 12.35mm), not
+      # by the module — so the plug must never be the structural
+      # element.  A printed USB strain-relief hood is the rev-2 case
+      # feature if the first article shows the plug walking the
+      # module in its socket.
   split_link: TRRS-optional         # status: fixed — BLE primary, TRRS is a
     # bring-up/debug fallback only. See split_connector.plug_type and
     # .hotplug; splitkb advises against cabling two battery halves.
