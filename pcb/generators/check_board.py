@@ -144,6 +144,18 @@ def mirror_residual(left, right, axis=G.MIRROR_AXIS):
     return max(d_lr, d_rl)
 
 
+def mirror_layer_residual(left_loops, right_loops, axis=G.MIRROR_AXIS):
+    """Symmetric Hausdorff bound across a whole plate layer (many loops)."""
+    lm = [[(2 * axis - x, y) for x, y in loop] for loop in left_loops]
+    ls = [s for loop in lm for s in closed_segs(loop)]
+    rs = [s for loop in right_loops for s in closed_segs(loop)]
+    d_lr = max(min(seg_dist(x, y, a, b) for a, b in rs)
+               for loop in lm for x, y in loop)
+    d_rl = max(min(seg_dist(x, y, a, b) for a, b in ls)
+               for loop in right_loops for x, y in loop)
+    return max(d_lr, d_rl)
+
+
 def mirror_artifacts():
     """Design-frame board and plate loops for the left/right gate."""
     out = {}
@@ -157,26 +169,37 @@ def mirror_artifacts():
         out[f"board-{tag}"] = pts
         polys = dxf_polylines(
             os.path.join(PLATE_DIR, f"Hojicha44-{half}-plate.dxf"))
-        poly = next((p for layer, p in polys if layer == "OUTLINE"), None)
-        if poly is None:
-            raise RuntimeError(f"no plate OUTLINE for {half}")
-        if (math.hypot(poly[0][0] - poly[-1][0],
-                       poly[0][1] - poly[-1][1]) < 1e-6):
-            poly = poly[:-1]
-        out[f"plate-{tag}"] = poly
+        by_layer = {}
+        for layer, poly in polys:
+            if (math.hypot(poly[0][0] - poly[-1][0],
+                           poly[0][1] - poly[-1][1]) < 1e-6):
+                poly = poly[:-1]
+            by_layer.setdefault(layer, []).append(poly)
+        for layer in ("OUTLINE", "CUTOUT", "PORON"):
+            loops = by_layer.get(layer, [])
+            if not loops:
+                raise RuntimeError(f"no plate {layer} for {half}")
+            out[f"plate-{layer.lower()}-{tag}"] = loops
     return out
 
 
 def check_mirror():
-    """H-7: board and plate must be exact left/right mirrors (0.05mm)."""
+    """H-7: board and every plate layer must mirror to 0.05mm."""
     bad = []
     art = mirror_artifacts()
-    for kind in ("board", "plate"):
-        d = mirror_residual(art[f"{kind}-L"], art[f"{kind}-R"])
-        print(f"  mirror {kind}: max {d:.4f}mm (floor {MIRROR_TOL:.2f})")
+    d = mirror_residual(art["board-L"], art["board-R"])
+    print(f"  mirror board: max {d:.4f}mm (floor {MIRROR_TOL:.2f})")
+    if d > MIRROR_TOL:
+        bad.append(f"board left/right mirror residual {d:.4f}mm > "
+                   f"{MIRROR_TOL:.2f}mm")
+    for layer in ("outline", "cutout", "poron"):
+        d = mirror_layer_residual(art[f"plate-{layer}-L"],
+                                  art[f"plate-{layer}-R"])
+        print(f"  mirror plate {layer}: max {d:.4f}mm "
+              f"(floor {MIRROR_TOL:.2f})")
         if d > MIRROR_TOL:
-            bad.append(f"{kind} left/right mirror residual {d:.4f}mm > "
-                       f"{MIRROR_TOL:.2f}mm")
+            bad.append(f"plate {layer} left/right mirror residual "
+                       f"{d:.4f}mm > {MIRROR_TOL:.2f}mm")
     return bad
 
 
@@ -185,19 +208,24 @@ def mirror_selftest():
     the actual board/plate pass."""
     bad = []
     art = mirror_artifacts()
-    for kind in ("board", "plate"):
-        left, right = art[f"{kind}-L"], art[f"{kind}-R"]
-        d = mirror_residual(left, right)
+    for key in ("board", "plate-outline", "plate-cutout", "plate-poron"):
+        left, right = art[f"{key}-L"], art[f"{key}-R"]
+        if key == "board":
+            left, right = [left], [right]
+            measure = mirror_layer_residual
+        else:
+            measure = mirror_layer_residual
+        d = measure(left, right)
         if d > MIRROR_TOL:
-            bad.append(f"self-test {kind}: actual residual {d:.4f}mm")
-        shifted = [(x + 0.5, y) for x, y in right]
-        ctl = mirror_residual(left, shifted)
+            bad.append(f"self-test {key}: actual residual {d:.4f}mm")
+        shifted = [[(x + 0.5, y) for x, y in loop] for loop in right]
+        ctl = measure(left, shifted)
         if ctl <= MIRROR_TOL:
-            bad.append(f"self-test {kind}: 0.5mm half-shift did NOT fail "
+            bad.append(f"self-test {key}: 0.5mm half-shift did NOT fail "
                        f"(residual {ctl:.4f}mm)")
-        near = [(x + 0.02, y) for x, y in right]
-        if mirror_residual(left, near) > MIRROR_TOL:
-            bad.append(f"self-test {kind}: 0.02mm shift exceeded the "
+        near = [[(x + 0.02, y) for x, y in loop] for loop in right]
+        if measure(left, near) > MIRROR_TOL:
+            bad.append(f"self-test {key}: 0.02mm shift exceeded the "
                        f"0.05mm floor")
     return bad
 
