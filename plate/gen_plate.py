@@ -101,6 +101,13 @@ PORON_EDGE_MIN = 0.6       # ABSOLUTE floor on the pad-corner -> plate-edge
                           # while silently restoring the 0.35mm
                           # kerf-fragile margin.
 PORON_SPEC = 'PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)'
+# Left tab roots, held for the Right half's exact-mirror splice. The
+# greedy tab walk samples the 1mm rim grid; run independently on the
+# mirrored right rim it can land on a neighbouring sample (0.07mm off)
+# and make the plate/case rim asymmetric. Build Left first, then derive
+# the Right roots from these coordinates and re-project them onto the
+# right rim.
+_LAST_LEFT_TABS = None
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
                          # root (measured worst 48.14mm at 2.5 pitches).
                          # Consistency comes from mount UNIFORMITY here, not
@@ -490,6 +497,7 @@ def usb_anchor(tag):
 
 
 def build_half(tag):
+    global _LAST_LEFT_TABS
     pcb = os.path.join(PCB_DIR, f'Hojicha44-{tag}.kicad_pcb')
     inst = parse_instances(pcb)
     seq = chain_loop(parse_outline(pcb))
@@ -750,6 +758,22 @@ def build_half(tag):
     def tang_at(s):
         return at(s)[1]
 
+    def param_of(pt):
+        """Nearest closed-loop parameter + distance for a world point."""
+        best = (1e9, 0.0)
+        for k in range(len(loop)):
+            a, b = loop[k], loop[(k + 1) % len(loop)]
+            vx, vy = b[0] - a[0], b[1] - a[1]
+            L2 = vx * vx + vy * vy or 1e-12
+            t = max(0.0, min(1.0,
+                       ((pt[0] - a[0]) * vx +
+                        (pt[1] - a[1]) * vy) / L2))
+            d = math.hypot(pt[0] - (a[0] + vx * t),
+                           pt[1] - (a[1] + vy * t))
+            if d < best[0]:
+                best = (d, cum[k] + math.sqrt(L2) * t)
+        return best
+
     def straight(s, half_span, tol_deg=6.0):
         # tabs are not precision datums; 6deg over the root span still
         # fillets cleanly (fillets are computed from local tangents) and
@@ -864,36 +888,68 @@ def build_half(tag):
     NS = 720
     elig = [s for k in range(NS) if eligible(P * k / NS)
             for s in [P * k / NS]]
-    # pinned corners: user-directed support where even spacing will not
-    # go on its own (top edge above the outer key column, bottom-inner
-    # corner under the MCU). Snapped to the nearest eligible sample;
-    # loud failure if the corner cannot host a tab at all.
-    PINNED = {'Left': [(95.0, 56.0), (120.0, -52.5)],
-              'Right': [(196.5, 56.0), (161.0, -52.5)]}[tag]
+    # Tab roots: Left is the design authority. Right mirrors the LEFT
+    # roots and re-projects them onto the right rim; the greedy walk is
+    # NOT run independently on the right (its 1mm sample phase can land
+    # one grid point over, e.g. x 170.64 -> 170.57, which is enough to
+    # make the plate/case rim fail the 0.05mm mirror gate). The right
+    # projection must find the mirrored rim point within 0.05mm — that
+    # is the plate-side mirror gate.
     centers = []
-    for wx, wy in PINNED:
-        s0 = min((P * k / NS for k in range(NS)),
-                 key=lambda s: math.hypot(at(s)[0][0] - wx,
-                                          at(s)[0][1] - wy))
-        snap = None
-        for off in [d / 2 for k in range(25) for d in (k, -k)]:
-            if eligible((s0 + off) % P):
-                snap = (s0 + off) % P
-                break
-        if snap is None:
-            fail(f'pinned corner ({wx},{wy}) has no eligible tab '
-                 f'spot within 12mm')
+    if tag == 'Right':
+        if _LAST_LEFT_TABS is None:
+            fail('Right tab layout needs the Left build first (same '
+                 'process, Left before Right)')
         else:
-            centers.append(snap)
-    if centers:
-        while len(centers) < TAB_N and len(centers) < len(elig):
-            cand, candd = elig[0], -1.0
-            for s in elig:
-                d = min(min(abs(s - c), P - abs(s - c)) for c in centers)
-                if d > candd:
-                    candd, cand = d, s
-            centers.append(cand)
-    centers.sort()
+            for lx, ly in _LAST_LEFT_TABS:
+                target = (2 * case_params.MIRROR_AX - lx, ly)
+                d, s = param_of(target)
+                if d > 0.05:
+                    fail(f'mirrored left tab ({lx:.3f},{ly:.3f}) -> '
+                         f'({target[0]:.3f},{target[1]:.3f}) is '
+                         f'{d:.3f}mm off the right rim (floor 0.05)')
+                    continue
+                if not eligible(s):
+                    fail(f'mirrored left tab ({lx:.3f},{ly:.3f}) -> '
+                         f'({target[0]:.3f},{target[1]:.3f}) is not '
+                         f'eligible on the right rim')
+                    continue
+                centers.append(s)
+            centers.sort()
+            if len(centers) != TAB_N:
+                fail(f'only {len(centers)} mirrored tab spots, want '
+                     f'{TAB_N}')
+    else:
+        # pinned corners: user-directed support where even spacing will
+        # not go on its own (top edge above the outer key column,
+        # bottom-inner corner under the MCU). Snapped to the nearest
+        # eligible sample; loud failure if it cannot host a tab at all.
+        PINNED = [(95.0, 56.0), (120.0, -52.5)]
+        for wx, wy in PINNED:
+            s0 = min((P * k / NS for k in range(NS)),
+                     key=lambda s: math.hypot(at(s)[0][0] - wx,
+                                              at(s)[0][1] - wy))
+            snap = None
+            for off in [d / 2 for k in range(25) for d in (k, -k)]:
+                if eligible((s0 + off) % P):
+                    snap = (s0 + off) % P
+                    break
+            if snap is None:
+                fail(f'pinned corner ({wx},{wy}) has no eligible tab '
+                     f'spot within 12mm')
+            else:
+                centers.append(snap)
+        if centers:
+            while len(centers) < TAB_N and len(centers) < len(elig):
+                cand, candd = elig[0], -1.0
+                for s in elig:
+                    d = min(min(abs(s - c), P - abs(s - c)) for c in centers)
+                    if d > candd:
+                        candd, cand = d, s
+                centers.append(cand)
+        centers.sort()
+        if len(centers) == TAB_N:
+            _LAST_LEFT_TABS = [at(c)[0] for c in centers]
     if len(centers) < TAB_N:
         fail(f'only {len(centers)} tab spots eligible, want {TAB_N}')
         centers = []
@@ -1061,6 +1117,18 @@ def build_half(tag):
              f'{poron_edge_at} < {PORON_EDGE_MIN}mm — the 7mm pad keeps '
              f'>=0.6mm to the plate edge (kerf + tolerance)')
     poron_edge_mm = poron_edge
+
+    # Output-side mirror gate: every right tab root must land on the
+    # mirror of a left tab root, not merely be derived from one.
+    if tag == 'Right' and _LAST_LEFT_TABS is not None:
+        mirrored = [(2 * case_params.MIRROR_AX - x, y)
+                    for x, y in _LAST_LEFT_TABS]
+        for t in tabs:
+            d = min(math.hypot(t['x'] - mx, t['y'] - my)
+                    for mx, my in mirrored)
+            if d > 0.05:
+                fail(f'tab root ({t["x"]:.3f},{t["y"]:.3f}) is {d:.3f}mm '
+                     f'from the nearest mirrored left tab (floor 0.05)')
 
     # M-review: definitive encoder-neighborhood webs (the spec's "~3.55"
     # and a reviewer's "1.75" measured different pairs — print every

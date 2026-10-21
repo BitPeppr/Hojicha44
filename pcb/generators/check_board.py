@@ -78,6 +78,7 @@ UART_R = ("/TRRS_R1", "/TRRS_T")   # U_R1 pin1 / pin2 — the CROSSED half
 DRIFT_POS_MM = 0.01   # committed-vs-model position tolerance (KiCad
                        # writes 3 decimals; the model rounds to 4)
 DRIFT_SIZE_MM = 0.002  # size / drill tolerance
+MIRROR_TOL = 0.05     # H-7 left/right gate: board, plate, tub, cover
 TICK_LOCAL_X = -2.45   # the SOD-123 cathode tick bar (gen_pcb embed)
 TICK_HALF_LEN = 0.5
 
@@ -118,6 +119,87 @@ def order_loop(segs):
         prev, cur = cur, nxt[0]
         pts.append(next(q for q in adj[prev] if key(q) == cur))
     return pts
+
+
+def closed_segs(points):
+    """Point cycle -> segment list (strips an explicit closure vertex)."""
+    if (len(points) > 1 and
+            math.hypot(points[0][0] - points[-1][0],
+                       points[0][1] - points[-1][1]) < 1e-6):
+        points = points[:-1]
+    return list(zip(points, points[1:] + points[:1]))
+
+
+def mirror_residual(left, right, axis=G.MIRROR_AXIS):
+    """Max one-sided distance from each mirrored-Left vertex to Right
+    (and back), i.e. a cheap symmetric Hausdorff bound for point loops.
+    The right half is RIGHT = 2*axis - LEFT. Both directions catch a
+    missing/extra lobe, not just a shifted matching one."""
+    lm = [(2 * axis - x, y) for x, y in left]
+    ls, rs = closed_segs(lm), closed_segs(right)
+    d_lr = max(min(seg_dist(x, y, a, b) for a, b in rs)
+               for x, y in lm)
+    d_rl = max(min(seg_dist(x, y, a, b) for a, b in ls)
+               for x, y in right)
+    return max(d_lr, d_rl)
+
+
+def mirror_artifacts():
+    """Design-frame board and plate loops for the left/right gate."""
+    out = {}
+    for tag, half in (("L", "Left"), ("R", "Right")):
+        txt = frame.read_design(
+            os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb"))
+        pts = order_loop(edge_segments(txt))
+        if (math.hypot(pts[0][0] - pts[-1][0],
+                       pts[0][1] - pts[-1][1]) < 1e-6):
+            pts = pts[:-1]
+        out[f"board-{tag}"] = pts
+        polys = dxf_polylines(
+            os.path.join(PLATE_DIR, f"Hojicha44-{half}-plate.dxf"))
+        poly = next((p for layer, p in polys if layer == "OUTLINE"), None)
+        if poly is None:
+            raise RuntimeError(f"no plate OUTLINE for {half}")
+        if (math.hypot(poly[0][0] - poly[-1][0],
+                       poly[0][1] - poly[-1][1]) < 1e-6):
+            poly = poly[:-1]
+        out[f"plate-{tag}"] = poly
+    return out
+
+
+def check_mirror():
+    """H-7: board and plate must be exact left/right mirrors (0.05mm)."""
+    bad = []
+    art = mirror_artifacts()
+    for kind in ("board", "plate"):
+        d = mirror_residual(art[f"{kind}-L"], art[f"{kind}-R"])
+        print(f"  mirror {kind}: max {d:.4f}mm (floor {MIRROR_TOL:.2f})")
+        if d > MIRROR_TOL:
+            bad.append(f"{kind} left/right mirror residual {d:.4f}mm > "
+                       f"{MIRROR_TOL:.2f}mm")
+    return bad
+
+
+def mirror_selftest():
+    """Prove the mirror comparator rejects a 0.5mm half-shift and that
+    the actual board/plate pass."""
+    bad = []
+    art = mirror_artifacts()
+    for kind in ("board", "plate"):
+        left, right = art[f"{kind}-L"], art[f"{kind}-R"]
+        d = mirror_residual(left, right)
+        if d > MIRROR_TOL:
+            bad.append(f"self-test {kind}: actual residual {d:.4f}mm")
+        shifted = [(x + 0.5, y) for x, y in right]
+        ctl = mirror_residual(left, shifted)
+        if ctl <= MIRROR_TOL:
+            bad.append(f"self-test {kind}: 0.5mm half-shift did NOT fail "
+                       f"(residual {ctl:.4f}mm)")
+        near = [(x + 0.02, y) for x, y in right]
+        if mirror_residual(left, near) > MIRROR_TOL:
+            bad.append(f"self-test {kind}: 0.02mm shift exceeded the "
+                       f"0.05mm floor")
+    return bad
 
 
 def components(segs):
@@ -1155,12 +1237,18 @@ def main():
         for b in check_frame(tag, pts):
             print(f"  !! {b}")
             rc = 1
+    for b in check_mirror():
+        print(f"  !! {b}")
+        rc = 1
     if "--self-test" in sys.argv:
         for b in frame_selftest():
             print(f"  !! {b}")
             rc = 1
-        print("frame self-test: CLEAN" if rc == 0 else
-              "frame self-test: FAILING")
+        for b in mirror_selftest():
+            print(f"  !! {b}")
+            rc = 1
+        print("frame/mirror self-test: CLEAN" if rc == 0 else
+              "frame/mirror self-test: FAILING")
     print("check_board: CLEAN" if rc == 0 else "check_board: FAILING")
     sys.exit(rc)
 

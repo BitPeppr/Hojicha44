@@ -117,6 +117,13 @@ but every design-shaped field below has exactly one right answer.
 - **Magnets ordered separately** (N52 Ø4×2, axially magnetized) — see
   `spec/first-article.md` for the seat-force verify gates and the
   tub/cover polarity pairing note.
+- **H-7 mirror gate (v0.4.0+):** the plate/case halves must be exact
+  mirrors before ordering. Run `python3
+  pcb/generators/check_board.py --self-test` (board 0.0000mm, plate
+  0.0100mm) and `case/.venv/bin/python case/mirror_gate.py` (tub
+  0.0094mm, cover 0.0000mm); the floor is 0.05mm and both gates include
+  negative controls. The right plate's gasket tabs are now derived from
+  the left roots (`plate/gen_plate.py`), not re-walked independently.
 
 ## Before you click buy
 

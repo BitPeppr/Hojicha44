@@ -248,9 +248,9 @@ outlines:
         - ref: mirror_matrix_index_top
           shift: [9.5, 9.5]
         - ref: mirror_matrix_inner_top
-          shift: [15.5, 16.5]
-        - ref: mirror_matrix_inner_top
           shift: [2.5, 16.5]
+        - ref: mirror_matrix_inner_top
+          shift: [15.5, 16.5]
         - ref: mirror_matrix_inner_top
           shift: [9.5, 9.5]
         - ref: mirror_mcu

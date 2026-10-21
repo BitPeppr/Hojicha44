@@ -30,6 +30,20 @@ Blender visualises.
 values of ITS build — those are historical, not current; the v3.6
 entry below is the current truth for every number it quotes.)
 
+- v3.7 (2026-10-21, H-7 mirror closure): the right board outline's
+  `mirror_matrix_inner_top` plateau order was the mirror of the left
+  order, so the right rim carried a 0.41mm north-plateau bump. Fixed the
+  config (plateau points now mirror exactly: 194→181 like left 97.5→
+  110.5), regenerated layout/board/plate. The right plate tab walk was
+  still landing one 1mm sample over at the bottom-inner tab (x 170.57 vs
+  mirrored 170.64, 0.07mm); `gen_plate.py` now derives the RIGHT tab
+  roots from the LEFT roots and re-projects them onto the right rim
+  (output-side mirror check included), so the plate tabs are exact
+  mirrors. New gates: `check_board.py --self-test` mirrors board+plate
+  (0.0000 / 0.0100mm); `case/mirror_gate.py` mirrors the STEP tub/cover
+  (0.0094 / 0.0000mm), floor 0.05mm, with 0.5mm negative controls.
+  Volumes unchanged: tub 75.7/75.7 cm³, cover 10.7/10.7 cm³.
+
 - v3.6 (2026-10-20, six-review design audit round): **magnet stations are
   now SYMMETRIC-BY-CONSTRUCTION** — `magnet_stations()` computes the LEFT
   set once and mirrors it (`x -> 291.5 - x`) for Right, re-validating
