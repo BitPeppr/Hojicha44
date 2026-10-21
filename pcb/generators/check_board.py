@@ -49,6 +49,7 @@ builders that produced it (fix.md §5.1 items 3-5):
 
 Also runs inside gen_pcb.main, so the committed pipeline enforces it.
 """
+import csv
 import math
 import os
 import re
@@ -941,6 +942,41 @@ def board_instances(txt):
     return out
 
 
+def parse_pos(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def pos_findings(rows, inst, tol=FRAME_TOL):
+    """Release pos.csv must be the design-frame placement list.
+
+    KiCad's pos writer reflects both y and rotation (verified on the
+    v0.4.0 cut: SW_L20 -> (100, -27.7, -27.5) for board (100, -27.7,
+    +27.5)).  A component placed from a Y-mirrored pos file would sit on
+    the wrong side of the board even though the gerbers are correct.
+    """
+    bad = []
+    if len(rows) < 40:
+        bad.append(f"pos.csv has only {len(rows)} placements")
+    for r in rows:
+        ref = r["Ref"].strip('"')
+        if ref not in inst:
+            bad.append(f"pos.csv ref {ref} not on the board")
+            continue
+        bx, by, brot = inst[ref]
+        x, y, rot = (float(r["PosX"]), float(r["PosY"]), float(r["Rot"]))
+        d = math.hypot(x - bx, y - by)
+        if d > tol:
+            bad.append(f"pos {ref} ({x:.3f},{y:.3f}) != design "
+                       f"({bx:.3f},{by:.3f}) — {d:.3f}mm")
+        want_rot = (-brot) % 360.0
+        drot = abs((rot - want_rot + 180.0) % 360.0 - 180.0)
+        if drot > tol:
+            bad.append(f"pos {ref} rot {rot:.3f} != design {-brot:.3f} "
+                       f"(delta {drot:.3f} deg)")
+    return bad
+
+
 def case_ports():
     import importlib.util as ilu
     spec = ilu.spec_from_file_location(
@@ -996,6 +1032,13 @@ def check_frame(tag, pts):
     # derive the same anchors the generators use.
     inst = board_instances(frame.read_design(
         os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")))
+    pos = os.path.join(reldir, half, "pos.csv")
+    if not os.path.exists(pos):
+        bad.append("release pos.csv missing")
+    else:
+        rows = parse_pos(pos)
+        bad += pos_findings(rows, inst)
+        print(f"  frame pos {tag}: {len(rows)} placements checked")
     ports = case_ports()[half]
     usb_want = (pts["usb" if tag == "L" else "mirror_usb"][0],
                 pts["usb" if tag == "L" else "mirror_usb"][1])
@@ -1066,9 +1109,24 @@ def frame_selftest():
         gfm = usb_floor(gmir, ux, uy)
         if gfm is not None and abs(gfm - pf) <= FRAME_TOL:
             bad.append(f"self-test {tag}: Y-negated outline did NOT fail")
-        # port perturbation: the real anchors pass, a 0.5mm nudge must not.
+        # pos.csv frame + negative controls: both a 0.5mm position nudge
+        # and a 1-degree rotation nudge must be rejected.
         inst = board_instances(frame.read_design(
             os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")))
+        rows = parse_pos(os.path.join(release_dir(), half, "pos.csv"))
+        if pos_findings(rows, inst):
+            bad.append(f"self-test {tag}: current pos.csv fails the "
+                       f"design-frame check")
+        nudge_xy = [dict(r) for r in rows]
+        nudge_xy[0]["PosX"] = str(float(nudge_xy[0]["PosX"]) + 0.5)
+        if not pos_findings(nudge_xy, inst):
+            bad.append(f"self-test {tag}: 0.5mm pos nudge did NOT fail")
+        nudge_rot = [dict(r) for r in rows]
+        nudge_rot[0]["Rot"] = str(float(nudge_rot[0]["Rot"]) + 1.0)
+        if not pos_findings(nudge_rot, inst):
+            bad.append(f"self-test {tag}: 1deg pos rotation nudge DID NOT "
+                       f"fail")
+        # port perturbation: the real anchors pass, a 0.5mm nudge must not.
         ports = case_ports()[half]
         trrs = inst[f"J_{tag}1"]
         pwr = inst[f"SW_{tag}PWR1"]

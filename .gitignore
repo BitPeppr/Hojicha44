@@ -25,12 +25,13 @@ layout/generated/**
 *-erc.rpt
 *-drc.rpt
 
-# versioned release evidence stays tracked (roadmap Phase 7/12)
-/generated/
+# versioned release evidence stays tracked (roadmap Phase 7/12).
+# Ignore generated/* children, not generated/ itself: Git cannot
+# re-include a path whose parent directory is excluded, so /generated/
+# would also swallow the !release rules (and force -f for every release).
+/generated/*
 !/generated/release/
 !generated/release/**
-!pcb/- FINAL/**
-pcb/- FINAL/.DS_Store
 
 # regenerable render exports (kicad-cli sch export ...)
 pcb/kicad/export/
