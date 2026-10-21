@@ -46,18 +46,46 @@ Two independent regimes, one mark:
   prominently (acma.gov.au "label your product").
 - Penalties: supplying with no label, or labelling before complying,
   can attract up to **500 penalty units**.
-- **Bluetooth SIG** is the one unavoidable cost item: a finished
-  keyboard is a Bluetooth "Product" and must be listed under the
-  builder's own account before sale ("your supplier cannot qualify your
-  products on you behalf"). Adopter membership is $0/yr; the headline
-  **Adopter full qualification fee is USD 12,000** per design, and the
-  **Company Identifier is USD 1,250** (bluetooth.com/fee-schedule,
-  effective 2026-03-01). A keyboard built on a Nordic-based module can
-  usually be listed by declaring the module's QDID as the design (an
-  End-Product-Listing style path) — **confirm that reuse path with a
-  Bluetooth qualification consultant BEFORE the board order**; it
-  changes the unit economics of the whole kit. **[UNVERIFIED]: the
-  exact fee that applies to "declare an existing Nordic design".**
+- **Bluetooth SIG** is the one item with a real fee, and the numbers
+  are worth stating precisely (SIG schedule of dues and fees, effective
+  **2026-03-01**, fetched 2026-10-22):
+
+  | Item | Fee |
+  |---|---|
+  | **Adopter membership** (annual) | **$0 — the tier is free** |
+  | Product Qualification Fee — Adopter, full qualification | $12,000 |
+  | Product Qualification Fee — Contributing Adopter (new tier), first qualification each membership year (33% off) | $8,000 (membership $3,500 small / $16,500 large per year) |
+  | Product Qualification Fee — Associate (50% off every qualification) | $6,000 (membership $11,250 small / $52,500 large per year) |
+  | Company Identifier — Adopter / Contributing Adopter | $1,250 |
+  | Company Identifier — Associate | $0 |
+
+  - The Product Qualification Fee (the old "Declaration Fee", renamed)
+    is charged **once per design**; further products on the same
+    unmodified design are added to the existing listing for free
+    (SIG quick-start guide). Our keyboard is an **Unmodified Design**
+    — Nordic's qualified nRF52840 + ZMK, referenced by QDID/Design
+    Number, with no change to the Bluetooth implementation — so it
+    takes the **listing/declaration path with no new RF testing**.
+  - **The arithmetic, for this kit specifically:** one design, listed
+    once. Adopter = $0 membership + $12,000 + $1,250 identifier =
+    **$13,250 total**. Associate = $11,250/yr + $6,000 = **$17,250**
+    and buys a discount you would not use (it also pays 50% off
+    *every* future qualification, which only pays off if a second
+    design is qualified in the same year). So **the free Adopter tier
+    is the right choice for this project** — the money is in the
+    one-off qualification, not the membership.
+  - **Scope, and why this may not bite at all:** the SIG's own FAQ
+    says "every company **selling, branding, manufacturing, or
+    representing a product as its own** must pay a Product
+    Qualification Fee". A self-built keyboard that is never sold and
+    never carries the Bluetooth logo has no SIG obligation; and SIG
+    membership is open to **companies, not individuals** (an
+    individual would need a sole-trader/company entity). So for a
+    **non-commercial pilot this is $0 of work**; it becomes a real
+    line item the moment a unit is sold.
+  - Action: confirm the Nordic-design listing path with a Bluetooth
+    qualification consultant **before** any unit is sold (not before
+    the board order), and get the entity question answered first.
 
 ## 3. United States — the path (if/when units go to the US)
 
@@ -122,9 +150,13 @@ electrical safety of the host, and the Bluetooth SIG listing.
    illegal to apply before this.
 2. Get the module's evidence: XIAO nRF52840 RED DoC, the datasheet's
    Class B statement, the FCC grant.
-3. Confirm with a Bluetooth qualification consultant whether the
-   Nordic-design reuse path applies (the USD 12,000 vs USD 1,250
-   question) — **this gates the whole kit's economics**.
+3. If the pilot units will be **sold or branded**, get a Bluetooth
+   qualification consultant to confirm the Unmodified-Design listing
+   path on Nordic's nRF52840 QDID, and settle the entity question
+   (SIG membership is company-only). Budget **USD 13,250** (Adopter
+   $0 + $12,000 Product Qualification Fee + $1,250 Company
+   Identifier) — one-off, and only if you sell. If the pilot is
+   self-built and never sold, this is $0 of work.
 4. Order an AU SDoC package from an ACMA-accredited lab (EMC Bay /
    MiCOM / TÜV Rheinland Australia) — quote first; budget AUD 600–1,500
    and 1–3 weeks. **[UNVERIFIED price — confirm by quote.]**
