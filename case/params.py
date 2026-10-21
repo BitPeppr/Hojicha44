@@ -13,17 +13,19 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 1.25mm (plate top 3.50 -> 2.25).  The diodes stay on the PCB's top
 # side and the plate relieves 0.35mm over them (measured SOD-123 top
 # = 1.26mm; see plate/gen_plate.py).
-PLATE_UNDER = 1.05  # PCB top -> plate underside (Choc v1 clip band)
+PLATE_UNDER = 1.00  # PCB top -> plate underside (Choc v1 clip band:
+                    # the plate must sit between the clip lip <=1.3 and the
+                    # 14.8 ears at 2.2 -> 1.0 gap + 1.2 plate = 1.0..2.2)
 PLATE_T = 1.2       # plate thickness (Choc v1 clip engagement)
 FOAM_T = 3.0        # poron pads, top + bottom of each tab
 PRELOAD = 0.15      # design assembly compression (spec: 0.15-0.20)
 TAB_W = 10.0        # tab width (plate/gen_plate.py)
 TAB_L = 5.0         # tab protrusion past outline
 
-PLATE_TOP = PLATE_UNDER + PLATE_T          # +2.25 (was 3.50)
+PLATE_TOP = PLATE_UNDER + PLATE_T          # +2.20 (was 3.50)
 # Tab-support shelf: bottom foam compressed under the tab.
-# SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 1.05 - 2.55 = -1.50
-SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -0.55
+# SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 1.00 - 2.55 = -1.55
+SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -1.55
 # Floor under the PCB zone: provisioned by the BELOW-PCB protrusions
 # (M1, review-corrected; wording fixed 2026-10-21 — the hotswap SOCKETS
 # are SOLDERED BENEATH (B.Cu pads, body on B.Fab/B.SilkS) and dip ~1.25
@@ -65,7 +67,7 @@ MIRROR_AX = 145.75  # shared left/right mirror axis: RIGHT = 2 * MIRROR_AX
                     # derivations produced 6/7 magnet stations and +0.5mm
                     # plate keep-zone drift; symmetric sources replaced
                     # them).
-TOP_LIP_Z = 4.75    # lip at plate top +2.5 (4.75 was 6.0): leaves a 2.5mm
+TOP_LIP_Z = 4.70    # lip at plate top +2.5 (4.70 was 6.0): leaves a 2.5mm
                     # gap = 16.7% preload on the 3.0 top foam.  The tie
                     # TOP_LIP_Z == PLATE_UNDER + PLATE_T + 2.5 is enforced
                     # by tests/spec_checks.cjs (stack-ties), so this stays a

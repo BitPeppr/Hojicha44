@@ -98,19 +98,29 @@ ENC_SQ = 12.7           # square hole: vendored EC11 body measures 12.30 wide
                         # because 0.145 > kerf wiggle and this is a
                         # hand-insert.
 PLATE_THICK = 1.2      # mm PC -- Choc v1 clip engagement (Keebio: 1.2mm)
-# PCB top -> plate underside.  Choc v1 standard is ~1.0mm (a 1.2mm
-# plate => 1.0mm gap); the decided support range is 1.0..1.2 and the
-# plate must land inside the switch's clip band, so 1.05 sits at the
-# bottom of the band with tolerance room.
-GAP = 1.05             # PCB top -> plate underside
+# PCB top -> plate underside.  MEASURED from the Kailh Choc v1 outline
+# drawing and a community STEP model (spec/research-open-items-2026-10-21.md
+# §PG1350; the memo's S1/S3): the stack above the PCB is
+#   0.0-0.9   skirt
+#   0.9-1.3   the flexible clip arms, whose retaining lip engages the
+#             plate's UNDERSIDE
+#   2.2-3.0   the 14.8-15.0 "ears" (the flange) that bear on the
+#             plate's TOP surface
+# so the plate must lie between the lip (<=1.3) and the ears (2.2):
+# a 1.2mm plate on a 1.00mm gap occupies 1.00..2.20 — the lip grabs
+# the underside and the ears seat exactly on the top.  A 1.05 gap
+# would lift the ears 0.05 into the plate, and a 1.3 gap would put the
+# plate top at 2.5, straight through the ears: no grab at all.
+GAP = 1.00             # PCB top -> plate underside
 # DIODE RELIEF.  The 22 matrix diodes (1N4148W SOD-123) stand on the
 # PCB's TOP side and are the only thing under the plate in the matrix
 # field.  MEASURED from KiCad's own D_SOD-123.step (the vendored
 # model): body 2.566 x 1.416mm, TOP AT 1.260mm above the seating
 # plane (the repo's old "1.35" comment was 0.09 pessimistic).  With
-# GAP 1.05 the plate underside would foul the diode by 0.21mm, so the
-# plate carries a 0.35mm RELIEF POCKET under every diode: the pocket
-# floor sits at GAP+0.35 = 1.40, i.e. 0.14mm above the diode top.
+# GAP 1.00 the plate underside would foul the diode by 0.26mm, so the
+# plate carries a 0.40mm RELIEF POCKET under every diode: the pocket
+# floor sits at GAP+0.40 = 1.40, i.e. 0.14mm above the diode top,
+# and 0.80mm of plate is left under it.
 # Alternatives rejected: (a) diodes on B.Cu — the Choc hotswap socket
 # is a bottom-side part whose solder tabs and plastic body are
 # asymmetric, and the switch fixes the socket's orientation, so the
@@ -118,7 +128,7 @@ GAP = 1.05             # PCB top -> plate underside
 # diode would break the project's left/right mirror discipline for no
 # functional gain; (b) no relief at all — needs GAP >= 1.4, outside
 # the switch's clip band.
-DIODE_RELIEF_D = 0.35  # relief pocket depth in the plate underside
+DIODE_RELIEF_D = 0.40  # relief pocket depth in the plate underside
 DIODE_BODY_L = 2.566   # measured diode body length (its local x)
 DIODE_BODY_W = 1.416   # measured diode body width (its local y)
 DIODE_RELIEF_CLR = 0.15  # pocket margin around the body, per side
@@ -1275,7 +1285,7 @@ def dxf_write(path, res):
     # with no plate support; skipping it fouls the diodes.
     A('0\nTEXT\n8\nRELIEF\n10\n' + str(r2(ox)) + '\n20\n'
       + str(r2(oy + 3.0)) + '\n30\n0.0\n40\n3.0\n1\n'
-      'RELIEF POCKETS - MACHINE 0.35mm DEEP INTO THE UNDERSIDE - '
+      'RELIEF POCKETS - MACHINE 0.40mm DEEP INTO THE UNDERSIDE - '
       'DO NOT CUT THROUGH\n')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
@@ -1379,7 +1389,7 @@ def main():
                     'diode_top_z': DIODE_TOP_Z,
                     'clearance': round(GAP + DIODE_RELIEF_D - DIODE_TOP_Z, 3),
                     'note': 'partial-depth pocket in the plate UNDERSIDE; '
-                            'machine 0.35mm, do not cut through',
+                            'machine 0.40mm, do not cut through',
                 },
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
