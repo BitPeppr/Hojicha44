@@ -135,12 +135,16 @@ but every design-shaped field below has exactly one right answer.
   Supplier** (free registration) + the ACMA **C02 SDoC** + the RCM
   label.  Do NOT buy a certification at pilot volume (a lab SDoC is
   ~AUD 600–1,500, 1–3 weeks).  Two things to settle BEFORE the board
-  order: (1) the **Bluetooth SIG** listing — a finished keyboard is a
-  Bluetooth "Product" that must be listed under the builder's own
-  account (Adopter full qualification **USD 12,000**, Company
-  Identifier USD 1,250) — confirm with a qualification consultant
-  whether the Nordic design can be reused; (2) keep the RCM label a
-  **sticker**, not case printing, until the market is fixed.
+  order: (1) the **Bluetooth SIG** listing — the Adopter tier is
+  **free**, and the money is the one-off Product Qualification Fee
+  (**USD 12,000** + a **USD 1,250** Company Identifier) which is only
+  due if a unit is **sold or branded** (the SIG's trigger is
+  "selling, branding, manufacturing, or representing a product as its
+  own"). Our keyboard is an Unmodified Design (Nordic's qualified
+  nRF52840 + ZMK), so it lists with no new RF testing. A self-built
+  pilot that is never sold owes the SIG nothing; SIG membership is
+  also company-only, so an individual needs an entity. (2) keep the RCM
+  label a **sticker**, not case printing, until the market is fixed.
 - **Pilot batch: 5 half-pairs (10 halves)** — see `spec/first-article.md`
   §0 for the order quantities and the indicative ~USD 35–70/half unit
   cost.
