@@ -26,10 +26,10 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z **4.75..7.75** across the wall band (the lip follows the plate top: PLATE_TOP 2.25 + 2.5) (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
+| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z **4.70..7.70** across the wall band (the lip follows the plate top: PLATE_TOP 2.20 + 2.5) (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
 | Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), 3mm thick |
 | Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
-| Plate↔PCB gap | **1.05mm** nominal — the Choc v1 clip band (the de-facto standard for a 1.2mm Choc plate is a 1.0mm gap). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.35mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.35mm into the underside, do NOT cut through). Measured from KiCad's own `D_SOD-123.step`: body 2.566 × 1.416mm, **top 1.260mm** above the PCB top surface → the relief floor sits at 1.40mm, leaving **0.14mm** over the diode top |
+| Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.40mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.40mm into the underside, do NOT cut through). Measured from KiCad's own `D_SOD-123.step`: body 2.566 × 1.416mm, **top 1.260mm** above the PCB top surface → the relief floor sits at 1.40mm, leaving **0.14mm** over the diode top and 0.80mm of plate under it |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
 | Bottom gaskets | Same 7×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
@@ -47,7 +47,7 @@ Encoder push over the window zone stays soft by design.
   socket bump **−1.25** (Kailh datasheet), slide-switch legs ≤**−3.5**
   (WS-SLTV family bound — caliper on the first article), JST PH ~**−2.5**
   (family bound). Deepest known = −3.65 → FLOOR_Z −5.6 keeps ~1.95mm
-  clearance; the tab-support shelf at SHELF_Z −1.50 is a separate
+  clearance; the tab-support shelf at SHELF_Z −1.55 is a separate
   feature (foam sets tab height, floor depth is separate —
   `case/params.py`).
 

@@ -264,3 +264,62 @@ With a **15.0 mm** cutout (≈1.0 mm of slack per side, vs ≈0.1 mm at the nomi
 6. **Formlabs (or bureau) minimum order / minimum spend** for SLS PA12 parts.
 7. **Choc v1 clip geometry from Kailh** — the maximum cutout tolerance.
 8. Per-piece **PG1350 hotswap socket price** and the XIAO/nice!nano **charge termination voltage** (BQ25101).
+
+---
+
+## 6. PG1350 (Choc v1) mechanical geometry — the numbers the plate is built on
+
+Second research pass, 2026-10-21. Sources: **S1** Kailh's official
+3-view outline drawing (PNG, from kailh.com's Choc page), **S2** the
+Kailh CPG135001D02rev1 datasheet (no dimensioned views), **S3** a
+community STEP model (koktoh/keyswitch_model, choc/v1/step/red.step;
+datum z=0 = the flat bottom of the base = the PCB top surface), **S4**
+Keebio's Choc stab page, **S5** the Sofle Choc issue #136 thread, **S6**
+Bubbleology's Choc v1 plate-support fork, **S7** Kailh's PCB-thickness
+precaution. Downloaded models/drawings to /tmp only.
+
+| Value | Number | Source | Confidence |
+|---|---|---|---|
+| Lower body through the plate | **13.80 × 13.80** | S1, S3 | HIGH |
+| Overall top view | 13.80 / 13.60 upper part; 15.00 × 15.00 with ears | S1 | HIGH |
+| Ears / flange | 14.8–15.0 wide, band **2.2–3.0** above the PCB | S3 | MED-HIGH |
+| Clip arm band | **1.30 tall** (0→1.30); the arms actually span 0.9→2.2 | S1, S3 | MED-HIGH |
+| Clip retaining lip | engages at ~**0.9–1.3** above the PCB top | S1, S3 | MED |
+| Base height above the PCB | 3.00 (S1) / 0–3.2 (S3) | S1, S3 | HIGH |
+| Housing top (keycap seat) | 5.50 (S3) / 5.80 (S1) | S1, S3 | MED-HIGH |
+| Stem top | 8.00 | S3 | MED |
+| "15×15×11" total height | not reproducible from the drawing | – | UNVERIFIED |
+| Plate thickness | **1.2** (1.6 = friction only) | S4, S5 | HIGH |
+| PCB-top → plate-underside gap | **1.0** (not 1.3) | S6 + geometry | MED-HIGH |
+| Width at 1.0mm above the PCB | 13.60 × 13.60 (12.2–12.4 in the clip slots) | S3 | MED |
+| Width at 2.2mm above the PCB | **14.80 × 14.80** (the ears begin) | S3 | MED |
+| PCB thickness | 1.6mm (S7 — about the PCB, not the plate) | S7 | HIGH |
+
+**Why the gap is 1.0, not 1.3** (the number people misquote): the
+stack above the PCB is skirt 0–0.9 → flexible clip arms 0.9–2.2 with
+the lip at ~0.9–1.3 → ears/flange 2.2–3.0 → base top 3.2 → housing top
+5.5 → stem top 8.0. The plate must therefore lie **between the lip
+(≤1.3) and the ears (2.2)**: a 1.2mm plate on a 1.0mm gap occupies
+1.0–2.2 — the lip grabs the underside, the ears seat on the top. A
+1.3mm gap puts the plate top at 2.5, straight through the ears (no
+grab); a 1.6mm plate on a 1.0mm gap means the lip cannot reach over it
+(friction only) — exactly the reported rev-1 failure.
+
+**Cutout**: 14.0 × 14.0 recommended (13.9 acceptable; 13.8 is zero
+clearance and binds where the body is 13.8 at z 1.3–2.1). With 14.0
+the 14.8–15.0 ears overhang the cutout edge by 0.4–0.5mm/side and rest
+on the plate's top while the lip grabs the underside — positive
+location. A 15.0 cutout lets the ears fall into the hole: nothing
+supports the switch and the lip cannot reach the plate edge, so the
+switch is held only by pin friction, rocks, and can be pushed up out of
+the plate.
+
+**Tolerances to design to**: plate 1.2 ±0.1; gap 1.0 (accept 0.8–1.0,
+keep ≤1.05 or the ears foul the plate top); cutout 14.0 +0.1/−0.05;
+PCB 1.6mm.
+
+**Caveats**: S1 is an anisotropically scaled PNG (calibrated at
+x ≈ 30 px/mm from the 5.00/5.80 dimensions); S3 is a hand-made
+community CAD model, not a scan, and its absolute heights agree with
+S1 to within ~0.3mm. The 14.50 dimension in S1's side view could not
+be mapped to a feature (UNVERIFIED).

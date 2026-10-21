@@ -47,14 +47,19 @@ poor bridger.
   retention, the switch rocks out). If 14.0 does not catch, drop to
   13.9 before ordering the plate batch.
 - [ ] **Plate relief pocket (PRE-ORDER, new in rev 2)** — the plate
-  carries a 0.35mm-deep pocket in its UNDERSIDE under each of the 22
-  diodes (RELIEF layer in the plate DXF: machine 0.35mm, do NOT cut
+  carries a 0.40mm-deep pocket in its UNDERSIDE under each of the 22
+  diodes (RELIEF layer in the plate DXF: machine 0.40mm, do NOT cut
   through; a through-cut leaves the switch without plate support).
   Test on the coupon: with the pocket floor 1.40mm above the PCB top
   and the diode top measured at 1.26mm, there must be no contact and
   the plate must still sit flat on the switch housings. Verify the
-  pocket is 0.35mm, NOT through: the remaining material under it is
-  0.85mm.
+  pocket is 0.40mm, NOT through: the remaining material under it is
+  0.80mm.
+  The stack to check on the same coupon: the plate underside 1.00mm
+  above the PCB top, the plate top 2.20mm — the switch's clip lip
+  (0.9–1.3mm above the PCB) must grab the underside and the 14.8mm
+  ears (starting at 2.2mm) must seat on the plate's top face with no
+  interference.
 - [ ] Module footprint: place a real nice!nano on the print, pin-1/USB end
   to the notch edge. All 24 pads must sit on printed copper.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.
