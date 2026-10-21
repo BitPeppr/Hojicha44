@@ -194,7 +194,7 @@ def check_cover(tag, solid, info):
     pr = info["ports"]["usb"]
     o, u, v = pr["o"], pr["u"], pr["v"]
     for t in (3.5, 14.25):        # bite fill + plateau band
-        for zb in (6.4, 8.6):
+        for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + P.COVER_T - 0.4):
             expect("usb cover passage",
                    o[0] + u[0] * t, o[1] + u[1] * t, zb, False)
     # ring resumes wherever a passage MEETS the skin: probe 0.6mm
@@ -211,14 +211,15 @@ def check_cover(tag, solid, info):
             rd = G.rect_d(sp, info["ports"][name]["rect"])
             if 0.05 <= rd <= 1.6:
                 expect(f"{name} cover wall resumes (skin-hug)",
-                       inner[0], inner[1], 7.5, True)
+                       inner[0], inner[1], P.TOP_LIP_Z + P.COVER_T - 0.25,
+                       True)
                 hits += 1
     if hits < 6:
         bad.append(f"cover wall resume probes found only {hits} skin "
                    f"hug points")
     pr = info["ports"]["trrs"]
     o, u, v = pr["o"], pr["u"], pr["v"]
-    for zb in (6.4, 6.9):
+    for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + 0.9):
         hw = math.sqrt(max(pr["r"] ** 2 - (zb - pr["zc"]) ** 2, 0.0))
         expect("trrs cover passage", o[0] + u[0] * 3.5,
                o[1] + u[1] * 3.5, zb, False)
@@ -227,10 +228,11 @@ def check_cover(tag, solid, info):
                    o[0] + u[0] * 3.5 + v[0] * sgn * (hw + 0.35),
                    o[1] + u[1] * 3.5 + v[1] * sgn * (hw + 0.35), zb, True)
     expect("trrs cover ceiling over boot",
-           o[0] + u[0] * 3.5, o[1] + u[1] * 3.5, 7.6, True)  # blind
+           o[0] + u[0] * 3.5, o[1] + u[1] * 3.5,
+           P.TOP_LIP_Z + P.COVER_T - 0.4, True)  # blind
     pr = info["ports"]["pwrsw"]
     o, u, v = pr["o"], pr["u"], pr["v"]
-    for zb in (6.4, 8.6):
+    for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + P.COVER_T - 0.4):
         expect("pwrsw cover passage", o[0] + u[0] * 3.5,
                o[1] + u[1] * 3.5, zb, False)
         expect("pwrsw cover inner web", o[0] + u[0] * 1.1,

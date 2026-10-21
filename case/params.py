@@ -7,16 +7,22 @@ import os
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ---- stack (spec/case.md "Stack", all per half) ----
-PLATE_UNDER = 2.0   # PCB top -> plate underside (diodes are 1.35)
-PLATE_T = 1.5       # plate thickness
+# SUPPORT STRATEGY (b), rev-2: the plate now carries the Choc v1 clip
+# engagement (14.0mm cutout, 1.2mm plate) and sits at the Choc gap of
+# 1.05mm above the PCB top, so the whole top of the case comes DOWN
+# 1.25mm (plate top 3.50 -> 2.25).  The diodes stay on the PCB's top
+# side and the plate relieves 0.35mm over them (measured SOD-123 top
+# = 1.26mm; see plate/gen_plate.py).
+PLATE_UNDER = 1.05  # PCB top -> plate underside (Choc v1 clip band)
+PLATE_T = 1.2       # plate thickness (Choc v1 clip engagement)
 FOAM_T = 3.0        # poron pads, top + bottom of each tab
 PRELOAD = 0.15      # design assembly compression (spec: 0.15-0.20)
 TAB_W = 10.0        # tab width (plate/gen_plate.py)
 TAB_L = 5.0         # tab protrusion past outline
 
-PLATE_TOP = PLATE_UNDER + PLATE_T          # +3.5
+PLATE_TOP = PLATE_UNDER + PLATE_T          # +2.25 (was 3.50)
 # Tab-support shelf: bottom foam compressed under the tab.
-# SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 2.0 - 2.55 = -0.55
+# SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 1.05 - 2.55 = -1.50
 SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -0.55
 # Floor under the PCB zone: provisioned by the BELOW-PCB protrusions
 # (M1, review-corrected; wording fixed 2026-10-21 — the hotswap SOCKETS
@@ -59,7 +65,11 @@ MIRROR_AX = 145.75  # shared left/right mirror axis: RIGHT = 2 * MIRROR_AX
                     # derivations produced 6/7 magnet stations and +0.5mm
                     # plate keep-zone drift; symmetric sources replaced
                     # them).
-TOP_LIP_Z = 6.0     # lip at plate top +2.5: leaves a 2.5mm gap = 16.7%
+TOP_LIP_Z = 4.75    # lip at plate top +2.5 (4.75 was 6.0): leaves a 2.5mm
+                    # gap = 16.7% preload on the 3.0 top foam.  The tie
+                    # TOP_LIP_Z == PLATE_UNDER + PLATE_T + 2.5 is enforced
+                    # by tests/spec_checks.cjs (stack-ties), so this stays a
+                    # literal on purpose.
 #   preload on the 3.0 top foam ((3.0 - 2.5) / 3.0), matching the ~15%
 #   bottom preload (2.55 of 3.0); receives the future top cover / upper
 #   foam. NOTE: the USB-C module stack tops ~7.7 above the PCB — the

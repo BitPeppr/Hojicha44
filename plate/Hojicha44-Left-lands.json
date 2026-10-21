@@ -1,8 +1,8 @@
 {
  "half": "Left",
  "units": "mm (KiCad board frame)",
- "plate": "1.5mm PC",
- "gap": 2.0,
+ "plate": "1.2mm PC",
+ "gap": 1.05,
  "poron": {
   "spec": "PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)",
   "pad": [
@@ -72,5 +72,13 @@
    "width": 10.0,
    "protrusion": 5.0
   }
- ]
+ ],
+ "diode_relief": {
+  "depth": 0.35,
+  "pockets": 22,
+  "floor_z": 1.4,
+  "diode_top_z": 1.26,
+  "clearance": 0.14,
+  "note": "partial-depth pocket in the plate UNDERSIDE; machine 0.35mm, do not cut through"
+ }
 }

@@ -17,11 +17,44 @@ USB/TRRS mouth arc bridges (~7mm spans), which typically bridge
 support-free on any decent bridge profile; add supports only for a
 poor bridger.
 
+## 0. Pilot batch
+
+- [ ] **Build 5 half-pairs (10 halves)** for the first article: enough
+  to test switch retention, plate fit, case fit and battery life with
+  a spare in every failure-prone class, small enough that a design
+  mistake is not expensive. Order quantities (research memo
+  2026-10-21): 20 PCBs (10 halves + 10 spares), 20 plates, 12–15
+  cases (3–4 printed spares per design), 490 switches (14 packs of
+  35), 450–500 hotswap sockets, 500 diodes, 12–14 cells, 150 magnets
+  (16/half + spares), 12 modules, 20 polyfuses.
+- [ ] Indicative unit cost **~USD 35–70 per half** (PCB ~USD 2/5 pcs
+  + ENIG adder, PCBA ~USD 8 setup + per-joint, PA12 ~USD 2–4 per
+  half, PG1350 ~USD 1.1 ea, LiPo USD 1.5–6, N52 USD 0.01–0.08).
+
 ## 1. Paper fit test (before ordering anything)
 
 - [ ] **Regenerate the fit PDFs first** — `out/fit` renders predate the
   16 Oct boards (and the case v3.3-v3.5 port changes); rebuild prints
   from the current tracked artifacts before any caliper check here.
+- [ ] **Choc cutout coupon (PRE-ORDER, new in rev 2) — the support
+  strategy hinges on this.** Cut four 20x20mm squares in 1.2mm PC with
+  **13.8 / 14.0 / 14.2 / 15.0mm** holes, and for each: drop a PG1350
+  in (does the body pass the hole?) then press the switch down onto
+  the coupon and LIFT it (does the clip arm catch the plate's
+  underside?). Expected: 14.0 gives 0.10mm/side on the 13.8 body and
+  0.50mm/side of clip-wing overlap; 13.8 may be line-to-line (a switch
+  that will not insert); 15.0 reproduces the old rev-1 failure (no
+  retention, the switch rocks out). If 14.0 does not catch, drop to
+  13.9 before ordering the plate batch.
+- [ ] **Plate relief pocket (PRE-ORDER, new in rev 2)** — the plate
+  carries a 0.35mm-deep pocket in its UNDERSIDE under each of the 22
+  diodes (RELIEF layer in the plate DXF: machine 0.35mm, do NOT cut
+  through; a through-cut leaves the switch without plate support).
+  Test on the coupon: with the pocket floor 1.40mm above the PCB top
+  and the diode top measured at 1.26mm, there must be no contact and
+  the plate must still sit flat on the switch housings. Verify the
+  pocket is 0.35mm, NOT through: the remaining material under it is
+  0.85mm.
 - [ ] Module footprint: place a real nice!nano on the print, pin-1/USB end
   to the notch edge. All 24 pads must sit on printed copper.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.

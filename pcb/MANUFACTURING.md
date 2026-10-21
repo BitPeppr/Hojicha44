@@ -1,4 +1,4 @@
-# Manufacturing order guide (v0.4.0)
+# Manufacturing order guide (v0.5.0)
 
 The exact answers for the JLCPCB Online PCB Quote, derived from the
 committed design + vendor research (2026-10; sources at the bottom).
@@ -47,18 +47,18 @@ but every design-shaped field below has exactly one right answer.
   "Different Design: 2", or two orders — each design is billed its own
   5-pc minimum. Don't merge them into one panel/gerber: per-extra-design
   fees exist and a shared panel of this size gains nothing.
-- The released artifacts are `generated/release/v0.4.0/{Left,Right}/`
+- The released artifacts are `generated/release/v0.5.0/{Left,Right}/`
   (9 gerbers + job + drill + pos + pos-smt + bom + ERC/DRC each; zip
   each half's folder for upload). Cross-check the MANIFEST stamp
   (`git commit:` / `board sha256:` lines in
-  `generated/release/v0.4.0/MANIFEST.txt`) — the ERC/DRC reports in the
+  `generated/release/v0.5.0/MANIFEST.txt`) — the ERC/DRC reports in the
   release are re-run at cut time, and the manifest records the board's
   hash, so the release certifies those exact bytes.
 - **Only `generated/release/vX.Y.Z/` is fab-pointable.** The pre-M3
   `pcb/- FINAL/` tree is removed; it had stale power-switch pads and
   pinned an uncommitted board (`3016153-dirty`). Historical audit
   reports may still mention it.
-- **Frame note (v0.4.0):** the `.kicad_pcb` is stored y-negated so
+- **Frame note (v0.5.0):** the `.kicad_pcb` is stored y-negated so
   KiCad's y-up Gerber/drill/pos exports land in the plate/case design
   frame. The board title block records
   `(comment 3 "frame: storage-yneg")`; readers convert with
@@ -106,8 +106,13 @@ but every design-shaped field below has exactly one right answer.
   `case/.venv/bin/python case/gen_case.py` +
   `case/gen_cover.py` (STEP out; volumes 75.7/75.7 cm³ at OUTSET 8.2,
   audit round 2026-10-20).
-- **Plate at 1.5mm: PC (default, per spec/case.md — the generator's
-  MATERIAL constant) or POM (the firmer upgrade) or CNC aluminum.** The
+- **Plate at 1.2mm: PC (default, per spec/case.md — the generator's
+  MATERIAL constant) or POM (the firmer upgrade) or CNC aluminum.**
+  **1.2mm is not a free choice: the Choc v1 clip only engages a 1.2mm
+  plate** (at 1.5/1.6mm the switch has no retention).  The plate also
+  carries a **0.35mm relief pocket in its underside under each of the
+  22 diodes** (RELIEF layer in the DXF) — machine that depth, do NOT
+  cut through it.  The
   plate's W1 windows keep the MCU/battery/USB region clear, so even
   metal doesn't blanket the module; PC wins all-round for rev 1 (quiet,
   cheapest prototype, laser-cut, no antenna-second-guessing). Files:
@@ -124,6 +129,21 @@ but every design-shaped field below has exactly one right answer.
   0.0094mm, cover 0.0000mm); the floor is 0.05mm and both gates include
   negative controls. The right plate's gasket tabs are now derived from
   the left roots (`plate/gen_plate.py`), not re-walked independently.
+
+- **Compliance (decided, see `spec/compliance.md`):** the pilot market
+  is **AU/NZ** and the path is the **RCM via an ACMA-only Responsible
+  Supplier** (free registration) + the ACMA **C02 SDoC** + the RCM
+  label.  Do NOT buy a certification at pilot volume (a lab SDoC is
+  ~AUD 600–1,500, 1–3 weeks).  Two things to settle BEFORE the board
+  order: (1) the **Bluetooth SIG** listing — a finished keyboard is a
+  Bluetooth "Product" that must be listed under the builder's own
+  account (Adopter full qualification **USD 12,000**, Company
+  Identifier USD 1,250) — confirm with a qualification consultant
+  whether the Nordic design can be reused; (2) keep the RCM label a
+  **sticker**, not case printing, until the market is fixed.
+- **Pilot batch: 5 half-pairs (10 halves)** — see `spec/first-article.md`
+  §0 for the order quantities and the indicative ~USD 35–70/half unit
+  cost.
 
 ## Before you click buy
 

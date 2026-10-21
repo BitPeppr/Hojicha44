@@ -26,10 +26,10 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z 6.0..9.0 across the wall band (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
+| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z **4.75..7.75** across the wall band (the lip follows the plate top: PLATE_TOP 2.25 + 2.5) (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
 | Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), 3mm thick |
-| Plate | 1.5mm (material below), outline = PCB outline + tabs (USB notch included) |
-| Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
+| Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
+| Plate↔PCB gap | **1.05mm** nominal — the Choc v1 clip band (the de-facto standard for a 1.2mm Choc plate is a 1.0mm gap). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.35mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.35mm into the underside, do NOT cut through). Measured from KiCad's own `D_SOD-123.step`: body 2.566 × 1.416mm, **top 1.260mm** above the PCB top surface → the relief floor sits at 1.40mm, leaving **0.14mm** over the diode top |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
 | Bottom gaskets | Same 7×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
@@ -47,7 +47,7 @@ Encoder push over the window zone stays soft by design.
   socket bump **−1.25** (Kailh datasheet), slide-switch legs ≤**−3.5**
   (WS-SLTV family bound — caliper on the first article), JST PH ~**−2.5**
   (family bound). Deepest known = −3.65 → FLOOR_Z −5.6 keeps ~1.95mm
-  clearance; the tab-support shelf at SHELF_Z −0.55 is a separate
+  clearance; the tab-support shelf at SHELF_Z −1.50 is a separate
   feature (foam sets tab height, floor depth is separate —
   `case/params.py`).
 
@@ -89,8 +89,8 @@ Encoder push over the window zone stays soft by design.
   (cell densification = accidental hard mount, harsh sound). Per half:
   cavity = 1.5 + 6×(1−c), c ∈ [0.15, 0.20] → **6.3–6.6 mm** sandwich
   (1.5 plate + 2× 3mm pads).
-- Plate note: foam spec is plate-agnostic; recommended **PC 1.5 mm**
-  (softest, most flex, deepest sound) or **POM 1.5 mm** (balanced,
+- Plate note: foam spec is plate-agnostic; recommended **PC 1.2 mm**
+  (softest, most flex, deepest sound) or **POM 1.2 mm** (balanced,
   good feel, stable). Bounce comes from plate span between tabs; foam
   sets mount resonance and damping. (FR4/ALU/CARBON change downstream
   only via `MATERIAL` — web minimums re-gate.)
@@ -267,11 +267,11 @@ both halves** — no longer kerf-fragile; strip stock still cuts 12 pads on
 
 | Material | Fab | Notes |
 |---|---|---|
-| PC 1.5mm (default) | laser | softest feel, virtually unbreakable, cheapest prototype |
-| POM 1.5mm | mill/laser | machines beautifully, slightly firmer than PC |
+| PC 1.2mm (default) | laser | softest feel, virtually unbreakable, cheapest prototype. **1.2mm is mandatory for Choc v1 clip engagement** — a thicker plate does not clip |
+| POM 1.2mm | mill/laser | machines beautifully, slightly firmer than PC |
 | FR4 1.6mm | route | stiff, cheap; glass dust when routing |
-| ALU 1.5mm | laser/waterjet/CNC | balanced feel, best sound; isolate from copper |
-| CARBON 1.5mm | mill ONLY (never laser: toxic dust + delamination) | stiffest; **conductive** — plate touches switch plastic + jackets only by construction, verify at assembly |
+| ALU 1.2mm | laser/waterjet/CNC | balanced feel, best sound; isolate from copper |
+| CARBON 1.2mm | mill ONLY (never laser: toxic dust + delamination) | stiffest; **conductive** — plate touches switch plastic + jackets only by construction, verify at assembly |
 
 `MATERIAL` in the generator re-gates every web minimum
 (PC/POM 1.0, FR4/ALU 1.5, CARBON 2.0); tab roots carry 2mm fillets
@@ -281,12 +281,16 @@ against crack initiation in every material.
 
 - 22× 15×15mm Choc cutouts at switch centers/rotations — **body
   clearance, not a clip fit**: the PG1350 lower body passes at 13.8
-  square (common plate-footprint datum; the 15.0 outline includes the
-  clip wings), so 15.0 gives ~0.6/side and the side clips never touch.
-  With the 1.5mm PC plate this is coherent anyway — Choc clips need a
-  ~1.3mm plate gap to click (1.2mm-class plates), so retention here is
-  friction + the hotsockets. Rev-2 option (laser coupon A/B at §1 of
-  first-article decides): ~14.0 cutout + 1.2mm plate.
+  square (Kailh's plate-footprint datum; the 15.0 outline is the CLIP
+  WING span).  Rev-2 (support strategy b, ADOPTED) uses a **14.0mm
+  cutout in a 1.2mm plate**: 0.10mm/side on the 13.8 body (a 13.8
+  hole is line-to-line and risks a switch that will not insert) while
+  the 15.0 clip wing still overlaps the plate by 0.50mm/side — the
+  overlap the clip arm hooks under.  The old 15.0 hole + 1.5mm plate
+  had NO retention: the switch rocked, lifted out and was held by
+  friction and the hotswap sockets alone.  First-article coupon
+  (spec/first-article.md): cut 13.8 / 14.0 / 14.2 / 15.0 squares in
+  1.2mm PC and measure insertion + retention before the plate order.
 - 12.7×12.7mm square encoder hole (instance rot 0, body axis-aligned).
   Sized off the vendored ROT_EC11E STEP: the body measures **12.30 wide
   in the plate band (z 2.0..3.5)** (12.00 up to z 4.0), so 12.7 gives

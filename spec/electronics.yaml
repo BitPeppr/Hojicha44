@@ -1,7 +1,7 @@
 # Electronics specification (source of truth for schematic/PCB).
 # Statuses: fixed | provisional | candidate | measured | undecided.
 
-version: 0.4.0
+version: 0.5.0
 status: provisional
     # schematic rev 0.3 regenerated (must-fix review applied), PCB placed+routed
   # with DRC clean modulo waiver W1 (exact 28 asserted) + W2 predicate armed
@@ -21,6 +21,20 @@ power:
     # host-wired operation = plug USB into either half's module; PCB phase
     # must keep both module USB-C ports exposed at the board edge.
   battery: 301230 LiPo, 3.7V nominal, ~110mAh, JST-PH 2.0mm
+      # PROTECTION DECISION (2026-10-21, from the LiPo research memo):
+      # keep a PCM'd cell (overcharge 4.28V / over-discharge 2.40V /
+      # over-current 160mV / short 1.00V) and do NOT add an on-board
+      # DW01A+8205A — it would duplicate the cell's PCM.  What the PCM
+      # does NOT cover is a REVERSED pack or a host-PCB short, so the
+      # rev-1 answer stays procedural: the slide switch sits in pack+,
+      # the JST pin-1 '+' silk marks orientation, and first-article
+      # meters RAW-B+/B- before the first plug-in.  A P-MOSFET ideal
+      # diode (rev 2) is only warranted if the pack can be inserted
+      # backwards in the field; a series polyfuse covers the host-short
+      # case.  Transport: UN 38.3 test summary required; 0.407Wh cell
+      # = IATA PI 967 Section II (<=2 batteries or 4 cells per
+      # package; batteries installed in the device for international
+      # mail).
     # rev-2 hardware candidate (6-review audit 2026-10-20): no
     # reverse-polarity protection on the LiPo path (P-MOSFET ideal diode
     # or a DMM gate) — risk accepted for rev 1 behind the procedural
@@ -80,6 +94,18 @@ matrix_per_half:
     # but the layout/boards use 19.00 — documented as-measured, not as-nominal
   diode_direction: COL2ROW         # status: fixed
   diode_part: 1N4148W SOD-123      # status: fixed
+      # MEASURED (KiCad's own Diode_SMD/D_SOD-123.step, 2026-10-21):
+      # body 2.566 x 1.416mm, TOP 1.260mm above the PCB top surface
+      # (the old "1.35" in the stack table was 0.09 pessimistic).  The
+      # diodes stay on the TOP side (F.Cu) in rev 2: the Choc hotswap
+      # socket is a BOTTOM-side part whose solder tabs and plastic body
+      # are asymmetric and whose orientation is fixed by the switch, so
+      # the two halves' bottom copper cannot be mirror-symmetric and a
+      # back-side diode would break the project's left/right mirror
+      # discipline for no functional gain.  Instead the PLATE relieves
+      # 0.35mm over every diode (RELIEF layer in the plate DXF) so the
+      # plate can sit at the Choc v1 clip band (1.05mm gap).
+      # See spec/case.md "Stack" and plate/gen_plate.py.
   diode_symbol: Diode:1N4001 with Value 1N4148W
       # 1N4148 symbol uses
     # `extends` which kicad-cli ERC cannot netlist; identical graphics
