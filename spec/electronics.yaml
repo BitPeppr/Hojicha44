@@ -38,7 +38,7 @@ power:
     # host-wired operation = plug USB into either half's module; PCB phase
     # must keep both module USB-C ports exposed at the board edge.
   battery: 301230 LiPo, 3.7V nominal, ~110mAh, JST-PH 2.0mm
-      # PROTECTION DECISION (2026-10-21, from the LiPo research memo):
+      # PROTECTION DECISION (2026-10-21, from spec/research-open-items-2026-10-21.md):
       # keep a PCM'd cell (overcharge 4.28V / over-discharge 2.40V /
       # over-current 160mV / short 1.00V) and do NOT add an on-board
       # DW01A+8205A — it would duplicate the cell's PCM.  What the PCM

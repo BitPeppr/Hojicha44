@@ -1,7 +1,7 @@
 # Compliance — Hojicha44 (status: DECIDED for the pilot market, per-market paths recorded)
 
-Date: 2026-10-21. Source: research memo `opencode/research-open-items.md`
-(2026-10-21) + primary regulator/vendor sources cited there. Numbers marked
+Date: 2026-10-21. Source: research memo `spec/research-open-items-2026-10-21.md` + the
+primary regulator/vendor sources cited there. Numbers marked
 **[UNVERIFIED]** were not confirmed from a primary source in that pass.
 
 The keyboard is a battery-powered Bluetooth LE (2.4 GHz) device: one
