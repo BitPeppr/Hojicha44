@@ -1,7 +1,7 @@
 # Electronics specification (source of truth for schematic/PCB).
 # Statuses: fixed | provisional | candidate | measured | undecided.
 
-version: 0.3.1
+version: 0.4.0
 status: provisional
     # schematic rev 0.3 regenerated (must-fix review applied), PCB placed+routed
   # with DRC clean modulo waiver W1 (exact 28 asserted) + W2 predicate armed

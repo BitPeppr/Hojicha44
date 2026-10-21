@@ -53,8 +53,10 @@ import math
 import os
 import re
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import frame
 import gen_pcb as G
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -366,9 +368,29 @@ def w1_pad_texts(src):
 
 
 def check(tag, pts):
-    """0 if clean, 1 otherwise. Prints findings."""
+    """Run the board gates on a design-frame view of the committed board.
+
+    The committed .kicad_pcb is stored y-negated so KiCad's y-up Gerber
+    export matches the plate/case design frame (frame.py).  Every gate in
+    _check_design was written against design-frame coordinates, so convert
+    once here and hand the audit helpers a temporary design-frame copy.
+    The conversion is pure coordinate reflection: topology, distances and
+    local footprint content are preserved.
+    """
     path = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
-    txt = open(path).read()
+    txt = frame.to_design(open(path).read())
+    fd, design_path = tempfile.mkstemp(
+        prefix=f"hojicha-{tag}-design-", suffix=".kicad_pcb")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(txt)
+        return _check_design(tag, pts, design_path, txt)
+    finally:
+        os.unlink(design_path)
+
+
+def _check_design(tag, pts, path, txt):
+    """0 if clean, 1 otherwise. Prints findings (design-frame input)."""
     proj = {"txt": txt, "path": path}
     bad = []
 
@@ -665,11 +687,422 @@ def check(tag, pts):
     return 1 if bad else 0
 
 
+# ---------------------------------------------------------------- frame gate
+# Cross-artifact frame proof: the release drill/Gerber must be the same
+# physical frame as the plate DXF/case anchors.  This is deliberately
+# independent of the board generator's own coordinates: it matches the
+# released T12/T10 holes against the plate cutout geometry and the released
+# Edge.Cuts profile against the plate outline.  A Y-mirrored release (the
+# pre-v0.4.0 bug) fails even when every T12 is a perfect centre hole.
+FRAME_TOL = 0.05
+PLATE_DIR = os.path.join(REPO, "plate")
+SPEC = os.path.join(REPO, "spec", "electronics.yaml")
+
+
+def release_version():
+    s = open(SPEC).read()
+    m = re.search(r"^version:\s*(\d+\.\d+\.\d+)", s, re.M)
+    assert m, "spec/electronics.yaml has no version MAJOR.MINOR.PATCH"
+    return m.group(1)
+
+
+def release_dir():
+    return os.path.join(REPO, "generated", "release",
+                        f"v{release_version()}")
+
+
+def dxf_polylines(path):
+    """[(layer, [(x, y), ...])] from the R12 plate DXF (stdlib only)."""
+    lines = open(path, encoding="latin-1").read().split("\n")
+    out = []
+    i = 0
+    while i < len(lines) - 1:
+        code, val = lines[i].strip(), lines[i + 1].strip()
+        if code == "0" and val == "POLYLINE":
+            layer, pts = None, []
+            j = i + 2
+            while j < len(lines) - 1:
+                c, v = lines[j].strip(), lines[j + 1].strip()
+                if c == "8":
+                    layer = v
+                elif c == "0" and v == "VERTEX":
+                    x = y = None
+                    k = j + 2
+                    while k < len(lines) - 1 and lines[k].strip() != "0":
+                        if lines[k].strip() == "10":
+                            x = float(lines[k + 1])
+                        if lines[k].strip() == "20":
+                            y = float(lines[k + 1])
+                        k += 2
+                    if x is not None and y is not None:
+                        pts.append((x, y))
+                elif c == "0" and v == "SEQEND":
+                    i = j
+                    break
+                j += 2
+            out.append((layer, pts))
+        i += 2
+    return out
+
+
+def parse_drill(path):
+    """{tool_diameter: [(x, y), ...]} from a KiCad Excellon file."""
+    tools, hits, cur = {}, {}, None
+    for line in open(path):
+        line = line.strip()
+        m = re.match(r"T(\d+)C([\d.]+)$", line)
+        if m:
+            tools[m.group(1)] = float(m.group(2))
+            continue
+        m = re.match(r"T(\d+)$", line)
+        if m:
+            cur = m.group(1)
+            continue
+        m = re.match(r"X([-\d.]+)Y([-\d.]+)", line)
+        if m and cur is not None:
+            hits.setdefault(tools[cur], []).append(
+                (float(m.group(1)), float(m.group(2))))
+    return hits
+
+
+def parse_gerber_segments(path):
+    """[(a, b)] line segments from a KiCad Edge.Cuts Gerber (4.6 mm)."""
+    s = open(path).read()
+    scale = 1e6  # %FSLAX46Y46*%
+    assert "%FSLAX46Y46*%" in s, f"{path}: expected 4.6 mm coordinates"
+    segs, cur = [], None
+    for line in s.splitlines():
+        m = re.match(r"X(-?\d+)Y(-?\d+)D0([12])\*$", line)
+        if not m:
+            continue
+        p = (int(m.group(1)) / scale, int(m.group(2)) / scale)
+        if m.group(3) == "2":
+            cur = p
+        elif cur is not None:
+            segs.append((cur, p))
+            cur = p
+    return segs
+
+
+def poly_area(poly):
+    return abs(sum(poly[i][0] * poly[(i + 1) % len(poly)][1]
+                   - poly[(i + 1) % len(poly)][0] * poly[i][1]
+                   for i in range(len(poly))) / 2.0)
+
+
+def point_in_poly(p, poly):
+    x, y = p
+    inside = False
+    for a, b in zip(poly, poly[1:] + poly[:1]):
+        if (a[1] > y) != (b[1] > y):
+            xx = (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]
+            if x < xx:
+                inside = not inside
+    return inside
+
+
+def cutout_poly(points):
+    """Drop the DXF's explicit closure duplicate."""
+    if len(points) > 1 and math.hypot(points[0][0] - points[-1][0],
+                                      points[0][1] - points[-1][1]) < 1e-9:
+        return points[:-1]
+    return points
+
+
+def poly_center(poly):
+    xs = [p[0] for p in poly]
+    ys = [p[1] for p in poly]
+    return ((min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0)
+
+
+def poly_side_angle(poly):
+    """Angle of the longest edge (radians).  The cutout is a square; the
+    edge lattice gives the four candidate switch rotations."""
+    edges = list(zip(poly, poly[1:] + poly[:1]))
+    a, b = max(edges, key=lambda e: math.hypot(e[1][0] - e[0][0],
+                                               e[1][1] - e[0][1]))
+    return math.atan2(b[1] - a[1], b[0] - a[0])
+
+
+def rot_cw(x, y, deg):
+    t = math.radians(deg)
+    return (x * math.cos(t) + y * math.sin(t),
+            -x * math.sin(t) + y * math.cos(t))
+
+
+def frame_residuals(t12, t10, cutouts):
+    """Match released drill holes to plate cutouts in the design frame.
+
+    Returns (findings, max_t12_residual, max_post_residual).  t12/t10 are
+    release drill coordinates; cutouts are plate DXF CUTOUT polygons.
+    """
+    findings = []
+    if len(t12) != 22:
+        findings.append(f"release has {len(t12)} T12 holes, want 22")
+    if len(t10) != 44:
+        findings.append(f"release has {len(t10)} T10 holes, want 44")
+    candidates = [cutout_poly(p) for layer, p in cutouts
+                  if layer == "CUTOUT" and len(p) >= 4]
+    candidates = [p for p in candidates
+                  if 120.0 <= poly_area(p) <= 400.0 and len(p) <= 8]
+    matched = {}
+    t12_res = []
+    for i, hole in enumerate(t12):
+        inside = [p for p in candidates if point_in_poly(hole, p)]
+        if not inside:
+            near = min(candidates, key=lambda p: math.hypot(
+                hole[0] - poly_center(p)[0], hole[1] - poly_center(p)[1]))
+            d = math.hypot(hole[0] - poly_center(near)[0],
+                           hole[1] - poly_center(near)[1])
+            findings.append(
+                f"T12 {i} ({hole[0]:.3f},{hole[1]:.3f}) is not inside any "
+                f"switch cutout (nearest centre {d:.3f}mm away) — release "
+                f"is not in the plate frame")
+            t12_res.append(d)
+            continue
+        cut = min(inside, key=poly_area)  # smallest containing cutout
+        c = poly_center(cut)
+        d = math.hypot(hole[0] - c[0], hole[1] - c[1])
+        t12_res.append(d)
+        if d > FRAME_TOL:
+            findings.append(f"T12 {i} is {d:.3f}mm from its cutout centre "
+                            f"(want <= {FRAME_TOL})")
+        key = id(cut)
+        if key in matched:
+            findings.append(f"T12 {i} and {matched[key]} share one cutout")
+        matched[key] = i
+    max_t12 = max(t12_res) if t12_res else 0.0
+
+    # The standard Choc post pair is (0,-5.9) and (5,-3.8) in footprint-local
+    # coordinates.  A mirror maps it to (0,+5.9)/(5,+3.8), which is NOT a
+    # rotation of the original pair — so this test catches handedness
+    # independently of the board file.  The plate square gives the 90-degree
+    # lattice; try all four rotations and require one to fit both posts.
+    max_post = 0.0
+    for cut in [p for p in candidates if id(p) in matched]:
+        c = poly_center(cut)
+        near = sorted(t10, key=lambda p: math.hypot(p[0] - c[0],
+                                                    p[1] - c[1]))[:2]
+        actual = [(p[0] - c[0], p[1] - c[1]) for p in near]
+        best = None
+        theta = math.degrees(poly_side_angle(cut))
+        for k in range(4):
+            rot = -theta + k * 90.0
+            want = [rot_cw(px, py, rot) for px, py in ((0.0, -5.9),
+                                                       (5.0, -3.8))]
+            res = max(min(math.hypot(w[0] - a[0], w[1] - a[1])
+                          for a in actual) for w in want)
+            if best is None or res < best[0]:
+                best = (res, rot)
+        max_post = max(max_post, best[0])
+        if best[0] > FRAME_TOL:
+            findings.append(
+                f"switch cutout at ({c[0]:.2f},{c[1]:.2f}): T10 posts are "
+                f"{best[0]:.3f}mm from the standard Choc pattern (best "
+                f"rotation {best[1]:.1f} deg) — mirrored/reversed posts")
+    return findings, max_t12, max_post
+
+
+def usb_floor(segments, ux, uy):
+    """Highest y at x=ux below the USB anchor, over outline segments."""
+    vals = []
+    for a, b in segments:
+        if abs(b[0] - a[0]) < 1e-12:
+            continue
+        t = (ux - a[0]) / (b[0] - a[0])
+        if -1e-9 <= t <= 1 + 1e-9:
+            y = a[1] + t * (b[1] - a[1])
+            if y < uy - 1.0:
+                vals.append(y)
+    return max(vals) if vals else None
+
+
+def board_instances(txt):
+    """{ref: (x, y, rot)} from a design-frame board text."""
+    lines = txt.splitlines()
+    out = {}
+    for i, ln in enumerate(lines):
+        if not re.match(r'\s*\(footprint "', ln):
+            continue
+        at = ref = None
+        for k in range(i, min(i + 12, len(lines))):
+            if at is None:
+                m = re.match(r'\s*\(at (-?[\d.]+) (-?[\d.]+)(?: (-?[\d.]+))?',
+                             lines[k])
+                if m:
+                    at = (float(m.group(1)), float(m.group(2)),
+                          float(m.group(3) or 0))
+            m = re.search(r'\(property "Reference" "([^"]+)"', lines[k])
+            if m:
+                ref = m.group(1)
+                break
+        if ref and at:
+            out[ref] = at
+    return out
+
+
+def case_ports():
+    import importlib.util as ilu
+    spec = ilu.spec_from_file_location(
+        "case_params_frame", os.path.join(REPO, "case", "params.py"))
+    mod = ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.PORTS
+
+
+def check_frame(tag, pts):
+    """Cross-artifact frame/ports gate for one half.  Returns findings."""
+    half = "Left" if tag == "L" else "Right"
+    bad = []
+    reldir = release_dir()
+    drill = os.path.join(reldir, half, f"Hojicha44-{half}.drl")
+    gerber = os.path.join(reldir, half,
+                          f"Hojicha44-{half}-Edge_Cuts.gm1")
+    plate = os.path.join(PLATE_DIR, f"Hojicha44-{half}-plate.dxf")
+    for p in (drill, gerber, plate):
+        if not os.path.exists(p):
+            return [f"missing frame-gate input {os.path.relpath(p, REPO)}"]
+    hits = parse_drill(drill)
+    t12 = hits.get(3.45, [])
+    t10 = hits.get(3.05, [])
+    cutouts = dxf_polylines(plate)
+    finds, max_t12, max_post = frame_residuals(t12, t10, cutouts)
+    bad += finds
+    print(f"  frame {tag}: {len(t12)} T12 / {len(t10)} T10 vs "
+          f"{len([1 for l, _ in cutouts if l == 'CUTOUT'])} plate cutouts; "
+          f"max T12 residual {max_t12:.4f}mm, max post residual "
+          f"{max_post:.4f}mm")
+
+    # released Edge.Cuts profile vs plate outline: the USB notch floor is a
+    # common feature (tabs are not on the PCB rim), so a y-mirrored export
+    # shows up as a ~94mm floor error even if every drill hit is centred.
+    gsegs = parse_gerber_segments(gerber)
+    ux, uy, _ = pts["usb" if tag == "L" else "mirror_usb"]
+    plate_outline = next((p for l, p in cutouts if l == "OUTLINE"), [])
+    psegs = list(zip(plate_outline, plate_outline[1:] + plate_outline[:1]))
+    gf = usb_floor(gsegs, ux, uy)
+    pf = usb_floor(psegs, ux, uy)
+    print(f"  frame outline {tag}: USB notch floor release "
+          f"{'none' if gf is None else f'{gf:.3f}'} / plate "
+          f"{'none' if pf is None else f'{pf:.3f}'}")
+    if gf is None or pf is None:
+        bad.append("USB notch floor not found on release/plate outline")
+    elif abs(gf - pf) > FRAME_TOL:
+        bad.append(f"release USB notch floor {gf:.3f} != plate {pf:.3f} "
+                   f"— release outline is not in the design frame")
+
+    # port anchors: PORTS is the single source shared by plate + case.  Read
+    # the committed board in DESIGN frame (the storage is y-negated) and
+    # derive the same anchors the generators use.
+    inst = board_instances(frame.read_design(
+        os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")))
+    ports = case_ports()[half]
+    usb_want = (pts["usb" if tag == "L" else "mirror_usb"][0],
+                pts["usb" if tag == "L" else "mirror_usb"][1])
+    trrs = inst.get(f"J_{tag}1")
+    pwr = inst.get(f"SW_{tag}PWR1")
+    got = {"usb": usb_want}
+    if trrs:
+        got["trrs"] = (trrs[0] + (12.1 if tag == "L" else -12.1), trrs[1])
+    if pwr:
+        got["pwrsw"] = (pwr[0], pwr[1] + 7.0)
+    for name in ("usb", "trrs", "pwrsw"):
+        if name not in got:
+            bad.append(f"port {name}: source footprint missing")
+            continue
+        d = math.hypot(ports[name][0] - got[name][0],
+                       ports[name][1] - got[name][1])
+        if d > FRAME_TOL:
+            bad.append(f"PORTS[{half}][{name}] {ports[name]} != design "
+                       f"anchor {got[name]} ({d:.3f}mm)")
+        else:
+            print(f"  port {tag}.{name}: ({got[name][0]:.2f},"
+                  f"{got[name][1]:.2f}) matches PORTS")
+    return bad
+
+
+def frame_selftest():
+    """Negative controls for the frame gate (no KiCad, current tree only).
+
+    Proves the gate is not a tautology: the released T12/T10 set must pass
+    in the plate frame, fail when Y-negated, and the port check must fail
+    on a 0.5mm perturbation.  Returns findings.
+    """
+    bad = []
+    pts = G.load_points()
+    for tag in ("L", "R"):
+        half = "Left" if tag == "L" else "Right"
+        hits = parse_drill(os.path.join(
+            release_dir(), half, f"Hojicha44-{half}.drl"))
+        cutouts = dxf_polylines(os.path.join(
+            PLATE_DIR, f"Hojicha44-{half}-plate.dxf"))
+        t12, t10 = hits.get(3.45, []), hits.get(3.05, [])
+        good, _, _ = frame_residuals(t12, t10, cutouts)
+        if good:
+            bad.append(f"self-test {tag}: current release fails frame gate: "
+                       + "; ".join(good[:2]))
+        mirrored = frame_residuals(
+            [(x, -y) for x, y in t12], [(x, -y) for x, y in t10], cutouts)[0]
+        if not mirrored:
+            bad.append(f"self-test {tag}: Y-negated drill did NOT fail")
+        if len(mirrored) < 10:
+            bad.append(f"self-test {tag}: Y-negated drill only produced "
+                       f"{len(mirrored)} findings; expected the centre test "
+                       f"to reject most/all 22 switches")
+        # outline negative control: the USB notch floor must pass on the
+        # release and fail when the Gerber segments are Y-negated.
+        ux, uy, _ = pts["usb" if tag == "L" else "mirror_usb"]
+        gerber = os.path.join(release_dir(), half,
+                              f"Hojicha44-{half}-Edge_Cuts.gm1")
+        gsegs = parse_gerber_segments(gerber)
+        plate_outline = next((p for l, p in cutouts if l == "OUTLINE"), [])
+        psegs = list(zip(plate_outline,
+                         plate_outline[1:] + plate_outline[:1]))
+        gf, pf = usb_floor(gsegs, ux, uy), usb_floor(psegs, ux, uy)
+        if gf is None or pf is None or abs(gf - pf) > FRAME_TOL:
+            bad.append(f"self-test {tag}: released USB notch floor does not "
+                       f"match the plate")
+        gmir = [((a[0], -a[1]), (b[0], -b[1])) for a, b in gsegs]
+        gfm = usb_floor(gmir, ux, uy)
+        if gfm is not None and abs(gfm - pf) <= FRAME_TOL:
+            bad.append(f"self-test {tag}: Y-negated outline did NOT fail")
+        # port perturbation: the real anchors pass, a 0.5mm nudge must not.
+        inst = board_instances(frame.read_design(
+            os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")))
+        ports = case_ports()[half]
+        trrs = inst[f"J_{tag}1"]
+        pwr = inst[f"SW_{tag}PWR1"]
+        anchors = {"usb": (ux, uy),
+                   "trrs": (trrs[0] + (12.1 if tag == "L" else -12.1),
+                            trrs[1]),
+                   "pwrsw": (pwr[0], pwr[1] + 7.0)}
+        for name, a in anchors.items():
+            if math.hypot(ports[name][0] - a[0],
+                          ports[name][1] - a[1]) > FRAME_TOL:
+                bad.append(f"self-test {tag}.{name}: real anchor does not "
+                           f"match PORTS")
+            nudged = (a[0] + 0.5, a[1])
+            if math.hypot(ports[name][0] - nudged[0],
+                          ports[name][1] - nudged[1]) <= FRAME_TOL:
+                bad.append(f"self-test {tag}.{name}: 0.5mm nudge did not "
+                           f"fail the port check")
+    return bad
+
+
 def main():
     pts = G.load_points()
     rc = 0
     for tag in ("L", "R"):
         rc |= check(tag, pts)
+        for b in check_frame(tag, pts):
+            print(f"  !! {b}")
+            rc = 1
+    if "--self-test" in sys.argv:
+        for b in frame_selftest():
+            print(f"  !! {b}")
+            rc = 1
+        print("frame self-test: CLEAN" if rc == 0 else
+              "frame self-test: FAILING")
     print("check_board: CLEAN" if rc == 0 else "check_board: FAILING")
     sys.exit(rc)
 

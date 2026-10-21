@@ -24,6 +24,8 @@ import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
+import frame
 SPEC = os.path.join(REPO, "spec", "electronics.yaml")
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 LAYERS = "F.Cu,B.Cu,F.Mask,B.Mask,F.Silkscreen,B.Silkscreen,F.Paste,B.Paste,Edge.Cuts"
@@ -126,21 +128,47 @@ def export_half(half, outdir):
     # the cut's own comment demanded "a failing or stale report must
     # not ride beside fresh gerbers" but only the FAILING case was
     # detected). kicad-cli is already required for the gerber export.
-    for ext, args, src in (
-            ("-drc.rpt", ["pcb", "drc", "--severity-all", "--format", "report"],
-             os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb")),
-            ("-erc.rpt", ["sch", "erc", "--severity-all", "--format", "report"],
-             os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_sch"))):
-        out = os.path.join(outdir, f"Hojicha44-{half}{ext}")
-        r = subprocess.run([KICAD_CLI] + args + ["-o", out, src],
-                           capture_output=True, text=True)
-        if r.returncode != 0:
-            sys.exit(f"release cut refused: {half} {ext} run failed "
-                     f"(exit {r.returncode}):\n"
-                     + (r.stdout + r.stderr)[-400:])
-        if not os.path.exists(out) or os.path.getsize(out) == 0:
-            sys.exit(f"release cut refused: {half} {ext} is empty — a "
-                     f"missing report must never read as clean")
+    # DRC uses the design-frame reflection of the exported board: storage
+    # is y-negated so KiCad's y-up gerber/drill export matches the plate,
+    # while KiCad's library comparison sees footprint-LOCAL geometry.  The
+    # reflection is an isometry; this is the same physical board with the
+    # libraries in their native frame, so the W1 set stays the intentional
+    # 28 edits instead of flagging all 54 mirrored footprints.
+    drc_stem = os.path.join(PCB_DIR, f".release-{half}-drc-design")
+    drc_src = drc_stem + ".kicad_pcb"
+    copied = [drc_src]
+    try:
+        with open(drc_src, "w") as f:
+            f.write(frame.read_design(
+                os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb")))
+        # matching project/custom-rule copies: otherwise KiCad falls back
+        # to default edge clearance and false-flags the router's edge tracks
+        for ext in (".kicad_pro", ".kicad_dru"):
+            s = os.path.join(PCB_DIR, f"Hojicha44-{half}{ext}")
+            if os.path.exists(s):
+                shutil.copyfile(s, drc_stem + ext)
+                copied.append(drc_stem + ext)
+        for ext, args, src in (
+                ("-drc.rpt",
+                 ["pcb", "drc", "--severity-all", "--format", "report"],
+                 drc_src),
+                ("-erc.rpt",
+                 ["sch", "erc", "--severity-all", "--format", "report"],
+                 os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_sch"))):
+            out = os.path.join(outdir, f"Hojicha44-{half}{ext}")
+            r = subprocess.run([KICAD_CLI] + args + ["-o", out, src],
+                               capture_output=True, text=True)
+            if r.returncode != 0:
+                sys.exit(f"release cut refused: {half} {ext} run failed "
+                         f"(exit {r.returncode}):\n"
+                         + (r.stdout + r.stderr)[-400:])
+            if not os.path.exists(out) or os.path.getsize(out) == 0:
+                sys.exit(f"release cut refused: {half} {ext} is empty — a "
+                         f"missing report must never read as clean")
+    finally:
+        for p in copied:
+            if os.path.exists(p):
+                os.unlink(p)
     # gate on the reports we just produced (same bytes the fab sees)
     sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
     import gen_pcb as _gp
@@ -154,12 +182,17 @@ def export_half(half, outdir):
                  f"(drc rc={drc_rc}, erc rc={erc_rc})")
 
 
-def sha12(path):
+def sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
+        for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
-    return h.hexdigest()[:12]
+    return h.hexdigest()
+
+
+def sha12(path):
+    """Legacy v0.3.1 manifest prefix; new manifests use full sha256."""
+    return sha256(path)[:12]
 
 
 def manifest_lines(reldir):
@@ -188,9 +221,10 @@ def verify_release(reldir, with_manifest=True):
         tops = sorted(os.listdir(reldir))
         if tops != ["Left", "MANIFEST.txt", "Right"]:
             bad.append(f"unexpected release top-level: {tops} (clean-cut only)")
-    # every listed file must still hash to its manifest sha12 (the manifest
+    # every listed file must still hash to its manifest digest (the manifest
     # is the tamper evidence; eb6678f was caught shipping stale gerbers
-    # beside a re-pointed manifest exactly because nothing re-verified)
+    # beside a re-pointed manifest exactly because nothing re-verified).
+    # v0.4.0+ writes full sha256; accept 12-hex v0.3.1 manifests for history.
     for half in ("Left", "Right"):
         d = os.path.join(reldir, half)
         if not os.path.isdir(d):
@@ -225,7 +259,8 @@ def verify_release(reldir, with_manifest=True):
                 if started and l.startswith("["):
                     break
                 if started:
-                    m = re.match(r"^  ([0-9a-f]{12})  (\S+)$", l)
+                    m = re.match(
+                        r"^  ([0-9a-f]{12}|[0-9a-f]{64})  (\S+)$", l)
                     if not m:
                         bad.append(f"{half}: unparseable manifest line {l!r}")
                         continue
@@ -237,7 +272,9 @@ def verify_release(reldir, with_manifest=True):
                 if not os.path.exists(os.path.join(d, f)):
                     bad.append(f"{half}/{f} in manifest but missing on disk")
                     continue
-                got_hash = sha12(os.path.join(d, f))
+                p = os.path.join(d, f)
+                got_hash = (sha256(p) if len(want_hash) == 64
+                            else sha12(p))
                 if got_hash != want_hash:
                     bad.append(f"{half}/{f} hash {got_hash} != manifest "
                                f"{want_hash} (stale content or edited artifact)")
@@ -252,6 +289,22 @@ def verify_release(reldir, with_manifest=True):
         if cmt != head:
             bad.append(f"manifest commit {cmt} != board-affecting HEAD {head} "
                        f"(- boards changed since the cut; re-run make_release)")
+        # and it must certify the board BYTES it was cut from, so a local
+        # edit cannot ride under an unchanged commit stamp.
+        bh = manifest_value(lines, "board sha256") or ""
+        m = re.match(
+            r"Left ([0-9a-f]{12}|[0-9a-f]{64})  "
+            r"Right ([0-9a-f]{12}|[0-9a-f]{64})$", bh)
+        if not m:
+            bad.append("manifest board sha256 line missing/unparseable")
+        else:
+            for half, want in (("Left", m.group(1)), ("Right", m.group(2))):
+                p = os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb")
+                got = sha256(p) if len(want) == 64 else sha12(p)
+                if got != want:
+                    bad.append(
+                        f"{half} board hash {got} != manifest {want} "
+                        f"(board changed since the cut)")
     return bad
 
 
@@ -302,7 +355,7 @@ def main():
             print(f"  !! {b}")
         sys.exit(1)
     board_hash = {
-        half: sha12(os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb"))
+        half: sha256(os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb"))
         for half in ("Left", "Right")}
     lines = [
         "Hojicha44 release manifest",
@@ -320,7 +373,9 @@ def main():
         "ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)",
         "DRC: 0 non-waived (exact W1 set of 28/half asserted); "
         "unconnected NOT waived; PTH/NPTH-in-courtyard = error",
-        "reports: ERC/DRC are re-run on the exported board at cut time",
+        "reports: ERC on the exported schematic; DRC on the design-frame "
+        "reflection of the exported y-negated board (same physical "
+        "geometry, same project rules) at cut time",
         "",
     ]
     for half in ("Left", "Right"):
@@ -328,7 +383,7 @@ def main():
         files = sorted(os.listdir(d))
         lines.append(f"[{half}] {len(files)} files")
         for f in files:
-            lines.append(f"  {sha12(os.path.join(d, f))}  {f}")
+            lines.append(f"  {sha256(os.path.join(d, f))}  {f}")
     open(os.path.join(reldir, "MANIFEST.txt"), "w").write("\n".join(lines) + "\n")
     print(f"release v{ver}: {reldir}")
     print(f"  spec {ver} boards @{bhead[:12]} router {router} cli {cli[:24]}")

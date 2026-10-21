@@ -45,6 +45,8 @@ import re
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
+import frame
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 OUT_DIR = os.path.join(REPO, "plate")
 
@@ -199,7 +201,10 @@ def chamfer(poly, r):
 
 # ---- board parsing ----
 def parse_instances(path):
-    lines = open(path).read().splitlines()
+    # The committed board is stored y-negated so KiCad's y-up export lands
+    # in the plate design frame (frame.py).  The plate is authored entirely
+    # in the design frame, so convert before reading.
+    lines = frame.read_design(path).splitlines()
     out = {}
     fp = at = None
     for i, ln in enumerate(lines):
@@ -220,7 +225,7 @@ def parse_instances(path):
 
 
 def parse_outline(path):
-    s = open(path).read()
+    s = frame.read_design(path)
     segs = []
     for m in re.finditer(
             r'\(gr_line \(start (-?[\d.]+) (-?[\d.]+)\) '

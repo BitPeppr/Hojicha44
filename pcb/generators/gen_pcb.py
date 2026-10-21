@@ -28,6 +28,8 @@ import subprocess
 import sys
 import uuid
 
+import frame
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PCB_DIR = os.path.join(REPO, "pcb", "kicad")
 POINTS = os.path.join(REPO, "layout", "generated", "v2", "points", "points.yaml")
@@ -1283,13 +1285,20 @@ def build_board(tag, pts):
     name_code = {n: c for c, n in nets}
     # Copper comes from the committed baseline; the working preamble (same
     # source-of-truth story as below: setup block survives local edits).
+    # The committed board may be design-frame (pre-v0.4.0) or the new
+    # y-negated storage frame; the copper signatures are design-frame, so
+    # convert before extraction.  The final board is reflected at the write
+    # boundary (see frame.py) — every builder above stays in design frame.
     track = git_track_text(path)
+    if track is not None:
+        track = frame.to_design(track)
     label = "HEAD:" + os.path.relpath(path, REPO)
     copper = [] if track is None else extract_copper_text(track, name_code,
                                                           label)
     import gen_route as router
     tag_now = f"placed+routed r{router.ROUTER_VERSION}"
     head = blank.split('(net 0 "")')[0] + '(net 0 "")\n'
+    head = frame.set_frame(head, frame.DESIGN)
     head = re.sub(r'\(comment 2 "[^"]*"\)', f'(comment 2 "{tag_now}")', head)
     for code, name in sorted(nets):
         if code == 0:
@@ -1420,10 +1429,15 @@ def build_board(tag, pts):
     check_containment(tag, placements)
     check_copper(tag, merged, placements, {c: n for c, n in nets}, pts,
                  dangle_items=kept)
+    text = (head
+            + "\n".join(gfx) + "\n"
+            + "\n".join(body + route_blocks + [b for _, b in kept]) + "\n)\n")
+    # KiCad's Gerber/Excellon writers negate stored y.  Storing the board
+    # y-negated makes the release artwork land in the plate/case design
+    # frame (see frame.py for the full rationale and the T12/T10 gate).
+    text = frame.to_storage(text)
     with open(path, "w") as f:
-        f.write(head)
-        f.write("\n".join(gfx) + "\n")
-        f.write("\n".join(body + route_blocks + [b for _, b in kept]) + "\n)\n")
+        f.write(text)
     print(f"{PROJECT[tag]}: {len(placements)} footprints, "
           f"{len(nets)} nets, {len(gfx)} edge segments, "
           f"{len(route_blocks)} routed + {len(kept)} preserved copper items")
@@ -1438,10 +1452,40 @@ def drc(tag):
     Anything else fails the build.
     """
     out = os.path.join(PCB_DIR, PROJECT[tag] + "-drc.rpt")
-    r = subprocess.run(
-        [KICAD_CLI, "pcb", "drc", "--severity-all", "--format", "report",
-         "-o", out, os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")],
-        capture_output=True, text=True)
+    src = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_pcb")
+    # DRC on the design-frame reflection, not the y-negated storage file.
+    # The two are the same physical board (frame.py); KiCad's library
+    # comparison, however, compares footprint-LOCAL geometry, and the
+    # storage file deliberately mirrors every local primitive so the
+    # Gerber export lands in the plate frame.  Running DRC on storage would
+    # flag all 54 footprints as lib_footprint_mismatch (the 20 intentional
+    # W1 edits would be buried); the reflection is an isometry, so DRC on
+    # the design copy is the same geometry with the library in its native
+    # frame.  Keep the copy inside the project dir so KIPRJMOD/lib tables
+    # resolve exactly as for the exported board.
+    stem = os.path.join(PCB_DIR, f".{PROJECT[tag]}-drc-design")
+    tmp = stem + ".kicad_pcb"
+    # KiCad picks design rules from <board-stem>.kicad_pro.  Without the
+    # matching project copy the temp board silently falls back to the
+    # default 0.5mm edge clearance and reports false copper_edge_clearance
+    # hits that the real project rule allows.  Copy the project (and custom
+    # rules, if any) beside the temp board, then remove all three.
+    copied = [tmp]
+    try:
+        with open(tmp, "w") as f:
+            f.write(frame.read_design(src))
+        for ext in (".kicad_pro", ".kicad_dru"):
+            s = os.path.join(PCB_DIR, PROJECT[tag] + ext)
+            if os.path.exists(s):
+                shutil.copyfile(s, stem + ext)
+                copied.append(stem + ext)
+        r = subprocess.run(
+            [KICAD_CLI, "pcb", "drc", "--severity-all", "--format", "report",
+             "-o", out, tmp], capture_output=True, text=True)
+    finally:
+        for p in copied:
+            if os.path.exists(p):
+                os.unlink(p)
     tail = (r.stdout + r.stderr).strip().splitlines()
     print(f"  {tail[-1] if tail else 'drc done'}")
     if r.returncode != 0:

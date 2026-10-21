@@ -47,6 +47,9 @@ import cadquery as cq
 import params
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
+import frame
+
 PLATE_DIR = os.path.join(REPO, "plate")
 OUT_DIR = os.path.join(REPO, "case", "out")
 
@@ -103,10 +106,12 @@ def read_pcb_outline(path):
     The case exterior dilates THIS, so tab tongues never bump the skin."""
     import re as _re
     segs = []
+    # PCB storage is y-negated; the case is authored in the plate/design
+    # frame, so convert before chaining the rim (frame.py).
     for m in _re.finditer(
             r'\(gr_line \(start (-?[\d.]+) (-?[\d.]+)\) '
             r'\(end (-?[\d.]+) (-?[\d.]+)\) \(layer "Edge\.Cuts"',
-            open(path).read()):
+            frame.read_design(path)):
         segs.append(((float(m.group(1)), float(m.group(2))),
                      (float(m.group(3)), float(m.group(4)))))
     assert len(segs) > 8, f"no Edge.Cuts loop in {path}"

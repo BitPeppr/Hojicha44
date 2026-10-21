@@ -1,4 +1,4 @@
-# Manufacturing order guide (v0.3.1)
+# Manufacturing order guide (v0.4.0)
 
 The exact answers for the JLCPCB Online PCB Quote, derived from the
 committed design + vendor research (2026-10; sources at the bottom).
@@ -47,14 +47,27 @@ but every design-shaped field below has exactly one right answer.
   "Different Design: 2", or two orders — each design is billed its own
   5-pc minimum. Don't merge them into one panel/gerber: per-extra-design
   fees exist and a shared panel of this size gains nothing.
-- The released artifacts are `generated/release/v0.3.1/{Left,Right}/`
+- The released artifacts are `generated/release/v0.4.0/{Left,Right}/`
   (9 gerbers + job + drill + pos + pos-smt + bom + ERC/DRC each; zip
   each half's folder for upload). Cross-check the MANIFEST stamp
   (`git commit:` / `board sha256:` lines in
-  `generated/release/v0.3.1/MANIFEST.txt`) — the ERC/DRC reports in the
-  release are re-run on the exported board at cut time, and the
-  manifest records the board's hash, so the release certifies those
-  exact bytes.
+  `generated/release/v0.4.0/MANIFEST.txt`) — the ERC/DRC reports in the
+  release are re-run at cut time, and the manifest records the board's
+  hash, so the release certifies those exact bytes.
+- **Only `generated/release/vX.Y.Z/` is fab-pointable.** The pre-M3
+  `pcb/- FINAL/` tree is removed; it had stale power-switch pads and
+  pinned an uncommitted board (`3016153-dirty`). Historical audit
+  reports may still mention it.
+- **Frame note (v0.4.0):** the `.kicad_pcb` is stored y-negated so
+  KiCad's y-up Gerber/drill/pos exports land in the plate/case design
+  frame. The board title block records
+  `(comment 3 "frame: storage-yneg")`; readers convert with
+  `pcb/generators/frame.py`. The release gate
+  `python3 pcb/generators/check_board.py --self-test` proves the
+  released T12/T10 holes and USB-notch outline match the plate, and
+  proves a Y-negated control fails. DRC is run on the geometrically
+  identical design-frame reflection (same project rules), because
+  KiCad compares footprint-local geometry to the libraries.
 - **Concave outline — TAB-ROUTE ONLY, NO V-CUT / V-SCORE.** The
   measured minimum copper-to-edge is 0.292mm, below the 0.3mm a V-cut
   wants, and the outline is concave (V-cut wants a straight edge). Put
