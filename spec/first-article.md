@@ -22,8 +22,8 @@ poor bridger.
 - [ ] **Build 5 half-pairs (10 halves)** for the first article: enough
   to test switch retention, plate fit, case fit and battery life with
   a spare in every failure-prone class, small enough that a design
-  mistake is not expensive. Order quantities (research memo
-  2026-10-21): 20 PCBs (10 halves + 10 spares), 20 plates, 12–15
+  mistake is not expensive. Order quantities (spec/research-open-items-2026-10-21.md):
+  20 PCBs (10 halves + 10 spares), 20 plates, 12–15
   cases (3–4 printed spares per design), 490 switches (14 packs of
   35), 450–500 hotswap sockets, 500 diodes, 12–14 cells, 150 magnets
   (16/half + spares), 12 modules, 20 polyfuses.
