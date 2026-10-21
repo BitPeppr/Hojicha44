@@ -765,9 +765,11 @@ def build_half(tag):
     # from the LEFT literals over the shared axis x -> 291.5 - x (pwrsw
     # was already hand-mirrored; usb/trrs carried a +0.5 drafting drift
     # that skewed only the right keep-zones). The case PORTS anchors
-    # (case/gen_case.py PORTS: usb L (118, 49.95), trrs (134.6, -22.0),
-    # pwrsw nw corner 103.6 — mirrored per half) must stay inside these
-    # keep-zones; re-derive if those anchors move.
+    # (case/params.py PORTS — the single source of truth for both
+    # files: usb L (118, 49.95), trrs (134.55, -22.0), pwrsw mouth
+    # centre (106.3, 58.0), mirrored per half) must stay inside these
+    # keep-zones; the assert below enforces it, so re-derive the
+    # literals if an anchor moves.
     L_rects = ((111.0, 45.0, 125.0, 60.0),      # usb
                (129.0, -27.0, 138.0, -17.0),    # trrs
                (103.8, 52.0, 108.8, 64.0))      # pwrsw
