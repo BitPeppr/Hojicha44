@@ -36,16 +36,33 @@ poor bridger.
 - [ ] **Regenerate the fit PDFs first** — `out/fit` renders predate the
   16 Oct boards (and the case v3.3-v3.5 port changes); rebuild prints
   from the current tracked artifacts before any caliper check here.
-- [ ] **Choc cutout coupon (PRE-ORDER, new in rev 2) — the support
-  strategy hinges on this.** Cut four 20x20mm squares in 1.2mm PC with
-  **13.8 / 14.0 / 14.2 / 15.0mm** holes, and for each: drop a PG1350
-  in (does the body pass the hole?) then press the switch down onto
-  the coupon and LIFT it (does the clip arm catch the plate's
-  underside?). Expected: 14.0 gives 0.10mm/side on the 13.8 body and
-  0.50mm/side of clip-wing overlap; 13.8 may be line-to-line (a switch
-  that will not insert); 15.0 reproduces the old rev-1 failure (no
-  retention, the switch rocks out). If 14.0 does not catch, drop to
-  13.9 before ordering the plate batch.
+- [ ] **Choc cutout test coupon (PRE-ORDER, new in rev 2) — the support
+  strategy hinges on this.**
+  *What it is:* a **test piece** — one small offcut of the REAL plate
+  material and thickness (1.2mm PC), cut by the same vendor with the
+  same process, carrying every candidate feature. Not a full plate.
+  *What to ask for:* a **100 x 100mm sheet of 1.2mm PC** with four
+  **20 x 20mm squares**, one hole each of **13.8 / 14.0 / 14.2 /
+  15.0mm**, all holes concentric in their square, PLUS one extra
+  20x20mm square with a 14.0mm hole **and a 0.40mm-deep pocket in its
+  underside** (the diode relief, 2.87 x 1.72mm, offset 9.5mm from the
+  hole centre — the fabricator needs the DXF, and it is the RELIEF
+  layer of the plate file). Cost: a few dollars; turnaround: a day.
+  *What to do with it:* for each square (a) drop a PG1350 in — does
+  the body pass the hole? (b) press the switch down onto the coupon
+  and LIFT it — does the clip arm catch the plate's underside?
+  Expected: at 14.0 the lip (0.9–1.3mm above the PCB) grabs the
+  1.00mm underside and the 14.8mm ears seat on the 2.20mm top face;
+  13.8 may be line-to-line (a switch that will not insert); 15.0
+  reproduces the old rev-1 failure (the ears fall into the hole, no
+  retention, the switch rocks out). On the relief square: the pocket
+  must be 0.40mm deep, NOT through (0.80mm of material must remain),
+  and the plate must still sit flat on the switch housings.
+  *Why it is worth a day:* the decisions are 0.1–0.2mm of hole size
+  and 0.05mm of ear seating — smaller than the datasheet tolerance
+  and smaller than any drawing can promise. If 14.0 does not catch,
+  drop to 13.9 and re-cut the coupon, rather than discovering it
+  after ordering 2 plates and 44 switches.
 - [ ] **Plate relief pocket (PRE-ORDER, new in rev 2)** — the plate
   carries a 0.40mm-deep pocket in its UNDERSIDE under each of the 22
   diodes (RELIEF layer in the plate DXF: machine 0.40mm, do NOT cut
