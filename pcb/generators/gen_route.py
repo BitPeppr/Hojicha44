@@ -966,7 +966,7 @@ def main():
     pts = P.load_points()
     total_v = []
     for tag in ("L", "R"):
-        nets, pin_net = P.load_nets(tag)
+        nets, pin_net = P.load_nets(tag, refresh=True)
         placements = P.build_placements(tag, pts, pin_net)
         board, tracks, vias = plan(tag, pts, placements, nets, pin_net)
         nseg = sum(len(p) - 1 for _, _, _, p in tracks)

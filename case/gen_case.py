@@ -406,7 +406,11 @@ def _station_fit(P, pt, skin, cav, obstructions, ant):
     if math.hypot(pt[0] - ant[0], pt[1] - ant[1]) < \
             P.ANT_R_MM + P.ANT_CASE_CLEAR + P.MAG_DIA / 2:
         return None
-    return ds + dc
+    # the TRUE web is the material beside the pocket: the smaller of the
+    # two boundary distances MINUS the pocket radius (the separation-
+    # derived web overstated it on oblique points) — the absolute
+    # MAG_WEB_MIN floor gates this value
+    return (ds + dc, min(ds, dc) - P.MAG_DIA / 2)
 
 
 def _ring_len(pts):
@@ -463,22 +467,22 @@ def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
             if d < P.MAG_STATION_BAND:
                 continue
             pt = (c[0] + cn[i][0] * d / 2, c[1] + cn[i][1] * d / 2)
-            band = _station_fit(P, pt, skin, cav, obstructions, P.ANTENNA_L)
-            if band is None:
+            fit = _station_fit(P, pt, skin, cav, obstructions, P.ANTENNA_L)
+            if fit is None:
                 continue
-            cands.append((arcs[i], pt, band))
+            cands.append((arcs[i], pt, fit[0], fit[1]))
         taken = []
         step = tot / P.MAG_MAX_STATIONS
         for k in range(P.MAG_MAX_STATIONS):
             want = step * k
             best = None
-            for s, cpt, d in cands:
+            for s, cpt, band, web in cands:
                 off = abs(s - want)
                 off = min(off, tot - off)
                 if off > step / 2:
                     continue
                 clash = False
-                for s2, _, _ in taken:
+                for s2, _, _, _ in taken:
                     dd = abs(s - s2)
                     if min(dd, tot - dd) < P.MAG_MIN_SEP:
                         clash = True
@@ -486,13 +490,15 @@ def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
                 if clash:
                     continue
                 if best is None or off < best[0]:
-                    best = (off, s, cpt, d)
+                    best = (off, s, cpt, band, web)
             if best is not None:
-                taken.append((best[1], best[2], best[3]))
-        res = [((p, d)) for _, p, d in taken]
+                taken.append((best[1], best[2], best[3], best[4]))
+        res = [(p, band, web) for _, p, band, web in taken]
         global _LAST_LEFT
         _LAST_LEFT = (_ring_len(skin), _ring_len(cav), res)
-        return ([p for p, _ in res], [d for _, d in res])
+        return ([p for p, _, _ in res],
+                [b for _, b, _ in res],
+                [w for _, _, w in res])
 
     # Right: exact mirror of the LEFT result, re-validated against the
     # right geometry (the build order visits Left first).
@@ -514,22 +520,23 @@ def magnet_stations(P, tag, skin, cav, pocket_rects, ports):
     mir_x = 2 * P.MIRROR_AX
     obstructions = list(pocket_rects) + [
         ports[k]["rect"] for k in ("usb", "trrs", "pwrsw")]
-    stations, bands, fails = [], [], []
-    for (x, y), d_l in left:
+    stations, bands, webs, fails = [], [], [], []
+    for (x, y), d_l, w_l in left:
         mir = (mir_x - x, y)
-        d_r = _station_fit(P, mir, skin, cav, obstructions, P.ANTENNA_R)
-        if d_r is None or abs(d_r - d_l) > 0.05:
-            fails.append(((x, y), mir, d_l, d_r))
+        fit = _station_fit(P, mir, skin, cav, obstructions, P.ANTENNA_R)
+        if fit is None or abs(fit[0] - d_l) > 0.05 or abs(fit[1] - w_l) > 0.05:
+            fails.append(((x, y), mir, d_l, None if fit is None else fit[0]))
         else:
             stations.append(mir)
-            bands.append(d_r)
+            bands.append(fit[0])
+            webs.append(fit[1])
     if fails:
         raise AssertionError(
             f"{tag}: mirrored magnet stations fail the right-half "
             f"validation (geometry is not mirror-symmetric at the band): "
             + "; ".join(f"left {l} -> right {m}, band {dl} vs {dr}"
                         for l, m, dl, dr in fails))
-    return (stations, bands)
+    return (stations, bands, webs)
 
 
 def build_half(tag):
@@ -609,7 +616,7 @@ def build_half(tag):
     # skin ring + pocket/port rects just committed to the solid; faces
     # sit flush at TOP_LIP_Z (zero-gap against the cover's opposite
     # pair — params.py carries the preload reasoning).
-    stations, bands = magnet_stations(P, tag, skin, cav_poly,
+    stations, bands, webs = magnet_stations(P, tag, skin, cav_poly,
                                       pocket_rects, ports)
     from OCP.gp import gp_Dir, gp_Pnt
     for (cx, cy) in stations:
@@ -620,6 +627,7 @@ def build_half(tag):
     return solid, {"tabs": tabs, "pockets": pocket_centers,
                    "pocket_rects": pocket_rects,
                    "mag_stations": stations, "mag_bands": bands,
+                   "mag_webs": webs,
                    "outline": outline, "rim": rim, "skin": skin,
                    "rim_ring": rim_ring, "rnorm": rnorm,
                    "cav_poly": cav_poly, "ports": ports}
@@ -683,10 +691,12 @@ def check_half(tag, solid, info):
     cavsegs = list(zip(cav, cav[1:] + cav[:1]))
     wall_min = min(min(segd(sp, a, b) for a, b in cavsegs)
                    for sp in skin)
-    wall_gate = P.CASE_OUTSET - P.TAB_L - P.RIM_CLEAR - 0.3
+    wall_gate = max(P.CASE_OUTSET - P.TAB_L - P.RIM_CLEAR - 0.3,
+                    P.WALL_MIN_ABS)
     if wall_min < wall_gate:
         bad.append(f"wall thins to {wall_min:.3f} < {wall_gate:.2f} "
-                   f"(tab-tip floor is OUTSET-TAB_L-RIM_CLEAR)")
+                   f"(tab-tip floor is OUTSET-TAB_L-RIM_CLEAR; absolute "
+                   f"floor {P.WALL_MIN_ABS})")
     # point-in-solid battery: proves void/solid SEMANTICS (distances alone
     # cannot catch an inside-out build — a flipped normal still measures).
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
@@ -892,11 +902,18 @@ def check_half(tag, solid, info):
                            f"(< 3)")
     # v3.5 magnet pockets: each recess must be a real hole in the band
     # top (void at half depth), properly floored (solid just below the
-    # pocket bottom), and walled (the station gates promise ~1.1 webs;
+    # pocket bottom), and walled (the station gates promise >=1.6 webs;
     # the classifier proves them on the finished solid).
     stn = info["mag_stations"]
     if len(stn) < P.MAG_MIN_STATIONS:
         bad.append(f"magnet stations {len(stn)} < {P.MAG_MIN_STATIONS}")
+    # ABSOLUTE web floor (the derived (band-dia)/2 floor shrinks with the
+    # band it polices — 3-review audit 2026-10-21). The measured value is
+    # the smaller of the two boundary distances at each station.
+    web_min = min(info["mag_webs"]) if info["mag_webs"] else 0.0
+    if web_min < P.MAG_WEB_MIN:
+        bad.append(f"magnet pocket web {web_min:.3f} < {P.MAG_WEB_MIN} "
+                   f"(absolute reviewer floor)")
     for (cx, cy) in stn:
         expect("magnet pocket void", cx, cy, P.TOP_LIP_Z - 0.5, False)
         expect("magnet pocket floor", cx, cy,
@@ -946,7 +963,7 @@ def check_half(tag, solid, info):
         print(f"  {tag} census magnets: {len(stn)} stations "
               f"[{', '.join(f'({r2(x)},{r2(y)})' for x, y in stn)}], "
               f"band min {min(info['mag_bands']):.2f}, web min "
-              f"{(min(info['mag_bands']) - P.MAG_DIA) / 2:.2f}, "
+              f"{min(info['mag_webs']):.2f}, "
               f"ant margin {ant_d:.2f} (r{P.ANT_R_MM:.0f}"
               f"+{P.ANT_CASE_CLEAR:.0f}+{P.MAG_DIA / 2:.1f})")
     else:

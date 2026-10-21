@@ -51,7 +51,14 @@ def board_commit():
             r.stdout.strip() else "unknown"
     return run("git", "log", "-1", "--format=%H", "--",
                "pcb/kicad", "pcb/generators", "pcb/make_release.py",
-               "spec/electronics.yaml")
+               "spec/electronics.yaml",
+               # three more board-affecting input trees (3-review audit
+               # 2026-10-21): the placement anchors, the board outline and
+               # the vendored footprint library all feed the .kicad_pcb —
+               # editing any of them must move the release stamp
+               "layout/generated/v2/points/points.yaml",
+               "layout/generated/v2/outlines/board.dxf",
+               "pcb/stock")
 
 
 def git_info():
@@ -112,15 +119,29 @@ def export_half(half, outdir):
         w = csv.DictWriter(f, fieldnames=rows[0].keys())
         w.writeheader()
         w.writerows(smt)
-    # ERC/DRC reports are gitignored at the source — copy them here so the
-    # versioned release carries the evidence (fix.md P0-3 hash manifest).
-    for ext in ("-erc.rpt", "-drc.rpt"):
-        src = os.path.join(PCB_DIR, f"Hojicha44-{half}{ext}")
-        assert os.path.exists(src), f"missing {src}: run gen_schematic/gen_pcb first"
-        shutil.copy(src, os.path.join(outdir, f"Hojicha44-{half}{ext}"))
-    # audit P0-1 (export ordering): the cut gates on the SAME reports the
-    # generators produced — a failing or stale report must not ride
-    # beside fresh gerbers just because the file exists
+    # ERC/DRC reports are produced FRESH here, on the exact board and
+    # schematic that are exported below (audit round 2026-10-21: the cut
+    # used to COPY the generator's committed reports, so a hand-edited
+    # board shipped with fresh gerbers beside a STALE clean report —
+    # the cut's own comment demanded "a failing or stale report must
+    # not ride beside fresh gerbers" but only the FAILING case was
+    # detected). kicad-cli is already required for the gerber export.
+    for ext, args, src in (
+            ("-drc.rpt", ["pcb", "drc", "--severity-all", "--format", "report"],
+             os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb")),
+            ("-erc.rpt", ["sch", "erc", "--severity-all", "--format", "report"],
+             os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_sch"))):
+        out = os.path.join(outdir, f"Hojicha44-{half}{ext}")
+        r = subprocess.run([KICAD_CLI] + args + ["-o", out, src],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            sys.exit(f"release cut refused: {half} {ext} run failed "
+                     f"(exit {r.returncode}):\n"
+                     + (r.stdout + r.stderr)[-400:])
+        if not os.path.exists(out) or os.path.getsize(out) == 0:
+            sys.exit(f"release cut refused: {half} {ext} is empty — a "
+                     f"missing report must never read as clean")
+    # gate on the reports we just produced (same bytes the fab sees)
     sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
     import gen_pcb as _gp
     import gen_schematic as _gs
@@ -280,6 +301,9 @@ def main():
         for b in bad:
             print(f"  !! {b}")
         sys.exit(1)
+    board_hash = {
+        half: sha12(os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb"))
+        for half in ("Left", "Right")}
     lines = [
         "Hojicha44 release manifest",
         f"spec version: {ver}",
@@ -289,9 +313,14 @@ def main():
         f"git tag: {tree_stamp}",
         f"router: gen_route.py {router}",
         f"kicad-cli: {cli}",
+        # the board bytes this release certifies (audit round 2026-10-21:
+        # the manifest named a COMMIT but not the board's hash, so a
+        # hand-edited board could ride along under a clean commit stamp)
+        f"board sha256: Left {board_hash['Left']}  Right {board_hash['Right']}",
         "ERC: 0 errors + 5 documented spare warnings/half (check_erc_report gate)",
         "DRC: 0 non-waived (exact W1 set of 28/half asserted); "
         "unconnected NOT waived; PTH/NPTH-in-courtyard = error",
+        "reports: ERC/DRC are re-run on the exported board at cut time",
         "",
     ]
     for half in ("Left", "Right"):

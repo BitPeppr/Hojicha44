@@ -103,7 +103,7 @@ poor bridger.
   channel (the ring's slot keeps a 1.1 inner web — confirm it prints
   intact).
 - [ ] Encoder shaft hole over the anchor — **FIRST pre-order bench check,
-  order (1) hole sample, (2) Choc clip fit + kerf on the 0.35mm pad
+  order (1) hole sample, (2) Choc clip fit + kerf on the 0.71mm pad
   margin (needs a laser-cut sample), (3) the plug slices below**. The
   12.7mm square plate hole clears the vendored EC11 STEP body, which
   measures **12.30 wide in the plate band (z 2.0..3.5)** — nominal
@@ -124,7 +124,9 @@ poor bridger.
   Measure the boot diameter of the chosen 90° cable; straight plugs are
   prohibited (two noses would meet head-on across the 22.40mm mouth gap).
 - [ ] Fab limits confirmed with the chosen fab BEFORE ordering: 2-layer
-  1.6mm, 0.25mm track / 0.2mm clearance / 0.8-0.4mm via accepted; rev-2
+  1.6mm, 0.25mm track / 0.2mm clearance / 0.30mm-drill-in-0.65mm-pad
+  signal vias (0.50-in-1.00 power) accepted — the old "0.8-0.4mm" line
+  quoted the KiCad template, not the boards; rev-2
   flex slots (typically >=1mm) quoted separately.
 - [ ] ORDER GATE — do not place the fab order until every box in §1 passes
   on paper AND the fab has accepted the limits above. §2–§5 need physical
@@ -161,11 +163,26 @@ poor bridger.
   (ground pin tip to mating face) — accept 4.5–5.0mm only; reject any
   set that reads <3.5 (2.11mm-class) or >5.0 (slides under the module
   body). The stack budget assumes this number — record it in the notes.
-- [ ] Diodes → switch (already done in §2) → sockets → TRRS → JST →
-  encoder. Modules last. Cell sandwich goes in AFTER all soldering: Kapton
-  (polyimide) tape over the pouch face AND over the nano underside
-  components, then cell between socket rows with the 4.5–5.0mm stack. No
-  Kapton, no cell. Dress JST leads beside the cell, never under the stack.
+- [ ] **Solder order (one list, no ambiguity — "sockets" means two
+  different parts, so they are named):**
+  1. slide switch (done in §2, FIRST — it is the charge disconnect)
+  2. diodes (D_Lxx/D_Rxx, cathode tick to the row)
+  3. **Choc hotswap sockets** (B.Cu, under each switch)
+  4. **nice!nano machine-pin sockets** (the 2×12 headers — NOT the Choc
+     sockets in step 3)
+  5. TRRS jack, JST, slide-switch wiring, EC11 encoder
+  6. modules last (nice!nano into its headers)
+  7. **cell sandwich** (Kapton over the pouch face AND the nano
+     underside, then the cell between the socket rows at the measured
+     4.5–5.0mm stack; no Kapton, no cell; JST leads beside the cell,
+     never under the stack)
+  8. **plate onto the switches** (the plate's switch holes take the
+     switch bodies, the gasket tabs hang over the rim)
+  9. **PCB into the tub** (feet/rim seats, no screws)
+  10. **poron pads** (bottom pads on the tabs, then the top pads)
+  11. **magnets** (tub face-UP, cover face-DOWN — faces meet at the lip
+      plane)
+  12. **cover on** (the ring presses the top poron pads at 16.7%)
 - [ ] TRRS cable mated with **both halves OFF *and* USB unplugged from
   both** (switch OFF alone is insufficient — USB still powers the
   controller), then switch on. Sleeve-GND mates at an angle; live mating
@@ -188,7 +205,7 @@ poor bridger.
   (Laser kerf enlarges cutouts ~0.1–0.2mm, so expect a slip fit, not
   interference — rock is the reject criterion. If loose in every region,
   rev-2 cutout tightens 15.0 → 14.9.)
-- [ ] Poron pads (rev-1 plate): 8×4mm 4701-30-15 pads stuck top+bottom on all
+- [ ] Poron pads (rev-1 plate): 7×4mm 4701-30-15 pads stuck top+bottom on all
   8 tabs per half per the PORON DXF layer — full tab coverage, none
   overhanging into cutouts/windows; peel-test one: adhesive holds the
   tab, not the case.
@@ -227,10 +244,17 @@ poor bridger.
   erase. A non-erased first flash boots fine but leaves encoder push and
   the spare dead with no error.
 - [ ] After flashing both halves: BLE-pair halves, confirm keys from each
-  side, then verify encoder push-click registers AND the spare input
-  toggles. If either is dead, re-flash that half with `--erase` before
-  suspecting hardware. Keymap content is still DRAFT — this step proves
-  the inputs, not the layout.
+  side, then verify the encoder push-click registers. If it is dead,
+  re-flash that half with `--erase` before suspecting hardware. Keymap
+  content is still DRAFT — this step proves the inputs, not the layout.
+- [ ] The SPARE input (D10) has no keymap binding and no test pad, so
+  it cannot be "verified by toggling" — check it with a DMM: the spare
+  pin is MCU **D10 = P0.09** (module header pin 13, the pin labelled
+  D10 on the silkscreen). With the half unpowered, continuity from the
+  header pin to the D10 net pad; with it powered, the pin idles high
+  and a scope/DMM shows the level. A "toggling spare" test would need a
+  binding (or a test pad) that does not exist — do not read a pass here
+  as a dead pin (audit 2026-10-21).
 
 ## 6. Case labels (apply before daily use)
 

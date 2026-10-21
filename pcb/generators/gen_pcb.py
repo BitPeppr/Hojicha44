@@ -135,7 +135,7 @@ def key_points(pts, tag):
 
 # ---------------------------------------------------------------- netlist
 
-def load_nets(tag):
+def load_nets(tag, refresh=False):
     """Schematic netlist -> (nets, pin_net).
 
     Exported by kicad-cli straight into pcb/kicad/<project>-<tag>.net,
@@ -144,11 +144,19 @@ def load_nets(tag):
     committed bytes and is the only net source when kicad-cli is
     absent.
 
+    refresh=False (default) READS the committed netlist and never
+    touches the file — the gates must not mutate tracked artifacts
+    (audit round 2026-10-21: the gates re-exported the netlist in
+    place whenever kicad-cli was present, so a "read-only" gate rewrote
+    a tracked file and locally tested different bytes than CI did).
+    refresh=True is the BUILDER's path: it re-exports the netlist from
+    the schematic before placing.
+
     nets: [(code, name)]; pin_net: {(ref, pin): (code, name)}.
     """
     netpath = os.path.join(PCB_DIR, PROJECT[tag] + ".net")
     sch = os.path.join(PCB_DIR, PROJECT[tag] + ".kicad_sch")
-    if os.path.exists(KICAD_CLI):
+    if refresh and os.path.exists(KICAD_CLI):
         r = subprocess.run(
             [KICAD_CLI, "sch", "export", "netlist", "--format",
              "kicadsexpr", "-o", netpath, sch],
@@ -1261,7 +1269,9 @@ def build_placements(tag, pts, pin_net):
 
 
 def build_board(tag, pts):
-    nets, pin_net = load_nets(tag)
+    # the BUILDER re-exports the netlist from the schematic before
+    # placing (the gates read the committed netlist read-only)
+    nets, pin_net = load_nets(tag, refresh=True)
     codes = {c for c, _ in nets}
     assert 0 in codes, "net 0 missing"
     placements = build_placements(tag, pts, pin_net)

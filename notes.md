@@ -1440,7 +1440,10 @@ verify-at-first-article, reject-with-evidence.
    nemotron both flagged), MAG_STATION_BAND 6.6 → 7.5 (web ≥1.6 floor,
    measured 1.69), MAG_MIN_STATIONS 6 → 8 (GLM's doc-chain finding: the
    16+16 BOM and the pull-test math promise 8/half — Left had been ON
-   the ≥1.5 kg gate at 6/7; now 8/8 exact mirrors, band 7.68).
+   the ≥1.5 kg gate at 6/7; now 8/8 exact mirrors, band 7.68 — the
+   STATION SET is exactly mirrored; the tub OUTLINES are not (the polygon
+   offsetting leaves wall_min 2.62 L vs 2.70 R, a 0.08mm difference
+   inside every floor).
    Volume tripwires widened [55,82] tub / [6,13] cover (75.7/10.7).
 3. **Wall census sampling**: every resampled skin point instead of
    every 2nd/4th (GLM P2) — the "chord sag ≤0.03" claim no longer has
@@ -1587,3 +1590,133 @@ one unverified assumption — all fixed, all with evidence:
   manifest stamp recomputed on a CLEAN tree (this also retires the
   stale `-dirty` tag MiniMax found in MANIFEST.txt — the stamp line
   was computed before the previous cut's outputs were committed).
+
+## 2026-10-21 — second review round (three max-thinking reviewers, one at a time)
+
+Three fresh READ-ONLY passes over the repo, run sequentially (not
+parallel) so each was independent: **MiniMax M3.1 Flash Free**, **GLM-5.3
+Flash Free**, **DeepSeek V4.1 Flash Free** (opencode zen, max thinking).
+31 raw findings; the three converged hard on the same systemic shape.
+
+### The systemic finding: gates that re-derived instead of read
+
+All three independently proved the same thing with negative controls:
+`check_board.py` re-derived pad geometry from the vendored footprint
+library + generator placements (`R.Board`), so **a hand-edited committed
+board passed every gate** — a TRRS pad moved 90mm off-board, a diode pad
+parked on the antenna centre, a pad's net swapped, all clean. The
+file's own docstring claimed it verified "against the BUILT .kicad_pcb".
+Fixed: the gates now parse the COMMITTED board's own pad blocks
+(`committed_pads()`, flip/y-axis convention verified pad-for-pad against
+the model) and everything that was checked against the model is now
+checked against the artifact:
+
+- containment, antenna keepout (pads + vias + **tracks**, which nothing
+  covered at all), the TRRS crossover pin-map (from the board's own pad
+  nets), W1 content (now including the pad's LOCAL position), plus two
+  new gates: **artifact-vs-model drift** (every committed copper pad must
+  equal what the generator would produce — position, size, drill AND
+  net; catches a hand edit on ANY footprint, not only the 28 waived
+  refs) and the **diode cathode tick** (the only polarity mark on 44
+  diodes, and CI never runs the builder that draws it).
+- Negative controls, all now failing loudly: TRRS pad off-board, diode
+  pad on the antenna centre, pad net swapped, tick moved, tick deleted,
+  track through the keepout, waived-ref pad resized, MCU TRRS nets
+  swapped, jack T/R1 swapped.
+- The UART gate ALSO had a second hole of its own (it read the
+  netlist, not the board) — now asserted on the artifact AND the
+  netlist.
+
+### Release chain (the deepest one)
+
+DeepSeek found the worst hole, and the cut's own comment proves it was
+known-but-unimplemented: "a failing **or stale** report must not ride
+beside fresh gerbers" — the cut detected the *failing* case only. It
+copied the generator's committed ERC/DRC reports, so a hand-edited board
+shipped with fresh gerbers beside a stale clean report. The cut now
+**re-runs** `kicad-cli pcb drc` / `sch erc` on the exact board and
+schematic it exports, gates on those, and the MANIFEST records the
+**board sha256** so the release names the bytes it certifies.
+
+### Derived thresholds that could not police themselves
+
+Three floors were computed from the very constants they were meant to
+police, so shrinking the constant shrank the floor (all three reviewers
+proved it by reverting the constant and watching the build stay green):
+`wall_gate = OUTSET-TAB_L-RIM_CLEAR-0.3`, the magnet web
+`(MAG_STATION_BAND-MAG_DIA)/2`, and `PORON_PAD_L` (no floor at all —
+8.0mm pads, the 0.35mm kerf-fragile state, passed every gate).
+Now ABSOLUTE floors: `WALL_MIN_ABS 2.0` (the MJF pass), `MAG_WEB_MIN
+1.6` (the reviewer floor, measured on the TRUE per-boundary web — the
+old derived number overstated it on oblique points), `PORON_EDGE_MIN
+0.6` (measured 0.707), and `spec_checks.cjs` moved 1.10 -> 1.60 and
+from a presence-only `diode-direction` test to the exact `col2row`
+value (a flipped value read the matrix backwards and passed).
+
+### Also fixed
+
+- `load_nets()` re-exported the netlist IN PLACE whenever kicad-cli
+  existed, so a read-only gate rewrote a tracked file and locally
+  tested different bytes than CI. Now read-only by default; the
+  builder passes `refresh=True`.
+- `board_commit()` ignored three board-affecting input trees
+  (`points.yaml`, `board.dxf`, `pcb/stock`) — editing any of them did
+  not move the release stamp. Now in the pathspec.
+- The Choc hotswap SOCKETS (44) had **no order line anywhere** — they
+  are footprint-only parts, so they never appear in the released
+  `bom.csv`; `pcb/BOM_ORDER.md` now has the line, and
+  `pcb/MANUFACTURING.md` names them in the hand-solder list.
+- The concave-outline **TAB-ROUTE ONLY, NO V-CUT** order instruction
+  existed only in `spec/bom.md`; it is now in both ordering docs
+  (measured min copper-to-edge 0.292mm).
+- Stale numbers reconciled: poron 8x4 -> **7x4** everywhere (case.md,
+  first-article, BOM_ORDER) with the force corrected 78 gf -> **~68 gf**
+  (28 mm²) and the strip yield 11 -> **12 pads/90mm**; the 0.35mm kerf
+  margin -> **0.71mm**; the "0.8-0.4mm via" line -> the real
+  0.30-in-0.65 signal / 0.50-in-1.00 power; BOM_ORDER's case volumes
+  68.1/68.2 -> **75.7/75.7**; MANUFACTURING's stale board stamp ->
+  the MANIFEST's own `git commit:` / `board sha256:` lines.
+- The first-article "verify the spare input toggles" step could not
+  pass (D10 has no binding and no test pad) — replaced with a DMM
+  check naming the pin (MCU D10 = P0.09).
+- The assembly order was ambiguous ("sockets" meant two different parts)
+  and never said when the PCB/plate/cover go in — rewritten as one
+  numbered 12-step order.
+- The case's port anchors were not mirror-exact (the trrs pair was
+  rounded to 1 dp and broke the mirror by 0.1mm) — now 134.55 /
+  156.95, exactly mirrored.
+- The "Choc sockets are top-side" wording contradicted
+  `spec/electronics.yaml` ("soldered beneath (B.Cu pads)") — the
+  electronics spec is right (the footprint's pads are B.Cu); the case
+  docs and `case/params.py` were corrected.
+- "8/8 exact mirrors" is now qualified: the STATION SET is exactly
+  mirrored; the tub OUTLINES are not (polygon offsetting leaves
+  wall_min 2.62 L vs 2.70 R — inside every floor, but not "exact").
+
+### Deferred / not acted on (with reasons)
+
+- **PORTS vs the physical jack position** (GLM): the case's trrs anchor
+  is not asserted against the committed board's TRRS footprint. Real
+  gap, but the fix needs the footprint's local mouth offset (12.1) as
+  a second source of truth; noted here rather than half-implemented.
+- **The 0.04mm silk-floor headroom** (MiniMax P3-4): the floor is 0.20
+  and the measured minimum is 0.24 — the gap is the TRRS jack's own
+  outline silk, which is DESIGNED to sit at the edge (its aperture IS
+  the edge). Left as is, with the reason in the constant's comment.
+- **The paper-fit PDF** (MiniMax P3-9) is unversioned scratch with no
+  documented regeneration command; the checklist already says
+  "regenerate first".
+- **`fp_source()` falling back to the local KiCad install** (MiniMax
+  P3-8): all six vendored files are present and tracked, so the
+  fallback never fires today.
+- **Battery price** (DeepSeek P3): BOM_ORDER said EUR 8.90,
+  `spec/bom.md` said 18.90 — offline neither can be verified, so both
+  now cite the EUR 8.90-18.90 range with "re-check at checkout".
+- **The W2 "0.64mm side web" claim** (DeepSeek explicitly dropped it):
+  the bore chord is tangential and the ring band is radial, so the
+  number was meaningless; the single-solid gate is the real severance
+  check.
+- **Live prices, the magnet pull force, the poron compression, the
+  plug dimensions, the cell stack height and the MJF printability**
+  all remain first-article measurements — no offline check can settle
+  them (every reviewer said so).

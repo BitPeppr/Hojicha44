@@ -41,7 +41,9 @@ entry below is the current truth for every number it quotes.)
   floor), MAG_STATION_BAND 6.6 -> 7.5 (webs 1.15 -> 1.69), MAG_MIN_STATIONS
   6 -> 8 (the doc chain's 8/half is now BUILT truth — Left had been ON
   the 1.5 kg pull-test floor at 6/7). Census: tub 75.7/75.7 cm³ (within
-  the widened [55,82] tripwire), stations 8/8 exact mirrors, band min
+  the widened [55,82] tripwire), stations 8/8 exact mirrors (the
+  STATION SET is exactly mirrored; the tub outlines are not — the polygon
+  offsetting leaves wall_min 2.62 L vs 2.70 R, inside every floor), band min
   7.68, web 1.69, ant margin 14.15 in-plane + 5.60 floor standoff
   (both now printed as a `census antenna` line), ports out
   20.20/10.70/10.70. Cover: 10.7/10.7 cm³ ([6,13] tripwire), ring

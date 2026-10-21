@@ -287,7 +287,12 @@ try {
   const conf = strip(d("config/hojicha44.conf"));
   if (/SPLIT_WIRED/.test(conf)) problems.push("conf still sets SPLIT_WIRED");
   if (!/CONFIG_ZMK_BLE=y/.test(conf)) problems.push("conf missing BLE");
-  if (!/diode-direction/.test(dtsi)) problems.push("dtsi missing diode-direction");
+  // the VALUE matters, not just the presence: a flipped diode-direction
+  // reads the matrix backwards while every presence check still passes
+  // (3-review audit 2026-10-21)
+  if (!/diode-direction\s*=\s*"col2row"/.test(dtsi))
+    problems.push('dtsi diode-direction is not "col2row" (the matrix is ' +
+      'read backwards if flipped)');
   // Encoder setup gate (EC11E15244G1: 30 detents = 15 pulses per rev;
   // ZMK `steps` semantics count PULSES per revolution, not detents —
   // assert both fields against the vendored part).
@@ -339,9 +344,12 @@ try {
       problems.push(`TAB_L ${tablP} (plate) != ${tablC} (case params)`);
     if (Math.abs(antP - antC) > 1e-9)
       problems.push(`ANT_R_MM ${antP} (gen_pcb) != ${antC} (case params)`);
-    if ((band - mag) / 2 < 1.1)
+    // ABSOLUTE web floor (the reviewer floor). The derived value shrinks
+    // with the band it polices, so it cannot catch a thinner pocket —
+    // the floor is pinned here (3-review audit 2026-10-21).
+    if ((band - mag) / 2 < 1.6)
       problems.push(`magnet web (band ${band} - dia ${mag})/2 = ` +
-        `${((band - mag) / 2).toFixed(2)} < 1.10`);
+        `${((band - mag) / 2).toFixed(2)} < 1.60 (absolute reviewer floor)`);
     if (Math.abs(gap - under) > 1e-9)
       problems.push(`GAP ${gap} != PLATE_UNDER ${under}`);
     if (Math.abs(lip - (under + pt + 2.5)) > 1e-9)

@@ -30,7 +30,7 @@ Construction (z=0 is the PCB top; see params.py):
            abs rides through and 0.2 past the top)
        W2  trrs = the SAME Ø9.5 cylinder (axis zc 2.5): a BLIND tunnel
            in the 6..9 slice (tops at 7.25 > boot swing 6.75), whose
-           chord in that slice stays <=4.82 < band 7.7 — the ring is
+           chord in that slice stays <=6.42 (lip plane) < band 7.7 — the
            NOT split
        pwrsw flick slot, full depth BUT starting t=1.6 (inner web 1.1
            to the cavity-side edge): W1 must remain the ONLY full
@@ -82,7 +82,7 @@ def build_cover(tag):
     ports = G.compute_ports(tag, rim_ring, rnorm, skin, P)
     sksegs = list(zip(skin, skin[1:] + skin[:1]))
     pocket_rects = G.pocket_layout(lands["tabs"], sksegs, P)
-    stations, bands = G.magnet_stations(P, tag, skin, cav_poly,
+    stations, bands, webs = G.magnet_stations(P, tag, skin, cav_poly,
                                         pocket_rects, ports)
     # top-poron press points (lands: pad centre = tab root +2.0 outward;
     # these MUST land on ring material at the lip plane)
@@ -106,7 +106,7 @@ def build_cover(tag):
     solid = solid.cut(G.fillet_slot(base, pr["v"], pr["u"], pr["w"],
                                     z0 - 0.5, z1 + 0.5, pr["r"], travel))
     # trrs: the SAME bore cylinder — chord in the 6..9 slice stays
-    # narrow (<=4.82), so no ring severance
+    # narrow (<=6.42 at the lip plane), so no ring severance
     pr = ports["trrs"]
     ox, oy = pr["o"]
     ux, uy = pr["u"]
@@ -140,6 +140,7 @@ def build_cover(tag):
     return solid, {"skin": skin, "cav_poly": cav_poly,
                    "ring_inner": ring_inner,
                    "mag_stations": stations, "mag_bands": bands,
+                   "mag_webs": webs,
                    "pad_centers": pad_centers, "ports": ports}
 
 
@@ -274,7 +275,7 @@ def check_cover(tag, solid, info):
     bstat = ""
     if stn:
         bstat = (f", magnet band min {min(info['mag_bands']):.2f}, "
-                 f"web min {(min(info['mag_bands']) - P.MAG_DIA) / 2:.2f}")
+                 f"web min {min(info['mag_webs']):.2f}")
     print(f"  {tag} cover: volume {vol / 1000:.1f} cm3, "
           f"bbox z [{bb.zmin:.1f}, {bb.zmax:.1f}], "
           f"wall_min {wall_min:.2f}, stations {len(stn)}{bstat}")

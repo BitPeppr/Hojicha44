@@ -31,15 +31,16 @@ Encoder push over the window zone stays soft by design.
 | Plate | 1.5mm (material below), outline = PCB outline + tabs (USB notch included) |
 | Plate↔PCB gap | 2.0mm nominal (top-side diodes are 1.35mm) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
-| Bottom gaskets | Same 8×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
+| Bottom gaskets | Same 7×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
 
 - **Bottom-case floor (case design):** floor under the PCB zone sits at
   FLOOR_Z −5.6 (PCB-top frame), provisioned by the BELOW-PCB protrusions
-  (M1, review-corrected 2026-10-18 + 2026-10-20 wording: the hotswap
-  SOCKETS seat on the top side — their solder pads are on B.Cu and the
-  body dips only −1.25 below the board, so the floor is provisioned by
-  the deeper protrusions, never by the sockets):
+  (M1, review-corrected 2026-10-18; wording fixed 2026-10-21 — the
+  hotswap SOCKETS are SOLDERED BENEATH (their pads are on B.Cu, the
+  footprint body on B.Fab/B.SilkS) and dip ~1.25 below the board
+  bottom (≈ −2.85 abs), so the floor is provisioned by the deeper
+  protrusions below, never by the sockets):
   encoder legs **−3.65** (measured off the vendored ROT_EC11E STEP,
   which the footprint maps 1:1 into the PCB frame — rotate 0, no z
   offset), TRRS THT pin tips **−3.0** (vendored PJ-320A STEP), Choc
@@ -55,7 +56,7 @@ Encoder push over the window zone stays soft by design.
 - **Rogers PORON** small sheets (4701-30-15, 3.18–6.35 mm):
   McMaster-Carr (search "Rogers 4701-30"), silicone-foams.com
   resogoo.com, h-oproducts. Min order is usually a 300×300 mm sheet
-  — ≫ what 16×8×4 mm pads need.
+  — ≫ what 16×7×4 mm pads need.
 - **Drop-in keyboard strips** (4701-40 stiffer fallback, 3×90×4 mm
   self-adhesive, ≈$8–12): Keebox (AliExpress), ThockKing universal pad,
   eBay 20-packs, Amazon BTNCL/GMMK. No Rogers part number on listings,
@@ -64,12 +65,14 @@ Encoder push over the window zone stays soft by design.
 - **Adhesive**: supported grade has PET film; keep strip adhesive
   surface toward the tab. Store sheets below 40 °C / 80 % RH or the
   adhesive bonds permanently to PET release liner.
-- **Shear / punch**: 8×4 pads cut cleanly with a sharp craft knife or
+- **Shear / punch**: 7×4 pads cut cleanly with a sharp craft knife or
   a 4/8 mm punch on a mat (no hot knife — poron tears). 1:1 paper print
   = cut template.
 - Spec: PORON **4701-30 Very Soft, 240 kg/m³ (15 pcf)** — the least-dense
   -30 sub-grade — 3mm thick, single-sided adhesive-backed. CFD ~24 kPa
-  (~3.5 psi) @ 25% → **~78 gf per 8×4mm pad at 25% compression**.
+  (~3.5 psi) @ 25% → **~68 gf per 7×4mm pad at 25% compression** (28 mm² —
+  the force scales with pad area; the old 8×4 pad's 78 gf was the
+  pre-audit figure, corrected 2026-10-21).
 - Static load ~25 g/pad (≈200 g half-assembly / 8 bottom gaskets) →
   ≈8–10% self-compression (≈0.2–0.3 mm on 3 mm), leaving ≈2.5–3× of
   force headroom before 25% compression.
@@ -91,7 +94,7 @@ Encoder push over the window zone stays soft by design.
   good feel, stable). Bounce comes from plate span between tabs; foam
   sets mount resonance and damping. (FR4/ALU/CARBON change downstream
   only via `MATERIAL` — web minimums re-gate.)
-- Cut 8×4 mm pads from 90×4 mm stock (≈11 pads per 90 mm strip; 16 pads/half
+- Cut 7×4 mm pads from 90×4 mm stock (≈12 pads per 90 mm strip; 16 pads/half
   ⇒ 2 strips/half). Single-supported (PET adhesive) preferred; unsupported
   stock needs spray/transfer adhesive and holds less well.
 - Pads stick to the TABs (plate), top and bottom — never to the case,

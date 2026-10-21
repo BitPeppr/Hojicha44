@@ -19,8 +19,11 @@ PLATE_TOP = PLATE_UNDER + PLATE_T          # +3.5
 # SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 2.0 - 2.55 = -0.55
 SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -0.55
 # Floor under the PCB zone: provisioned by the BELOW-PCB protrusions
-# (M1, review-corrected: the hotswap SOCKETS are top-side — module
-# 4.5..7.7 — and never hang below the board). Measured ruler: encoder
+# (M1, review-corrected; wording fixed 2026-10-21 — the hotswap SOCKETS
+# are SOLDERED BENEATH (B.Cu pads, body on B.Fab/B.SilkS) and dip ~1.25
+# below the board bottom, i.e. ~-2.85 abs, so they stay well clear of
+# the -5.6 floor; the module itself is 4.5..7.7 above the board).
+# Measured ruler: encoder
 # legs -3.65 (vendored ROT_EC11E STEP; footprint maps it 1:1 into the
 # PCB frame — rotate 0, no z offset), TRRS THT pin tips -3.0 (vendored
 # PJ-320A STEP), Choc socket bump -1.25 (Kailh datasheet), slide-switch
@@ -172,6 +175,16 @@ MAG_STATION_BAND = 7.5 # local band needed: pocket + >=1.6 web both faces
                        # (6-review audit 2026-10-20: the web >= 1.6 reviewer
                        # floor is NOW met in-band — webs (7.5-4.3)/2 = 1.6,
                        # straight-rim band is 7.7 = OUTSET 8.2 - RIM 0.5)
+MAG_WEB_MIN = 1.6      # ABSOLUTE magnet-pocket web floor (reviewer floor).
+                       # The derived gate ((MAG_STATION_BAND - MAG_DIA)/2)
+                       # shrinks with the band it polices, so it can never
+                       # catch a thinner pocket — this constant can
+                       # (3-review audit 2026-10-21: all three reviewers
+                       # found the derived floor unenforceable).
+WALL_MIN_ABS = 2.0     # ABSOLUTE tub wall floor (the MJF 2.0 print pass).
+                       # The derived gate (OUTSET - TAB_L - RIM_CLEAR - 0.3)
+                       # moves with OUTSET and therefore cannot detect an
+                       # absolute thinning (same audit).
 MAG_MIN_SEP = 14.0     # arc separation between stations
 MAG_MAX_STATIONS = 8
 MAG_MIN_STATIONS = 8   # retention gate on station count (audit: the doc
@@ -204,9 +217,12 @@ MAG_MIN_STATIONS = 8   # retention gate on station count (audit: the doc
 #         exposed (body spans x 101.3..111.3 / 180.2..190.2).
 # Slots are explicit rects whose outer extent is measured to actually
 # breach the skin.
-PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),
+# The trrs pair is mirror-exact to 0.01 (the 2026-10-21 audit found the
+# 1-decimal rounding had broken the mirror by 0.1mm: 134.6 <-> 156.9,
+# not 157.0 — the derived pair is 134.55 / 156.95).
+PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.55, -22.0),
                   "pwrsw": (106.3, 58.0)},
-         "Right": {"usb": (173.5, 49.95), "trrs": (157.0, -22.0),
+         "Right": {"usb": (173.5, 49.95), "trrs": (156.95, -22.0),
                    "pwrsw": (185.2, 58.0)}}
 
 # ---- ring cover (v3.5: flush bezel ring on the lip) ----
@@ -214,7 +230,8 @@ PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.6, -22.0),
 # below the keycap field ~9.5-10.5). Openings: W1 = USB plug
 # neck/housing band to its top ~9.2 (full-depth pass), W2 = TRRS boot
 # swing past the lip (top ~6.75: the Ø9.5 cylinder cut reaches 7.25 and
-# its chord in the 6..9 slice stays <=4.82 so the ring is NOT split),
+# its chord in the 6..9 slice stays <=6.42 at the lip plane so the ring is
+# NOT split),
 # the pwrsw flick slot, and the magnet pockets. Outer face = the skin
 # face FLUSH (an intentional lid seam).
 COVER_T = 3.0          # 6.0..9.0; 1.3 floor over the 1.7 magnet pockets

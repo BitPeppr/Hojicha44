@@ -47,7 +47,8 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 
 ## Cell — locked to orderable stock (was TBD)
 
-- Primary: kriscables 301230 110mAh + JST PH 2.0mm (€18.90, SKU
+- Primary: kriscables 301230 110mAh + JST PH 2.0mm (€8.90–18.90 seen,
+  re-check at checkout; SKU
   `Li-Po Battery 110mah-1`, tagged nice!nano — order 2 for a split).
   Verified on the listing: 3×12×30mm, 3.7V, 110mAh, PH 2.0mm, ~3cm leads.
   Charge math on the same page: 100mA → ~1.1h, i.e. 0.9C — suitable.

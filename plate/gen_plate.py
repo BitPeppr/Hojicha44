@@ -92,6 +92,12 @@ PORON_PAD_L = 7.0        # poron pad per tab, cut from 90x4mm strip stock.
                          # restores >=0.85/side; spec §246 carve remark is
                          # now adopted in-file)
 PORON_PAD_W = 4.0
+PORON_EDGE_MIN = 0.6       # ABSOLUTE floor on the pad-corner -> plate-edge
+                          # margin (the kerf + part-tolerance budget).
+                          # Unenforced before the 2026-10-21 audit round:
+                          # reverting PORON_PAD_L to 8.0 passed every gate
+                          # while silently restoring the 0.35mm
+                          # kerf-fragile margin.
 PORON_SPEC = 'PORON 4701-30 Very Soft 240kg/m3, 3mm adhesive (-40 strips / -50 fallback, drop-in)'
 MAX_TAB_DIST = 55.0         # every switch + encoder must sit this near a tab
                          # root (measured worst 48.14mm at 2.5 pitches).
@@ -1009,6 +1015,8 @@ def build_half(tag):
              f'{r2(worst_pt[0])},{r2(worst_pt[1])} > {MAX_TAB_DIST}')
     tabs = []
     poron = []
+    poron_edge = 1e9          # tightest pad-corner -> plate-edge margin
+    poron_edge_at = None
     for c in centers:
         (px, py), (tx, ty) = at(c)
         n = inward((px, py), (tx, ty))
@@ -1029,8 +1037,23 @@ def build_half(tag):
             if not point_in_poly((vx, vy), new_loop) and \
                     poly_dist((vx, vy), new_loop) > 0.1:
                 fail(f'poron pad corner ({r2(vx)},{r2(vy)}) off-plate')
+            # kerf margin: the pad corner's distance to the plate edge
+            # (3-review audit 2026-10-21: reverting PORON_PAD_L to 8.0
+            # passed every gate while silently restoring the 0.35mm
+            # kerf-fragile margin — the documented value was policed by
+            # nothing, so it is policed here)
+            m = poly_dist((vx, vy), new_loop)
+            if point_in_poly((vx, vy), new_loop) and m < poron_edge:
+                poron_edge = m
+                poron_edge_at = (r2(vx), r2(vy))
         poron.append(pad)
     lands = [('tab', 0, None) for _ in tabs]
+    # absolute kerf-margin floor on the poron pads (see PORON_EDGE_MIN)
+    if poron_edge < PORON_EDGE_MIN:
+        fail(f'poron pad corner-edge margin {poron_edge:.3f}mm at '
+             f'{poron_edge_at} < {PORON_EDGE_MIN}mm — the 7mm pad keeps '
+             f'>=0.6mm to the plate edge (kerf + tolerance)')
+    poron_edge_mm = poron_edge
 
     # M-review: definitive encoder-neighborhood webs (the spec's "~3.55"
     # and a reviewer's "1.75" measured different pairs — print every
@@ -1045,7 +1068,8 @@ def build_half(tag):
 
     return {'half': tag, 'loop': loop, 'outline': new_loop, 'cuts': cuts,
             'sw': sw, 'enc': enc_hole, 'wins': wins, 'tool': tool,
-            'tabs': tabs, 'poron': poron, 'enc_web': enc_web}, bad
+            'tabs': tabs, 'poron': poron, 'enc_web': enc_web,
+            'poron_edge': poron_edge_mm}, bad
 
 
 # ---- DXF R12 writer ----
@@ -1177,6 +1201,8 @@ def main():
         ew = res['enc_web']
         print(f'{tag}: encoder web — cutouts {ew["cutouts"]:.2f}, '
               f'windows {ew["windows"]:.2f}, ports {ew["ports"]:.2f}')
+        print(f'{tag}: poron pad {PORON_PAD_L}x{PORON_PAD_W} — corner-edge '
+              f'margin {res["poron_edge"]:.3f}mm (floor {PORON_EDGE_MIN})')
     sys.exit(1 if failed else 0)
 
 

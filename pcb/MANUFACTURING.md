@@ -50,7 +50,16 @@ but every design-shaped field below has exactly one right answer.
 - The released artifacts are `generated/release/v0.3.1/{Left,Right}/`
   (9 gerbers + job + drill + pos + pos-smt + bom + ERC/DRC each; zip
   each half's folder for upload). Cross-check the MANIFEST stamp
-  (`boards @e67bb0ae5de2...`) — or whatever HEAD's make_release stamped.
+  (`git commit:` / `board sha256:` lines in
+  `generated/release/v0.3.1/MANIFEST.txt`) — the ERC/DRC reports in the
+  release are re-run on the exported board at cut time, and the
+  manifest records the board's hash, so the release certifies those
+  exact bytes.
+- **Concave outline — TAB-ROUTE ONLY, NO V-CUT / V-SCORE.** The
+  measured minimum copper-to-edge is 0.292mm, below the 0.3mm a V-cut
+  wants, and the outline is concave (V-cut wants a straight edge). Put
+  this in the fab order verbatim:
+  `CONCAVE OUTLINE — TAB-ROUTE ONLY, NO V-CUT / V-SCORE`
 - The ENIG pick in the **gbrjob is informational only** — the form's
   Surface Finish choice is what the fab actually executes. Pick ENIG
   there or the stamp ships nothing.
@@ -61,10 +70,14 @@ but every design-shaped field below has exactly one right answer.
 
 ## Assembly
 
-- **Intent is hand-solder**: diodes (D_L*/D_R*), the Nice!Nano socket
-  headers, TRRS THT, and the pwrsw/JST. Hotswap sockets mean switches
-  never get soldered at all. ENIG is the friendly finish for exactly
-  this.
+- **Intent is hand-solder**: diodes (D_L*/D_R*), the **44 Choc v1
+  hotswap sockets** (soldered on B.Cu under each switch — they are
+  footprint-only parts, so they carry no MPN and never appear in the
+  released `bom.csv`; order them from `pcb/BOM_ORDER.md`), the 2
+  **EC11E15244G1 encoders**, the Nice!Nano socket headers, TRRS THT,
+  and the pwrsw/JST. The SWITCHES themselves are never soldered (they
+  plug into the hotswap sockets). ENIG is the friendly finish for
+  exactly this.
 - JLC machine PCBA is *possible* (`pos-smt.csv` shipped for it) but low-
   value here: the bulk of the part count is hand-placement-class, and
   their parts library won't hold the keyboard-bit parts. Skip unless a
