@@ -396,7 +396,11 @@ short local) → COL rails (matrix chained, thumb+MCU tapped) → ROW rails →
 stubs (ENC/TRRS/VBAT) → GND chain. Single pass, no rip-up (bounded retry
 oscillated: stubs↔rails ripped each other).
 
-Final: Left 54 fp / 48 nets / 111 edge segs / 446 copper items, Right
+Final: Left 54 fp / 48 nets / 111 edge segs / 455 copper items (the
+"446" originally written here predated the last copper pass — it no
+longer reproduced. Re-measured 2026-10-23 on the committed board:
+384 `(segment` + 71 `(via` = 455; the identical metric reproduces
+Right's 590 = 490+100), Right
 54 / 48 / 117 / 590 (router r13). `unconnected_items` = 0 both halves.
 DRC shows ONLY the documented waiver W1 (28× `lib_footprint_mismatch`) —
 0 non-waived (W2 retired by the Choc silk trim: 0 silk items either half),
@@ -1890,3 +1894,129 @@ Implementation:
   legends live in `spec/layout.yaml` and firmware is not in the
   release bundle) — **no release re-cut required**; release stays
   v0.5.0 @4adf5fbf8e9c.
+
+## M3.4: three-round production-readiness audit cycle (2026-10-23)
+
+Three staged fresh-eye audits, one subagent at a time (free-provider rate
+limits). Standing rule held end to end: **verify every finding locally
+before fixing; refute on the primary source, never by assertion; every new
+gate gets a negative control proving it bites.** Findings: round 1 = F01–
+F07 (firmware/keymap), round 2 = 14 mechanical, round 3 = 3 P2. All
+resolved or refuted with evidence; release v0.5.0 stays CLEAN
+@4adf5fbf8e9c (no board-affecting change entered the repo since the
+stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
+(round 2), this commit (round 3).
+
+### Round 1 — firmware/keymap/bindings
+- F01 binding `;`: dtc 1.8.1 harness (`opencode/dtc_keymap_test.py`,
+  untracked scratch) — `<&kp 7; &kp 7>`, `<7;>`, `<7;\n7;>` all error AT
+  the `;`; newline-separated rows compile clean; the CI-compiled draft
+  (063e47e) carries no `;` inside arrays. Fix: 5 keymaps regenerated with
+  newline rows + validate() gate rejecting any interior `;`. Negative
+  control: the harness FAILs on the pre-fix file, naming the guilty row.
+  (bc27556)
+- F03 EC11 semantics: ZMK v0.3 `ec11.c` computes val = pulses×360/steps —
+  a delta from the per-pulse reading the datasheet wording invites.
+  Primary sources: vendored `alps,ec11.yaml`, ZMK
+  `app/module/drivers/sensor/ec11/`, sofle shield (steps `<80>` / TPR 20)
+  corroborating the ratio. Fix: dtsi `steps = <60>` (TPR stays 30),
+  spec_checks gate 15→60; the Alps "15 pulses/rev" wording stays in
+  electronics.yaml/bom.md (mechanical truth; the ZMK steps value
+  quantizes it). (8b5f99d)
+- F04+F05: full 10-slot thumb asserts (positions 36–45) on every variant,
+  sideband wiring asserts (`kscan = <&enc_push_kscan>`, `row = <0>`,
+  `column = <0>`), CANON_MAP_ORDER ordered-transform gate; 5 hand-built
+  mutants all caught. (7ef1296)
+- F06+F07 stale-string purge: layout.yaml R=91.2/13.9 sync, dead "Tab is
+  an L1+Space combo" dropped, keycap-W/E adjust anchors, spec_checks
+  header "exactly 4 layers", hojicha44.conf documents the deliberate
+  absence of `_right.conf`. (62caad9)
+- Residual F02 = the CI-compile proof itself: 32+ commits unpushed; the
+  binding gates + dtc harness are local, but the green CI run on the
+  pushed tip is the final artifact — awaits push approval.
+
+### Round 2 — mechanical plate/case/order docs (minimax m3.1)
+- F-01 (P0): BOM_ORDER plate row carries the DXF layer contract
+  (OUTLINE/CUTOUT through; RELIEF = 22× 0.55 partial-depth pockets, do
+  NOT cut through; PORON = punch template) + ask-the-shop-FIRST on 0.55
+  partial-depth capability.
+- F-02 (P1): relief pocket re-derived — DS30086 rev 31-2 p4 as primary
+  (E = length 2.55–2.85, D = WIDTH 1.40–1.70, A = height 1.00–1.35) + the
+  vendored STEP's widest section at the plate plane (2.700×1.550; the old
+  2.566×1.416 basis was the chamfered top face) → pocket **3.15×2.00**;
+  assert pins the pocket basis to the STEP section. The old 2.866×1.716
+  left 0.008 mm/side against a datasheet-max part — inside mill
+  tolerance.
+- F-04 REFUTED on the same source: the finding read D as height; DS30086
+  says D = body width (typ 1.55 = exactly the STEP's measured width).
+  The 1.40 "height ceiling" does not exist; the 0.55 relief stands on
+  A_max 1.35 + seat.
+- F-03 (P1): `gen_plate.py --check` now regenerates into a tempdir and
+  byte-compares DXF/SVG/lands.json vs the tracked artifacts (the old
+  check only replayed geometry gates — the auditor's CUTOUT=15 mutant
+  sailed through); absolute assert holds CUTOUT 14.0 ±0.02. Negative
+  controls: CUTOUT=14.015 mutant (inside the assert window) → `STALE` +
+  exit 1 naming the four drifted files; tampered lands.json byte →
+  print-manifest FAIL naming the file; CI-parity proven in a /tmp
+  extract with no `case/out` (skipped cleanly).
+- F-14: capture-window derivation documented and guarded — the Choc v1
+  clip captures the plate underside inside the lip band z 0.9..1.3;
+  settled gap = 2.2 − plate thickness → 1.3 = lip tip (marginal),
+  1.5/1.6 = below the band = friction-only (the documented failure).
+  Assert keeps PLATE_THICK in 1.0..1.25; the coupon calipers the real
+  plate first.
+- F-05..F-13: webs 7.90/3.80/4.38 measured off the regenerated artifacts,
+  x/y window clearance 0.625/0.375 asymmetry documented, lip 4.70/5.20,
+  docstring/SVG-legend/encoder-comment fixes (24.04 shaft-based), knob
+  swept-circle note (13×13 square sweeps ~Ø18.4 at the corners) + shaft
+  D-flat alignment notes, order-record MANIFEST (sha256 of 6 tracked
+  plate files + 8 case solids; `.gitignore` re-include; npm
+  print-manifest gate), mirror gate added to the CI case job. (4066571)
+
+### Round 3 — electronics/process
+- Model note: two launch attempts on deepseek-v4.1-flash (opencode zen)
+  died at startup ("Insufficient account funds"); GLM 5.3-flash #max ran
+  the round. An independent verification pass over this round runs
+  re-bound on nvidia NIM (deepseek-v4.1-flash) — verdict appended below
+  when it lands.
+- Verdict: **zero P0, zero P1** — first round with none. Verified-clean
+  (evidence re-checked locally): ERC = exactly the 5 waived spare labels
+  (matches `spec/electronics.yaml:305-309`); DRC = 28×
+  `lib_footprint_mismatch` waiver both halves, 0 non-waived; W1 = 22
+  diodes + 4 thumb Choc + socket + TRRS per half; extents 150.499×114.627
+  both halves; vias 0.30/0.65 + 0.5/1.0 and tracks {0.25, 0.5} per
+  MANUFACTURING.md; min copper→edge 0.292 (Left notch corridor) / 0.330
+  (Right) vs the 0.3 fab rule — top carried concern: have the fab confirm
+  in writing or nudge one track at reorder; bom.csv 49 rows/half;
+  pos-smt = the 22 top-side diodes only; B_Paste empty (hand assembly);
+  JST "+" silk on the pin-1/VBAT side; PCB 5.0 vs case 3.0 antenna rules
+  are two documented lanes, not a contradiction.
+- R3-01 (P2, fixed): the transport memo carried "UN 3480, PI 965 Section
+  II (packed with equipment)" — doubly wrong. IATA deleted PI 965 § II
+  (DGR 63rd ed., eff. 1 Apr 2022; the FAA 2024 guide lists the removal;
+  the IATA 2026 guidance = DGR 67th ed. lists bare cells only as PI 965
+  § IA passenger-forbidden / § IB, ≤30% SoC from 1 Jan 2026 per SP A331),
+  and "packed with equipment" mispairs the UN number (UN 3481 = with
+  equipment: PI 966 § II packed-with, PI 967 § II contained-in). Memo
+  bullet rewritten with sources; `spec/electronics.yaml:51-54`
+  (UN 3481/PI 967 § II) was already correct.
+- R3-02 (P2, fixed): notes.md Left census "446 copper items" predates the
+  last copper pass; re-measured on the committed board: 384 `(segment` +
+  71 `(via` = 455 (the identical metric reproduces Right 590 = 490+100).
+  Corrected inline with the re-measure note.
+- R3-03 (P2, DEFERRED): `pcb/kicad/Hojicha44-*.net` headers carry an
+  absolute single-machine `(source "/Users/martinchen/…")` and
+  `(date "")`. Evidence: gen_pcb.py:168-173 nulls the date deliberately
+  (determinism — KiCad stamps wall-clock there), the source path is
+  whatever kicad-cli wrote at export, and NO gate or tool consumes either
+  field (grep across pcb/generators + tests: only the writer). Any fix
+  (fold a source-path relativize into the date-null re.sub, or edit the
+  tracked .net) is a board-affecting change that would tip the v0.5.0
+  stamp and force a gerber re-cut for zero content change → fold into
+  the next natural re-cut.
+
+### Standing order gates (user actions)
+- Cutout coupon (13.8/14.0/14.2/15.0 + 0.55-deep relief; pocket now
+  3.15×2.00), fabricator written 0.55-partial-depth confirmation
+  (embedded in the BOM_ORDER plate row), Bluetooth-SIG consultant.
+  Push approval → CI green closes round-1 F02.
