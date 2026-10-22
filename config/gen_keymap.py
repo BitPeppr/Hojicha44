@@ -278,7 +278,12 @@ def bindings_dt(all46, indent="                "):
     lines.append(indent + " ".join(thumbs[:6]))
     lines.append(indent + " ".join(thumbs[6:]))
     close = indent[:-4] + ">;"
-    return "bindings = <\n" + ";\n".join(lines) + ";\n" + close
+    # Rows are separated by bare newlines with NO ';' inside the `<>` array:
+    # dtc has no ';' production inside an array, so an interior ';' is a
+    # syntax error (dtc 1.8.1: <&kp 7;\n&kp 7;> -> "syntax error", while
+    # newline-separated rows and </* valid */> parse clean). Style matches
+    # the CI-compiled draft keymap (commit 063e47e). cf. validate().
+    return "bindings = <\n" + "\n".join(lines) + "\n" + close
 
 
 def generate(variant, lrows, rrows, tleft, tright):
@@ -411,6 +416,11 @@ def validate(text, variant, lrows, rrows, tleft, tright):
             bad.append(f"{name}: malformed layer node")
             continue
         layers.append((name, bm.group(1), sm.group(1)))
+        # dtc gate: an interior ';' inside `bindings = <…>` is a syntax
+        # error (see bindings_dt). Regex-only so the gate runs without dtc.
+        if ";" in bm.group(1):
+            bad.append(f"{name}: interior ';' inside `bindings = <…>` — "
+                       "rows must be newline-separated")
     if len(layers) != 4:
         bad.append(f"{len(layers)} layer nodes, want exactly 4")
     want_sensors = [BASE_SENSOR, L1_SENSOR, L2_SENSOR, ADJUST_SENSOR]
