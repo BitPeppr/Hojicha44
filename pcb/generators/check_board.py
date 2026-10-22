@@ -757,10 +757,7 @@ def _check_design(tag, pts, path, txt):
             if st and en:
                 lines.append(((float(st.group(1)), float(st.group(2))),
                               (float(en.group(1)), float(en.group(2)))))
-        tick = [ln for ln in lines
-                if abs(abs(ln[0][0]) - abs(TICK_LOCAL_X)) < 0.01
-                and abs(abs(ln[0][1]) - TICK_HALF_LEN) < 0.01
-                and abs(abs(ln[1][1]) - TICK_HALF_LEN) < 0.01]
+        tick = cathode_ticks(lines)
         if len(tick) != 1:
             bad.append(f"{ref}: {len(tick)} cathode ticks (want exactly 1) "
                        f"— the diode's polarity mark is the tick; the stock "
@@ -1060,10 +1057,16 @@ def parse_pos(path):
 def pos_findings(rows, inst, tol=FRAME_TOL):
     """Release pos.csv must be the design-frame placement list.
 
-    KiCad's pos writer reflects both y and rotation (verified on the
-    v0.4.0 cut: SW_L20 -> (100, -27.7, -27.5) for board (100, -27.7,
-    +27.5)).  A component placed from a Y-mirrored pos file would sit on
-    the wrong side of the board even though the gerbers are correct.
+    The committed board is stored Y-NEGATED, so its stored placement
+    (x, y) and stored rotation are the mirrored ones; the pos writer
+    emits the DESIGN frame (x, -y) and the design rotation, which is
+    the negative of the stored one (verified on the v0.4.0 cut:
+    SW_L20 -> (100, -27.7, -27.5) for stored board (100, -27.7,
+    +27.5)).  The RULE asserted below is "pos y == -board y and pos rot
+    == -board rot", which is what makes the rule right even though the
+    stored frame is the mirror of the design frame.  A component placed
+    from a Y-mirrored pos file would sit on the wrong side of the board
+    even though the gerbers are correct.
     """
     bad = []
     if len(rows) < 40:
@@ -1174,6 +1177,66 @@ def check_frame(tag, pts):
     return bad
 
 
+def cathode_ticks(lines):
+    """The cathode-end tick lines of one diode footprint.
+
+    The tick must sit at the CATHODE end: pad 1 (cathode) is at local
+    x=-1.65, so the mark is at local x=-2.45.  The old test compared
+    |x| against |TICK_LOCAL_X|, so a tick drawn at +2.45 (the ANODE
+    side) passed -- and the tick is the ONLY polarity mark on 44
+    hand-soldered diodes.  The sign is required.  (The y ENDPOINTS may
+    be in either order: the frame convention mirrors the footprint's
+    local y, which reverses them.)
+    """
+    return [ln for ln in lines
+            if abs(ln[0][0] - TICK_LOCAL_X) < 0.01
+            and abs(abs(ln[0][1]) - TICK_HALF_LEN) < 0.01
+            and abs(abs(ln[1][1]) - TICK_HALF_LEN) < 0.01]
+
+
+def tick_selftest():
+    """Negative control for the cathode-tick matcher.
+
+    The tick is the only polarity mark on 44 hand-soldered diodes, so
+    the matcher must reject a tick drawn on the ANODE side (+2.45) and
+    must still accept the real one.
+    """
+    bad = []
+    import audit_silk as A3
+    for half in ("Left", "Right"):
+        path = os.path.join(PCB_DIR, f"Hojicha44-{half}.kicad_pcb")
+        got = None
+        for ref, x, y, rot, blk in A3.footprints(path):
+            if not re.match(r"^D_[LR]\d\d$", ref):
+                continue
+            lines = []
+            for kw, sub in A3.split_top(blk):
+                if kw != "fp_line":
+                    continue
+                lay = re.search(r'\(layer "([^"]+)"', sub)
+                if not lay or lay.group(1) != "F.SilkS":
+                    continue
+                st = re.search(r'\(start ([-\d.]+) ([-\d.]+)\)', sub)
+                en = re.search(r'\(end ([-\d.]+) ([-\d.]+)\)', sub)
+                if st and en:
+                    lines.append(((float(st.group(1)), float(st.group(2))),
+                                  (float(en.group(1)), float(en.group(2)))))
+            got = lines
+            break
+        if not got:
+            bad.append(f"self-test {half}: no diode footprint found for "
+                       f"the tick control")
+            continue
+        if len(cathode_ticks(got)) != 1:
+            bad.append(f"self-test {half}: the real tick was not matched")
+        flipped = [(((2.45 if abs(a[0]) < 2.5 else a[0]), a[1]), b)
+                   for a, b in got]
+        if cathode_ticks(flipped):
+            bad.append(f"self-test {half}: an ANODE-side tick (+2.45) was "
+                       f"accepted — the polarity mark is not policed")
+    return bad
+
+
 def frame_selftest():
     """Negative controls for the frame gate (no KiCad, current tree only).
 
@@ -1273,6 +1336,9 @@ def main():
             print(f"  !! {b}")
             rc = 1
         for b in mirror_selftest():
+            print(f"  !! {b}")
+            rc = 1
+        for b in tick_selftest():
             print(f"  !! {b}")
             rc = 1
         print("frame/mirror self-test: CLEAN" if rc == 0 else

@@ -50,6 +50,38 @@ Items marked **[UNVERIFIED]** could not be confirmed from a primary/authoritativ
 | **RCM / EESS (AU/NZ)** | **No evidence found of an RCM/EESS certification or a supplier code number for the XIAO nRF52840.** **[UNVERIFIED — but likely "none"**: I searched Seeed's certificate index and found FCC/TELEC/CE files only, no RCM/ACMA/EESS file. | seeedstudio.com product page / certificate directory |
 | **Bluetooth SIG** | The nRF52840 SoC is qualified by Nordic; the **XIAO module itself is not a SIG "Qualified Product"**. A finished keyboard is a Bluetooth "Product" that **must** be listed by its own member account before sale: "Your supplier or other member companies cannot qualify your products on your behalf" and "The Bluetooth Qualification Process must be completed before you take products to market". | https://www.bluetooth.com/develop-with-bluetooth/qualification-listing ; https://www.bluetooth.com/develop-with-bluetooth/qualify/ |
 
+### 1a-bis. CORRECTION (2026-10-22, primary sources re-fetched)
+
+Two claims in the memo above were **wrong** and are corrected here (and in
+`spec/compliance.md`):
+
+1. **The EESS does not apply to this product AT ALL.** The memo said
+   "EESS Level 1 ... Level 1 registration and a CoS are voluntary".
+   The EESS's own "Not In-scope Electrical Equipment" page says extra
+   low voltage (<50 V AC RMS / <120 V ripple-free DC) is **not in
+   scope**, and "Responsible Suppliers of electrical equipment that is
+   not in-scope under the EESS definition, **do not have to register,
+   or register equipment** in the EESS Registration Database". Level 1
+   itself requires an input rating of **≥50 VA or ≥120 VDC**. A 3.7 V
+   cell / 5 V USB keyboard is therefore NOT Level 1 equipment — it is
+   out of scope, so there is **no EESS registration, no EESS CoS and
+   no EESS compliance folder**. Source:
+   https://www.eess.gov.au/equipment/not-in-scope/ and
+   https://www.eess.gov.au/registration/registration-in-scope-electrical-equipment/level-1/
+2. **A lab test report is OPTIONAL, not expected.** The Radiocommunications
+   Labelling (EMC) Notice 2017 s.4.4: "**Compliance level 1 — low risk
+   device: There are no additional requirements for a low risk device
+   that complies with an applicable standard**"; the ACMA's summary
+   table says level 1 = "Testing is not required but you may choose to
+   obtain a test report from a testing body". The medium-risk
+   definition excludes battery-powered devices outright ("A
+   battery-powered device is not a medium risk device unless the ACMA
+   has declared the device to be a medium risk device"). So the AU path
+   is: free ACMA-only Responsible Supplier registration + a device
+   description + the C02 SDoC + the RCM label — **no mandatory lab
+   spend**. Source: https://www.legislation.gov.au/F2018L00028/latest/text
+   and https://www.acma.gov.au/step-2-show-your-product-complies
+
 **Bluetooth SIG cost (primary source, schedule of dues and fees effective 01 March 2026 — fetched and re-verified 2026-10-22)**: **Adopter membership $0/yr** (the tier IS free); **Product Qualification Fee** (the old "Declaration Fee", renamed): Adopter **Full qualification $12,000**, NEW Contributing Adopter $8,000 for the first qualification each membership year (33% off; membership $3,500 small / $16,500 large per year), Associate $6,000 (50% off every qualification; membership $11,250 small / $52,500 large per year); **Company Identifier** $1,250 (Adopter / Contributing Adopter) or $0 (Associate). Source: https://www.bluetooth.com/fee-schedule/ and the SIG quick-start guide (https://www.bluetooth.com/bluetooth-qualification-process-quick-start-guide).
 
 *Interpretation for Hojicha44* (now resolved, not UNVERIFIED): the Product Qualification Fee is charged **once per design**; further products on the same **Unmodified Design** are added to the existing listing free. Our keyboard is an Unmodified Design (Nordic's qualified nRF52840 + ZMK, referenced by QDID/Design Number), so it takes the **listing/declaration path with no new RF testing**. For ONE design listed once: Adopter $0 + $12,000 + $1,250 = **$13,250** vs Associate $11,250/yr + $6,000 = $17,250 (a discount you would not use) → **the free Adopter tier is correct for this kit**; the money is the one-off qualification, not the membership. **Scope**: the SIG FAQ says every company "selling, branding, manufacturing, or representing a product as its own" must qualify — a self-built, never-sold, never-branded pilot has no SIG obligation, and SIG membership is open to **companies, not individuals**.

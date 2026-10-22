@@ -37,13 +37,35 @@ Two independent regimes, one mark:
 
 | Regime | What it covers | What we owe |
 |---|---|---|
-| **ACMA** (EMC + radiocommunications) | Part 15 of Schedule 5 to the Radiocommunications (General) Rules 2021; BLE/wifi SRDs are explicitly in scope | Register as an **"ACMA-only" Responsible Supplier** on the EESS database — **free**, no fees (eess.gov.au). Complete **ACMA form C02 "Supplier's declaration of conformity"** (May 2023). Apply the **RCM** mark (AS/NZS 4417.1). Keep the evidence and be able to produce it within **10 business days**; retain **5 years**. |
-| **EESS (electrical safety)** | Level 1 equipment | Level 1 registration and a CoS are **voluntary**; skip at pilot volume. |
+| **ACMA** (EMC + radiocommunications) | Part 15 of Schedule 5 to the Radiocommunications (General) Rules 2021; BLE/wifi SRDs are explicitly in scope | Register as an **"ACMA-only" Responsible Supplier** on the EESS database — **free**, no fees (eess.gov.au: "There are no fees for ACMA-only registration"; a prompt to pay means you picked the wrong box). Complete **ACMA form C02 "Supplier's declaration of conformity"** (May 2023). Apply the **RCM** mark (AS/NZS 4417.1). Keep the evidence and be able to produce it within **10 business days**; retain **5 years**. |
+| **EESS (electrical safety)** | **NOT APPLICABLE — the keyboard is out of scope entirely** | See below: extra-low-voltage equipment (<50 V AC RMS / <120 V ripple-free DC) is **"not in-scope"** under the EESS, and "Responsible Suppliers of electrical equipment that is not in-scope ... **do not have to register, or register equipment** in the EESS Registration Database" (eess.gov.au/equipment/not-in-scope/). Our keyboard runs off a 3.7 V cell and 5 V USB — it is not Level 1 equipment at all (Level 1 requires an input rating ≥50 VA / ≥120 VDC). **There is no EESS registration, no EESS CoS and no EESS compliance folder.** (An earlier draft of this file said "Level 1 registration is voluntary, skip it" — the correct statement is stronger: nothing applies. The ACMA FAQ confirms the two regimes are independent: "If my device is not covered by the EESS, can I apply the RCM for ACMA requirements only? Yes.") |
 | **NZ** | NZ has its own Radiocommunications (Compliance) Notice 2013 and wants a **Supplier Code Number** for a supplier/importer | Same RCM mark; get an SCN if the units are imported into NZ. |
 
 - The RCM label must be on a readily accessible surface, legible to the
   unaided eye, or a QR code linking to a page showing the RCM
   prominently (acma.gov.au "label your product").
+- **Compliance level 1 — TESTING IS NOT REQUIRED.** The ACMA sorts
+  devices into compliance levels (Radiocommunications Labelling (EMC)
+  Notice 2017, s.4): "**Compliance level 1 — low risk device: There
+  are no additional requirements for a low risk device that complies
+  with an applicable standard**", and the ACMA's own summary table
+  says level 1 = "Testing is not required but you may choose to obtain
+  a test report from a testing body". Bluetooth/Wi-Fi short-range
+  devices are the canonical level-1 case. A BLE keyboard is therefore
+  a **level 1 (low risk) device**: the supplier prepares a **device
+  description** and signs a **declaration of conformity** (form C02),
+  and may optionally obtain a test report. **A paid lab test is NOT
+  required** — which is why the cost line below is a budget for an
+  OPTIONAL report, not a fixed cost. Note the medium-risk definition
+  ("contains a microprocessor / a transistor switching circuit")
+  explicitly excludes battery-powered devices: "A battery-powered
+  device is not a medium risk device unless the ACMA has declared the
+  device to be a medium risk device".
+  [UNVERIFIED: the ACMA's exact level-1/2 boundary for a BLE device
+  with a wired TRRS port and USB — the level-1/2 split turns on the
+  device class, and no primary text I could reach states the boundary
+  for "short-range device + host". The module's own FCC/CE evidence
+  plus the device description is the conservative path.]
 - Penalties: supplying with no label, or labelling before complying,
   can attract up to **500 penalty units**.
 - **Bluetooth SIG** is the one item with a real fee, and the numbers
@@ -77,12 +99,17 @@ Two independent regimes, one mark:
   - **Scope, and why this may not bite at all:** the SIG's own FAQ
     says "every company **selling, branding, manufacturing, or
     representing a product as its own** must pay a Product
-    Qualification Fee". A self-built keyboard that is never sold and
-    never carries the Bluetooth logo has no SIG obligation; and SIG
-    membership is open to **companies, not individuals** (an
-    individual would need a sole-trader/company entity). So for a
-    **non-commercial pilot this is $0 of work**; it becomes a real
-    line item the moment a unit is sold.
+    Qualification Fee", and separately that to **"market a product
+    that implements Bluetooth technology and/or uses any of the
+    Bluetooth trademarks (including the word 'Bluetooth')"** you must
+    be a member AND complete the qualification. So a self-built
+    keyboard that is never sold, never branded as a product and never
+    uses the word "Bluetooth" (name it "Hojicha44", not "Hojicha44
+    Bluetooth") has **no SIG obligation**; SIG membership is also open
+    to **companies, not individuals** (an individual would need a
+    sole-trader/company entity). For a **non-commercial pilot this is
+    $0 of work**; it becomes a real line item the moment a unit is
+    sold or branded.
   - Action: confirm the Nordic-design listing path with a Bluetooth
     qualification consultant **before** any unit is sold (not before
     the board order), and get the entity question answered first.
@@ -157,9 +184,13 @@ electrical safety of the host, and the Bluetooth SIG listing.
    $0 + $12,000 Product Qualification Fee + $1,250 Company
    Identifier) — one-off, and only if you sell. If the pilot is
    self-built and never sold, this is $0 of work.
-4. Order an AU SDoC package from an ACMA-accredited lab (EMC Bay /
-   MiCOM / TÜV Rheinland Australia) — quote first; budget AUD 600–1,500
-   and 1–3 weeks. **[UNVERIFIED price — confirm by quote.]**
+4. Write the **device description** (model, the XIAO's FCC ID and its
+   reports, the firmware version, photos) and sign the **C02 SDoC**.
+   **A lab test report is OPTIONAL, not required** — a level-1 (low
+   risk) BLE device needs no testing; if you want one anyway, quote an
+   ACMA-accredited lab (EMC Bay / MiCOM / TÜV Rheinland Australia) —
+   budget AUD 600–1,500 and 1–3 weeks. **[UNVERIFIED price — confirm
+   by quote.]**
 5. Produce the RCM label artwork as a **sticker**, not as case
    printing, until the market is fixed.
 6. Keep the evidence (test report, module certificates, this file) for

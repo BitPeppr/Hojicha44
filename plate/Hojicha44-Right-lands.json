@@ -74,11 +74,11 @@
   }
  ],
  "diode_relief": {
-  "depth": 0.4,
+  "depth": 0.55,
   "pockets": 22,
-  "floor_z": 1.4,
+  "floor_z": 1.55,
   "diode_top_z": 1.26,
-  "clearance": 0.14,
-  "note": "partial-depth pocket in the plate UNDERSIDE; machine 0.40mm, do not cut through"
+  "clearance": 0.29,
+  "note": "partial-depth pocket in the plate UNDERSIDE; machine 0.55mm, do not cut through"
  }
 }

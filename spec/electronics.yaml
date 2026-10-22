@@ -120,8 +120,10 @@ matrix_per_half:
       # the two halves' bottom copper cannot be mirror-symmetric and a
       # back-side diode would break the project's left/right mirror
       # discipline for no functional gain.  Instead the PLATE relieves
-      # 0.35mm over every diode (RELIEF layer in the plate DXF) so the
-      # plate can sit at the Choc v1 clip band (1.05mm gap).
+      # 0.55mm over every diode (RELIEF layer in the plate DXF) so the
+      # plate can sit at the Choc v1 clip band (1.00mm gap) and still
+      # clear a 1.40mm-tall diode (the measured model says 1.26mm; the
+      # part tolerance reaches 1.40, which the 0.40mm relief did NOT).
       # See spec/case.md "Stack" and plate/gen_plate.py.
   diode_symbol: Diode:1N4001 with Value 1N4148W
       # 1N4148 symbol uses

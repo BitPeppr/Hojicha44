@@ -257,12 +257,17 @@ poor bridger.
 - [ ] Antenna end: 5mm copper-free respected, no case material within 3mm.
   Case shell near the antenna end must be plastic/wood — no metal, no
   carbon fibre (both detune/kill 2.4GHz).
-- [ ] Plate clearance: top-side diodes stand ~1.35mm in the inter-key gaps
-  under solid plate (gated ≥0.25mm from every cutout edge) with a 2.0mm
-  nominal plate gap → **0.65mm nominal vertical clearance**. Slide a
-  0.5mm feeler under the plate over each diode row on the real build; any
-  contact/scrape means relief pockets over the diodes or a gap increase
-  (case-side fix). Validate on the build.
+- [ ] Plate clearance (rev 2): the 22 top-side diodes stand **1.26mm**
+  (measured; up to 1.40mm on a real part) in the inter-key gaps, and
+  the plate now sits **1.00mm** above the PCB top with a **0.55mm
+  RELIEF POCKET** over each diode (RELIEF layer in the DXF — machine
+  it, do not cut through). The pocket floor is at 1.55mm, so there is
+  **0.15–0.29mm** of clearance over the diode, not the solid plate.
+  Check on the real build: the pocket must be a POCKET (0.65mm of plate
+  must remain under it) and a **0.5mm feeler must NOT pass** under the
+  plate over a diode row — if it does, the relief was cut through.
+  Anywhere the plate is solid (between the pockets) it must NOT touch
+  a diode: any contact/scrape means the relief is too shallow.
 - [ ] Plate fit (rev-2 plate in `plate/`): 1:1 print over the real PCB —
   every 14×14 cutout frames its switch footprint, the 16.2×12.4 window frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
@@ -270,15 +275,16 @@ poor bridger.
   Choc switch per region (corner/edge/thumb): clips engage, no rock.
   (Laser kerf enlarges cutouts ~0.1–0.2mm, so expect a slip fit, not
   interference — rock is the reject criterion. If loose in every region,
-  rev-2 cutout tightens 15.0 → 14.9.)
-- [ ] Poron pads (rev-1 plate): 7×4mm 4701-30-15 pads stuck top+bottom on all
+  the cutout tightens 14.0 → 13.9.)
+- [ ] Poron pads (rev-2 plate): 7×4mm 4701-30-15 pads stuck top+bottom on all
   8 tabs per half per the PORON DXF layer — full tab coverage, none
   overhanging into cutouts/windows; peel-test one: adhesive holds the
   tab, not the case.
 - [ ] Gasket preload: dry-stack plate + pads (no PCB) and measure sandwich
-  vs the 6.3–6.6mm cavity target (15–20% foam compression per
-  `spec/case.md`). Under 6.3 crushes past 20% (bright/harsh); over 6.6
-  leaves the stack loose (rattle).
+  vs the **6.0–6.3mm** cavity target (rev 2's 1.2mm plate; the case as
+  built measures 6.25mm — 15–20% foam compression per `spec/case.md`).
+  Under 6.0 crushes past 20% (bright/harsh); over 6.3 leaves the stack
+  loose (rattle).
 
 ## 4. Power-on
 

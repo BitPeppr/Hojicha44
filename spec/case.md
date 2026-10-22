@@ -87,8 +87,10 @@ Encoder push over the window zone stays soft by design.
 - Assembly preload: design the case cavity for 15–20% foam compression —
   never near 0% (rattle, pads can't damp unloaded) and never past ~50%
   (cell densification = accidental hard mount, harsh sound). Per half:
-  cavity = 1.5 + 6×(1−c), c ∈ [0.15, 0.20] → **6.3–6.6 mm** sandwich
-  (1.5 plate + 2× 3mm pads).
+  cavity = 1.2 + 6×(1−c), c ∈ [0.15, 0.20] → **6.0–6.3 mm** sandwich
+  (rev-2's 1.2 plate + 2× 3mm pads).  The case as built measures
+  **6.25 mm** (shelf −1.55 → lip 4.70 = 2.55 + 1.2 plate + 2.5 gap),
+  i.e. mid-band.
 - Plate note: foam spec is plate-agnostic; recommended **PC 1.2 mm**
   (softest, most flex, deepest sound) or **POM 1.2 mm** (balanced,
   good feel, stable). Bounce comes from plate span between tabs; foam
@@ -292,6 +294,18 @@ against crack initiation in every material.
   friction and the hotswap sockets alone.  First-article coupon
   (spec/first-article.md): cut 13.8 / 14.0 / 14.2 / 15.0 squares in
   1.2mm PC and measure insertion + retention before the plate order.
+  **Tolerance stack (the clip band is only 1.3mm tall):** the lip
+  engages at 0.9–1.3 above the PCB and the 14.8 ears bear on the
+  plate's top from 2.2, so the usable gap window is
+  **0.9 ≤ gap ≤ 2.2 − plate_thickness** — for a 1.2mm plate that is
+  **0.90…1.00**, and the design sits at 1.00, the top of the window.
+  There is no tolerance-free setting: a +0.1mm plate (1.3) at gap 1.00
+  puts the plate's top at 2.30, i.e. 0.10 into the ears, which pushes
+  the switch 0.10 up — and the lip, moving with the switch, is then at
+  1.00–1.10, still inside its band. **The out-of-tolerance failure
+  mode is therefore "the switch sits high", not "the switch falls
+  out"** — verify that on the first article (caliper the gap, confirm
+  the switch sits flush with its neighbours and the clip catches).
 - **16.2 × 12.4mm encoder window** (instance rot 0, body axis-aligned).
   **CHANGED IN REV 2, and it was a blocker.** The rev-1 hole was a
   12.7mm square sized off the vendored ROT_EC11E STEP for the rev-1

@@ -29,7 +29,7 @@ Stack contract (spec/case.md), rev 2 / support (b): 1.2mm PC plate,
 lower body is 13.80, the clip lip sits 0.9-1.3 above the PCB and the
 14.8 ears bear on the plate's top at 2.20).  The 22 top-side diodes
 (1.260mm tall, MEASURED off KiCad's D_SOD-123.step) clear the plate
-through 0.40mm relief pockets in its underside (RELIEF layer).
+through 0.55mm relief pockets in its underside (RELIEF layer).
 
 Usage:
   python3 plate/gen_plate.py          # writes plate/
@@ -142,9 +142,13 @@ GAP = 1.00             # PCB top -> plate underside
 # model): body 2.566 x 1.416mm, TOP AT 1.260mm above the seating
 # plane (the repo's old "1.35" comment was 0.09 pessimistic).  With
 # GAP 1.00 the plate underside would foul the diode by 0.26mm, so the
-# plate carries a 0.40mm RELIEF POCKET under every diode: the pocket
-# floor sits at GAP+0.40 = 1.40, i.e. 0.14mm above the diode top,
-# and 0.80mm of plate is left under it.
+# plate carries a 0.55mm RELIEF POCKET under every diode: the pocket
+# floor sits at GAP+0.55 = 1.55, i.e. 0.29mm above the MODELLED diode
+# top (1.26) and 0.15mm above the PART TOLERANCE ceiling (1.40).
+# 0.65mm of plate is left under the pocket (floor 0.60).  The 0.40mm
+# relief that shipped first was sized on the model alone and left
+# only 0.14mm — inside a real part's height tolerance, i.e. it would
+# have scraped a tall diode.
 # Alternatives rejected: (a) diodes on B.Cu — the Choc hotswap socket
 # is a bottom-side part whose solder tabs and plastic body are
 # asymmetric, and the switch fixes the socket's orientation, so the
@@ -152,11 +156,14 @@ GAP = 1.00             # PCB top -> plate underside
 # diode would break the project's left/right mirror discipline for no
 # functional gain; (b) no relief at all — needs GAP >= 1.4, outside
 # the switch's clip band.
-DIODE_RELIEF_D = 0.40  # relief pocket depth in the plate underside
+DIODE_RELIEF_D = 0.55  # relief pocket depth in the plate underside
 DIODE_BODY_L = 2.566   # measured diode body length (its local x)
 DIODE_BODY_W = 1.416   # measured diode body width (its local y)
 DIODE_RELIEF_CLR = 0.15  # pocket margin around the body, per side
 DIODE_TOP_Z = 1.26     # measured diode top above the PCB top surface
+DIODE_TOP_MAX_Z = 1.40  # the part tolerance ceiling (a real SOD-123 is
+                        # 1.25..1.40) -- the relief is sized against
+                        # THIS, not against the model alone
 TAB_W = 10.0             # tab width along the rim
 TAB_L = 5.0              # tab protrusion past the outline
 TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
@@ -603,7 +610,7 @@ def build_half(tag):
 
     cuts = [cut_poly(x, y, CUTOUT, CUTOUT, rot) for _, x, y, rot in sw]
 
-    # Diode relief pockets (support b): a 0.40mm-deep pocket in the
+    # Diode relief pockets (support b): a 0.55mm-deep pocket in the
     # plate underside under every matrix diode, so the plate can come
     # down to GAP 1.05 without fouling the 1.26mm-tall SOD-123s.
     # The pocket follows the MEASURED body (2.566 x 1.416) + 0.15/side
@@ -685,8 +692,13 @@ def build_half(tag):
                            tx + tb[2] + tpad, ty + tb[3] + tpad)
     # USB-plug bay (post-audit H1): the plug is 12.35 wide over an 11.0
     # notch, so its shoulders cut residual plate strips beside the notch
-    # walls at z 2.0..3.5 that neither the switch strip (stops at its own
-    # courtyard) nor the pulled-in core edges cover. The mouth anchor is
+    # walls that neither the switch strip (stops at its own courtyard) nor
+    # the pulled-in core edges cover.  (The bay was sized for the rev-1
+    # plate band z 2.0..3.5; in rev 2 the plate band is z 1.00..2.20 and
+    # the plug's overmold bottom ~2.8 now sits ABOVE the plate, so the bay
+    # is vestigial clearance — kept because the plate's material beside
+    # the notch is still cut by the plug's shoulders in the assembled
+    # stack, and removing it is a separate change.) The mouth anchor is
     # the config usb point (notch referee in check_board); the notch floor
     # is the highest outline point strictly inside the mouth window that
     # sits below the anchor (an open bite dips under it). The floor flat
@@ -1212,15 +1224,21 @@ def build_half(tag):
              f'{poron_edge_at} < {PORON_EDGE_MIN}mm — the 7mm pad keeps '
              f'>=0.6mm to the plate edge (kerf + tolerance)')
     poron_edge_mm = poron_edge
-
     # --- diode relief gates (support b) --------------------------------
     # (a) the stack must actually clear the measured diode: the relief
     #     floor (GAP + DIODE_RELIEF_D) must stand above the diode top
     #     (DIODE_TOP_Z) with the stated margin.
-    clear = GAP + DIODE_RELIEF_D - DIODE_TOP_Z
+    clear = GAP + DIODE_RELIEF_D - DIODE_TOP_MAX_Z
     if clear < 0.10:
-        fail(f'diode relief leaves only {clear:.3f}mm over the diode top '
-             f'(floor 0.10) — raise GAP or DIODE_RELIEF_D')
+        fail(f'diode relief leaves only {clear:.3f}mm over the WORST-CASE '
+             f'diode top ({DIODE_TOP_MAX_Z}mm, floor 0.10) — raise GAP or '
+             f'DIODE_RELIEF_D')
+    clear_model = GAP + DIODE_RELIEF_D - DIODE_TOP_Z
+    if tag == 'Left':
+        print(f"diode relief: {DIODE_RELIEF_D}mm deep, floor at "
+              f"{GAP + DIODE_RELIEF_D:.2f}, clearance {clear:.3f}mm over the "
+              f"worst-case diode ({DIODE_TOP_MAX_Z}) / {clear_model:.3f}mm "
+              f"over the model ({DIODE_TOP_Z})")
     # (b) the relief must not eat the plate: the material left under a
     #     pocket is PLATE_THICK - DIODE_RELIEF_D.
     if PLATE_THICK - DIODE_RELIEF_D < 0.6:
@@ -1309,7 +1327,7 @@ def dxf_write(path, res):
     # with no plate support; skipping it fouls the diodes.
     A('0\nTEXT\n8\nRELIEF\n10\n' + str(r2(ox)) + '\n20\n'
       + str(r2(oy + 3.0)) + '\n30\n0.0\n40\n3.0\n1\n'
-      'RELIEF POCKETS - MACHINE 0.40mm DEEP INTO THE UNDERSIDE - '
+      'RELIEF POCKETS - MACHINE 0.55mm DEEP INTO THE UNDERSIDE - '
       'DO NOT CUT THROUGH\n')
     A('0\nENDSEC\n0\nEOF\n')
     open(path, 'w').write(''.join(L))
@@ -1413,7 +1431,7 @@ def main():
                     'diode_top_z': DIODE_TOP_Z,
                     'clearance': round(GAP + DIODE_RELIEF_D - DIODE_TOP_Z, 3),
                     'note': 'partial-depth pocket in the plate UNDERSIDE; '
-                            'machine 0.40mm, do not cut through',
+                            'machine 0.55mm, do not cut through',
                 },
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
