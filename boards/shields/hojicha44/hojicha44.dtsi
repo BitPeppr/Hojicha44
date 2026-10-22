@@ -96,10 +96,17 @@
         compatible = "alps,ec11";
         a-gpios = <&gpio1 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A0 */
         b-gpios = <&gpio0  2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* A1 */
-        steps = <15>;             /* EC11E15244G1: 30 detents but 15 PULSES/rev;
-                                   ZMK `steps` counts pulses per revolution —
-                                   confirm CW/CCW event counts over one full
-                                   revolution on first article */
+        steps = <60>;             /* v0.3 ec11 driver samples A/B on both-edge
+                                   interrupts and reports val = deltas*360/steps:
+                                   `steps` counts quadrature DELTAS per rotation,
+                                   NOT ALPS "pulse periods". EC11E15244G1 has
+                                   15 pulse-periods/rev = 4 deltas each = 60
+                                   (in-tree reference, sofle v0.3: 20-detent
+                                   full-cycle part -> steps = <80> / TPR 20).
+                                   With TPR 30 below, one detent click = 12deg
+                                   = exactly one trigger. First-article bench
+                                   still verifies CW/CCW counts per click and
+                                   per revolution. */
         status = "disabled";      /* enabled per half-overlay */
     };
 

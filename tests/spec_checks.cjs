@@ -194,13 +194,15 @@ try {
   if (!/diode-direction\s*=\s*"col2row"/.test(dtsi))
     problems.push('dtsi diode-direction is not "col2row" (the matrix is ' +
       'read backwards if flipped)');
-  // Encoder setup gate (EC11E15244G1: 30 detents = 15 pulses per rev;
-  // ZMK `steps` semantics count PULSES per revolution, not detents —
-  // assert both fields against the vendored part).
+  // Encoder setup gate (EC11E15244G1: 30 detents / 15 ALPS pulse-periods
+  // per rev. ZMK v0.3 `steps` counts quadrature DELTAS per radical turn —
+  // val = deltas*360/steps in app/module/drivers/sensor/ec11/ec11.c —
+  // 15 periods x 4 deltas = 60; in-tree reference sofle uses 80/20 for a
+  // 20-detent full-cycle part. Assert both fields against the part).
   const steps = /steps\s*=\s*<(\d+)>/.exec(dtsi);
-  if (!steps || +steps[1] !== 15) {
+  if (!steps || +steps[1] !== 60) {
     problems.push(`dtsi: encoder steps ${steps ? steps[1] : "missing"} ` +
-      "!= 15 (pulses/rev)");
+      "!= 60 (quadrature deltas/rev = 15 pulse-periods x 4)");
   }
   const trig = /triggers-per-rotation\s*=\s*<(\d+)>/.exec(dtsi);
   if (!trig || +trig[1] !== 30) {
