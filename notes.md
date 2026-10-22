@@ -2069,3 +2069,10 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
     pads), F_Paste 44 (diodes × 2); consistent with hand assembly
     (pos-smt.csv = the 22 diodes only, a deliberate make_release
     filter). Entry line above corrected.
+- **F02 CLOSED (2026-10-23):** 39 commits pushed (03c5f49..ca48bd4);
+  CI green on both workflows at ca48bd4 — Static repo checks run
+  39864726437, ZMK firmware build run 39864726932. The audit cycle is
+  fully closed: every finding fixed, refuted on a primary source, or
+  explicitly deferred (next-re-cut batch: R3-03, A-01, A-03). Remaining
+  before orders = user-action gates only (coupon, partial-depth
+  confirm, copper-edge confirm, Bluetooth-SIG).
