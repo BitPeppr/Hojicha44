@@ -1559,8 +1559,10 @@ one unverified assumption — all fixed, all with evidence:
    element, so a rebuild churns ~7800 lines of the board file while the
    GEOMETRY is identical (verified: uuid/date-stripped files are
    byte-equal). Two consequences: the committed boards are the
-   certified artifact by definition (the manifest hashes the EXPORTS,
-   not the board), and any local rebuild must be reverted rather than
+   certified artifact by definition (the manifest hashes the EXPORTS
+   **and the board bytes** — the release manifest carries board sha256,
+   make_release.py enforces it), and any local rebuild must be reverted
+   rather than
    committed. Worth knowing before a future "let me just regenerate"
    reflex; the board-affecting pathspec treats a generator edit as a
    board change anyway.
@@ -1988,8 +1990,10 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
   MANUFACTURING.md; min copper→edge 0.292 (Left notch corridor) / 0.330
   (Right) vs the 0.3 fab rule — top carried concern: have the fab confirm
   in writing or nudge one track at reorder; bom.csv 49 rows/half;
-  pos-smt = the 22 top-side diodes only; B_Paste empty (hand assembly);
-  JST "+" silk on the pin-1/VBAT side; PCB 5.0 vs case 3.0 antenna rules
+  pos-smt = the 22 top-side diodes only (paste SHIPS for hand placement:
+  B_Paste carries the 44 socket-pad apertures, F_Paste the 44 diode
+  apertures — an earlier draft of this entry said "B_Paste empty",
+  corrected by the NIM pass); JST "+" silk on the pin-1/VBAT side; PCB 5.0 vs case 3.0 antenna rules
   are two documented lanes, not a contradiction.
 - R3-01 (P2, fixed): the transport memo carried "UN 3480, PI 965 Section
   II (packed with equipment)" — doubly wrong. IATA deleted PI 965 § II
@@ -2020,3 +2024,48 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
   3.15×2.00), fabricator written 0.55-partial-depth confirmation
   (embedded in the BOM_ORDER plate row), Bluetooth-SIG consultant.
   Push approval → CI green closes round-1 F02.
+
+### Round 3 verification pass (nvidia NIM deepseek-v4.1-flash re-bind)
+- The GLM round-3 session re-bound to NIM (no zen respawn — deepseek
+  v4.1 was the originally requested auditor family; the zen route was
+  unfunded). Independent pass: fresh six-area sweep FIRST, then verify
+  the three resolutions.
+- Part B: R3-02 **VERIFY** (count reproduced: 384+71=455 Left,
+  490+100=590 Right, edge segs 111/111); R3-03 **VERIFY — defer sound**
+  (refresh=False reads the .net read-only; the parser touches only
+  net/code/name/class + pins; board_commit() covers pcb/kicad +
+  pcb/generators, so any fix moves the stamp); R3-01 **QUALIFY** — one
+  clause wrong, fixed this commit.
+- R3-01 fix detail: the ≤30% SoC rule for bare UN 3480 applies **since
+  2016** (the ICAO April-2016 rule — rechargebatteries.org guidance;
+  lion.com), not from 2026. 1 Jan 2026 is when it extends into PI 966
+  **packed with equipment** (DGR-66: "extended into PI 966, initially
+  as a recommendation in 2025, and becoming mandatory in 2026"; IATA
+  fact sheet; >2.7 Wh per the DGR-66 change — the 0.407 Wh cell is
+  under that threshold either way). SP A331 is the **exception**
+  (transport at >30% SoC with State approval), not the limit's basis.
+  And BOTH § IA and § IB are cargo-aircraft-only for UN 3480. Memo
+  corrected against these sources.
+- New findings, all P2, **no new P0/P1**:
+  - A-01: rev drift — committed board/sch title blocks say `(rev "0.3")`
+    while spec/electronics.yaml is 0.5.0 and gen_schematic.py:663
+    derives REV = spec MAJOR.MINOR; electronics.yaml:314-315 claims the
+    sheet "cannot drift", but gen_schematic.py:1230-1237 skips an
+    already-placed board and gen_pcb.py:1300 rebuilds from the frozen
+    head, so it cannot self-heal. DEFERRED with R3-03 to the next
+    re-cut: one-time re-stamp + a KiCad-free CI gate (title-block rev
+    vs spec MAJOR.MINOR). Inert for ordering — the fab gets gerbers (no
+    title block) + drill + BOM + pos; the gbrjob GeneralSpecs rev is
+    cosmetic.
+  - A-02 (fixed this commit): notes.md said the manifest "hashes the
+    EXPORTS, not the board" — wrong: the release manifest carries board
+    sha256 and make_release.py:292-306 enforces it. Corrected.
+  - A-03: gen_pcb.py:144 comment "byte-stable like the boards" wrong
+    (uuid4 per element; the truth is geometry-stable, notes.md:1558).
+    Comment-only edit in pcb/generators = board-affecting → DEFERRED to
+    the next re-cut.
+  - Self-correction adopted: round 3's "B_Paste contains only headers"
+    was wrong — B_Paste carries 44 aperture flashes (22 sockets × 2
+    pads), F_Paste 44 (diodes × 2); consistent with hand assembly
+    (pos-smt.csv = the 22 diodes only, a deliberate make_release
+    filter). Entry line above corrected.
