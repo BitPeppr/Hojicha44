@@ -1781,6 +1781,31 @@ decisions that are the owner's to make.
   mouth-to-mouth) and the 90-degree plug fit;
 - the 301230 cell's outline in the printed bay.
 
+### E. BLOCKER found by the rev-2 audit (2026-10-22) — FIXED, but read this
+
+**The encoder did not fit the rev-2 plate.** The rev-1 encoder hole was
+a 12.7mm square sized for the rev-1 plate band (z 2.0..3.5), where
+the EC11E's body is 12.30 wide. The rev-2 band is **z 1.00..2.20**,
+and measuring the project's OWN vendored ROT_EC11E STEP shows the
+encoder's **terminal blocks span 14.95mm for z 0.0..1.5** (the
+12.30 waist starts at z 1.6). The rev-2 band sits inside the terminal
+blocks: the 12.7 hole fouled the encoder by **1.41mm/side** and it
+would not have gone through the plate at all — the first article would
+have caught it, at the cost of two plates and a re-cut.
+
+Fixed by sizing the window to the measured ENVELOPE: **16.2 x 12.4**
+(~0.34/side over 14.95 x 11.70), symmetric about the shaft so the
+halves stay exact mirrors (the encoder is a translated, not mirrored,
+part). `gen_plate.py` now ASSERTS the window cannot shrink below
+envelope + 0.2/side. A first-article caliper check on the real
+encoder's terminals is in `spec/first-article.md`.
+
+The lesson is the same one as the diode height, and it is worth
+stating twice: **a component that moves relative to a hole must have
+its clearance envelope re-measured in the NEW band.** The encoder's
+own datasheet number (12.30) was still in the spec, still true, and
+still wrong for the hole.
+
 ### D. Process lessons from this round (do not repeat them)
 
 - **Research before deferring.** BLK-2 sat open for a session because

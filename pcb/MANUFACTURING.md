@@ -110,9 +110,11 @@ but every design-shaped field below has exactly one right answer.
   MATERIAL constant) or POM (the firmer upgrade) or CNC aluminum.**
   **1.2mm is not a free choice: the Choc v1 clip only engages a 1.2mm
   plate** (at 1.5/1.6mm the switch has no retention).  The plate also
-  carries a **0.35mm relief pocket in its underside under each of the
+  carries a **0.40mm relief pocket in its underside under each of the
   22 diodes** (RELIEF layer in the DXF) — machine that depth, do NOT
-  cut through it.  The
+  cut through it.  The **encoder window is 16.2 x 12.4** (rev 1's
+  12.7 square fouled the encoder's terminal blocks at the rev-2 plate
+  height — measured off the vendored EC11E STEP).  The
   plate's W1 windows keep the MCU/battery/USB region clear, so even
   metal doesn't blanket the module; PC wins all-round for rev 1 (quiet,
   cheapest prototype, laser-cut, no antenna-second-guessing). Files:

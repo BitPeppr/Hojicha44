@@ -77,6 +77,17 @@ poor bridger.
   (0.9–1.3mm above the PCB) must grab the underside and the 14.8mm
   ears (starting at 2.2mm) must seat on the plate's top face with no
   interference.
+- [ ] **Encoder window (PRE-ORDER, new in rev 2)** — the plate's encoder
+  window is now **16.2 x 12.4** (rev 1 had a 12.7 square, which fouled
+  the encoder's terminal blocks once the plate moved down to the 1.00mm
+  gap). On the coupon (or a scrap of the same 1.2mm PC): the encoder
+  must pass the window freely, and the two terminal blocks must clear
+  it with room to spare. **Caliper the real encoder**: the width
+  across the A/B/C and S1/S2 terminal blocks at 1.0mm and 1.5mm above
+  the PCB. If the blocks do NOT protrude above ~1.5mm (the vendored
+  STEP may overstate them), the window can go back to 12.7 square and
+  the plate batch saves material — but only with that measurement in
+  hand, not with the STEP alone.
 - [ ] Module footprint: place a real nice!nano on the print, pin-1/USB end
   to the notch edge. All 24 pads must sit on printed copper.
 - [ ] Socket rows on print measure **15.24mm** apart, 2.54mm pitch.

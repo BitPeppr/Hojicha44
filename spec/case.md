@@ -291,16 +291,34 @@ against crack initiation in every material.
   friction and the hotswap sockets alone.  First-article coupon
   (spec/first-article.md): cut 13.8 / 14.0 / 14.2 / 15.0 squares in
   1.2mm PC and measure insertion + retention before the plate order.
-- 12.7×12.7mm square encoder hole (instance rot 0, body axis-aligned).
-  Sized off the vendored ROT_EC11E STEP: the body measures **12.30 wide
-  in the plate band (z 2.0..3.5)** (12.00 up to z 4.0), so 12.7 gives
-  0.20/side nominal (the old 12.5 was spec'd 0.4/side off the "11mm
-  class" — the real part is wider; bench-verify with the real encoder
-  before the plate order). Corner relief maths (audit 2026-10-20): body
-  extreme over the diagonal = (12.30/2)·√2 − 0.17·(√2−1) ≈ 8.63 vs the
-  hole's 0.5 fillet-relief reach ≈ 8.77 → 0.145mm nominal corner
-  clearance; tangency would need a 0.85 fillet or the 13.0-hole
-  fallback, both rejected as needless (hand insert).
+- **16.2 × 12.4mm encoder window** (instance rot 0, body axis-aligned).
+  **CHANGED IN REV 2, and it was a blocker.** The rev-1 hole was a
+  12.7mm square sized off the vendored ROT_EC11E STEP for the rev-1
+  plate band (z 2.0..3.5), where the encoder's body is 12.30 wide.
+  The rev-2 plate band is **z 1.00..2.20** (1.00 gap + 1.20 plate),
+  and measuring the SAME vendored STEP gives the encoder's
+  cross-section as **14.95 wide × 11.70 deep for z 0.0..1.5** (the
+  A/B/C and S1/S2 terminal blocks stand proud of the 12.30 body) and
+  12.30 × 11.70 for z 1.6..2.3 (the waist). The rev-2 band therefore
+  sits **inside the terminal blocks**: the 12.7 hole fouled the
+  encoder by up to **1.41mm/side** and the encoder would not pass
+  through the plate at all. The window is now sized to the measured
+  ENVELOPE, not the waist: 16.2 × 12.4 gives ~0.34/side over
+  14.95 × 11.70, and stays symmetric about the shaft so the two
+  halves' windows remain exact mirrors (the encoder is a translated,
+  NOT mirrored, part — an offset window would break the mirror gate).
+  Nothing is lost: the encoder is located by its PCB pins, and the
+  rev-1 hole had 0.20/side, i.e. clearance only. `gen_plate.py` asserts
+  the window can never shrink below envelope + 0.2/side.
+  **First article:** caliper the real encoder's terminals at
+  z 1.0..1.5; if they do not protrude above ~1.5mm (the STEP may
+  overstate them) the window may be reduced to 12.7 square, but the
+  shipped plate must clear the model as it stands.
+  Corner relief maths (audit 2026-10-20): body extreme over the
+  diagonal = (12.30/2)·√2 − 0.17·(√2−1) ≈ 8.63 vs the hole's 0.5
+  fillet-relief reach ≈ 8.77 → 0.145mm nominal corner clearance;
+  tangency would need a 0.85 fillet or the 13.0-hole fallback, both
+  rejected as needless (hand insert).
   The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
   the hole. A 17mm round hole was rejected: the encoder SHAFT center
   sits 24.04mm from the nearest switch center (SW_L17; the old "18.18"

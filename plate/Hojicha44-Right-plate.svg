@@ -25,7 +25,7 @@
 <polygon points="103.38,495.92 145.32,458.82 108.22,416.88 66.28,453.98" fill="#000" stroke="#fff" stroke-width="1"/>
 <polygon points="85.0,48.0 83.0,50.0 83.0,93.8 81.0,95.8 70.0,95.8 68.0,97.8 68.0,277.4 70.0,279.4 151.2,279.4 153.2,277.4 153.2,104.0 155.2,102.0 180.4,102.0 182.4,100.0 182.4,84.0 180.4,82.0 140.2,82.0 138.2,80.0 138.2,50.0 136.2,48.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
 <polygon points="32.6,398.0 34.6,400.0 102.8,400.0 104.8,398.0 104.8,370.0 102.8,368.0 34.6,368.0 32.6,370.0" fill="#000" stroke="#ff9800" stroke-width="1.5" stroke-dasharray="5,3"/>
-<polygon points="85.2,351.4 87.2,353.4 134.0,353.4 136.0,351.4 136.0,304.6 134.0,302.6 87.2,302.6 85.2,304.6" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
+<polygon points="78.2,350.8 80.2,352.8 141.0,352.8 143.0,350.8 143.0,305.2 141.0,303.2 80.2,303.2 78.2,305.2" fill="#000" stroke="#ff9800" stroke-width="1.5"/>
 <polygon points="541.17,170.27 541.17,181.73 548.03,181.73 548.03,170.27" fill="none" stroke="#00bcd4" stroke-width="1" stroke-dasharray="3,2"/>
 <polygon points="465.17,154.27 465.17,165.73 472.03,165.73 472.03,154.27" fill="none" stroke="#00bcd4" stroke-width="1" stroke-dasharray="3,2"/>
 <polygon points="389.17,134.27 389.17,145.73 396.03,145.73 396.03,134.27" fill="none" stroke="#00bcd4" stroke-width="1" stroke-dasharray="3,2"/>
@@ -66,7 +66,7 @@
 <text x="437.34" y="446.46" fill="#f0f" font-size="9" font-weight="bold" text-anchor="middle">T8</text>
 <text x="8" y="14" fill="#f0f" font-size="10">T = gasket tab (poron pads top+bottom, yellow)</text>
 <text x="8" y="26" fill="#fff" font-size="10">white square = Choc cutout 15x15</text>
-<text x="8" y="38" fill="#ff9800" font-size="10">solid orange = encoder hole 12.7sq / dashed orange = component window (tall parts)</text>
+<text x="8" y="38" fill="#ff9800" font-size="10">solid orange = encoder window 16.2x12.4 / dashed orange = component window (tall parts)</text>
 <circle cx="68.6" cy="280.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <circle cx="536.6" cy="360.0" r="6.4" fill="none" stroke="#03a9f4" stroke-width="1"/>
 <text x="582.6" y="176.0" fill="#888" font-size="7" text-anchor="middle">SW_R00</text>

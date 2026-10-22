@@ -7,9 +7,10 @@ geometry, never hand-drawn):
   outline  = PCB Edge.Cuts loop, identical (USB notch included, so the
              plug housing passes the plate edge exactly as it passes the PCB)
   cutouts  = 22x 15x15mm Choc PG1350 squares at switch instances/rotations
-  encoder  = 12.7x12.7mm square hole (instance rot 0, body axis-aligned):
-             clears the 12.30 body (measured off the vendored STEP in the
-             plate band) at 0.20/side AND clears the neighbour key
+  encoder  = 16.2x12.4mm window (instance rot 0, body axis-aligned):
+             clears the encoder's 14.95x11.70 terminal-block envelope
+             (measured off the vendored STEP, which the rev-2 plate band
+             z 1.00..2.20 now intersects) AND clears the neighbour key
              cutout where a 17mm round hole would merge into it; the 13mm
              knob rides high on the 20mm shaft (bore never enters the hole)
   W1       = switch strip + MCU/cell/USB + JST windows (slide switch 6.4,
@@ -84,19 +85,38 @@ STOCK_FP = os.environ.get(
 #     14.2 / 15.0 squares in 1.2mm PC and measure retention before
 #     the plate order.
 CUTOUT = 14.0          # Choc PG1350 plate cutout (13.8 body + 0.1/side)
-ENC_SQ = 12.7           # square hole: vendored EC11 body measures 12.30 wide
-                        # in the plate band (z 2.0..3.5) -> 0.20/side; knob
-                        # rides high on the 20mm shaft either way.
-                        # Corner math (audit-round question, checked
-                        # 2026-10-20): body extreme radius over the
-                        # diagonal = (12.30/2)*sqrt2 - 0.17*(sqrt2-1) =
-                        # 8.628; the WIN_FILLET 0.5 relief gives the hole
-                        # reach (12.70/2-0.5)*sqrt2 + 0.5 = 8.773 -> 0.145
-                        # nominal diagonal clearance. Tangency would need
-                        # a 0.85 fillet on this hole (or a 13.0 hole per
-                        # first-article fallback option) — both unchanged
-                        # because 0.145 > kerf wiggle and this is a
-                        # hand-insert.
+# ENCODER WINDOW.  rev-1 used a 12.7mm SQUARE hole, sized off the
+# vendored ROT_EC11E STEP for the OLD plate band (z 2.0..3.5), where
+# the encoder's body is 12.30 wide.  The rev-2 plate moved the band to
+# z 1.00..2.20 (1.00 gap + 1.20 plate) and THAT BREAKS THE OLD HOLE:
+# measured off the same vendored STEP, the encoder's cross-section is
+#   z 0.0..1.5 : 14.95 wide x 11.70 deep  (the A/B/C and S1/S2
+#                terminal blocks stand proud of the 12.30 body)
+#   z 1.6..2.3 : 12.30 wide x 11.70 deep  (the waist)
+# so in the new band the encoder needs 14.95 of width and the 12.7
+# hole FOULS IT by up to 1.41mm/side — the encoder would not go
+# through the plate at all.  The window is therefore sized to the
+# measured ENVELOPE (not the waist): 16.2 x 12.4 gives ~0.34/side
+# over the 14.95 x 11.70 envelope, and stays SYMMETRIC about the
+# shaft so the two halves' windows remain exact mirrors (the encoder
+# is a translated, NOT mirrored, part, so an offset window would
+# break the plate's mirror gate).
+# The encoder is located by its PCB pins, not by the plate (the old
+# hole had 0.20/side, i.e. clearance only), so nothing is lost.
+# The knob rides high on the 20mm shaft either way.
+# FIRST ARTICLE: caliper the REAL encoder's terminals at z 1.0..1.5.
+# If they do NOT protrude above ~1.5mm (i.e. the STEP overstates
+# them), the window may be reduced to 12.7 square; the shipped plate
+# must clear the model as it stands.
+ENC_W = 16.2            # encoder window, x (shaft-centred)
+ENC_H = 12.4            # encoder window, y (shaft-centred)
+# Hard guard: the window must never shrink below the measured
+# clearance envelope + 0.2/side.  These floors are the reason the
+# rev-2 window is 16.2 and not 12.7.
+ENC_ENV_X = 14.95       # measured: terminal-block span (vendored STEP)
+ENC_ENV_Y = 11.70       # measured: body depth (vendored STEP)
+assert ENC_W >= ENC_ENV_X + 0.2, f"encoder window {ENC_W} < envelope {ENC_ENV_X} + 0.2"
+assert ENC_H >= ENC_ENV_Y + 0.2, f"encoder window {ENC_H} < envelope {ENC_ENV_Y} + 0.2"
 PLATE_THICK = 1.2      # mm PC -- Choc v1 clip engagement (Keebio: 1.2mm)
 # PCB top -> plate underside.  MEASURED from the Kailh Choc v1 outline
 # drawing and a community STEP model (spec/research-open-items-2026-10-21.md
@@ -725,7 +745,7 @@ def build_half(tag):
     # instance at ergogen_point minus that offset, so add it back here.
     # A hole at the raw instance origin would sit 7.9mm off-shaft.
     _osx, _osy = rot_cw(7.5, 2.5, enc[3])
-    enc_poly = cut_poly(enc[1] + _osx, enc[2] + _osy, ENC_SQ, ENC_SQ, 0)
+    enc_poly = cut_poly(enc[1] + _osx, enc[2] + _osy, ENC_W, ENC_H, 0)
     # same crack argument as the windows; verified vs the vendored EC11:
     # a body corner radius >= 0.17 keeps the body clear of a 0.5 back-cut
     enc_hole = chamfer(enc_poly, WIN_FILLET)
@@ -1339,7 +1359,7 @@ def svg_write(path, res):
              f'white square = Choc cutout 15x15'
              f'</text>')
     o.append(f'<text x="8" y="38" fill="#ff9800" font-size="10">'
-             f'solid orange = encoder hole 12.7sq / dashed orange = '
+             f'solid orange = encoder window {ENC_W:g}x{ENC_H:g} / dashed orange = '
              f'component window (tall parts)'
              f'</text>')
     for tx, ty in res['tool']:
@@ -1393,7 +1413,7 @@ def main():
                 },
             }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
                     'w'), indent=1)
-        print(f'{tag}: 22 cutouts + enc {ENC_SQ}sq + {len(res["wins"])} '
+        print(f'{tag}: 22 cutouts + enc {ENC_W}x{ENC_H} + {len(res["wins"])} '
               f'windows + {len(res["tabs"])} gasket tabs — CLEAN')
         ew = res['enc_web']
         print(f'{tag}: encoder web — cutouts {ew["cutouts"]:.2f}, '
