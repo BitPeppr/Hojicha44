@@ -117,8 +117,8 @@ L2_ROWS = [
 L2_SENSOR = "&inc_dec_kp C_PREV C_NEXT"
 
 # ---- Adjust (the L1+L2 chord, via conditional_layers) ----
-ADJUST_BOOT_POS = 1        # W's position: miryoku puts bootloader on the
-ADJUST_RESET_POS = 2       # top-row pinky column; reset beside it
+ADJUST_BOOT_POS = 1        # keycap W — above the ring-finger home mod (S)
+ADJUST_RESET_POS = 2       # keycap E — above the middle-finger mod (D)
 ADJUST_SENSOR = "&inc_dec_kp C_VOL_UP C_VOL_DN"
 BASE_SENSOR = "&inc_dec_kp C_VOL_UP C_VOL_DN"
 

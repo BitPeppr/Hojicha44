@@ -27,8 +27,8 @@ matrix:
 
 thumbs:
   # Left west->east / right west->east. All standalone keys (status: fixed),
-  # all 1u. The four sit on one true circle (R=90 about the thumb joint,
-  # fitted residual 0.1mm): even ~13.2deg steps give even ~22mm chords and
+  # all 1u. The four sit on one true circle (R=91.2 about the thumb joint)
+  # even ~13.9deg steps give even ~22mm chords and
   # clock-tangent rotations (tangent error <=1.6deg), so every key sits ON
   # the curve facing along it. Edge clearance >=1.3mm on every cap pair
   # (verified by polygon check, not center distance).
@@ -47,7 +47,6 @@ thumbs:
     - Cmd is Super; Opt is Alt — both now live on the home row (rev 3).
     - L1 and L2 stay separate layers (status: fixed).
     - Fn is the L1+L2 chord, not a key (status: provisional).
-    - Tab is an L1+Space combo (status: provisional).
     - Cluster arcs down-east into the split gap; inner key most rotated.
 
 encoder:

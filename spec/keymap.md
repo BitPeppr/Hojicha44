@@ -155,8 +155,10 @@ the editing trio lives under one thumb-hand reach.
 
 ```
 conditional_layers: if-layers = <1 2>, then-layer = <3>
-- &bootloader at W's position, &sys_reset at E's (miryoku: reset on the
-  top-row pinky column, both thumbs already busy holding the chord)
+- &bootloader at the keycap-W position, &sys_reset at the keycap-E
+  position (left top row, directly above the ring- and middle-finger home
+  mods; both thumbs are busy holding the chord, and everything else is
+  &none — there is nothing safe to type mid-chord)
 - every other key &none (there is nothing safe to type mid-chord)
 - encoder = volume (harmless while reaching for boot)
 ```

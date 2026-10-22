@@ -7,8 +7,9 @@
  *    against the TRACKED release DRC copies (generated/release/vX.Y.Z/)
  *  - release MANIFEST exists for the spec version and lists both halves
  *  - ZMK structure: transform map RC count == keymap bindings per layer,
- *    exact 2 layers, every binding's POSITION against the row-major
- *    interleaved legend signature (the left-then-right ordering bug can
+ *    exactly 4 layers (the gen gate), every binding's POSITION against
+ *    the row-major interleaved legend signature (the left-then-right
+ *    ordering bug can
  *    never silently ship wrong characters), col-offset coverage, BLE-only
  *    (no wired-split node, no SPLIT_WIRED), diode-direction set
  *    (the 6-column-transform-for-12-columns bug can never recur silently)
