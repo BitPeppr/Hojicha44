@@ -1720,3 +1720,96 @@ value (a flipped value read the matrix backwards and passed).
   plug dimensions, the cell stack height and the MJF printability**
   all remain first-article measurements — no offline check can settle
   them (every reviewer said so).
+
+---
+
+## Open to-do log — 2026-10-22 (after support strategy b, release v0.5.0)
+
+State at this entry: the rev-2 stack is implemented and gated, the
+release is cut and clean, and nothing has been ordered or pushed. What
+is left is the work that **cannot be done in software** plus three
+decisions that are the owner's to make.
+
+### A. Pre-order gates — these block the ORDER, not the work
+
+1. **Choc cutout test coupon** (`spec/first-article.md` §1). One
+   100 x 100mm sheet of 1.2mm PC: four 20x20mm squares with 13.8 /
+   14.0 / 14.2 / 15.0mm holes, plus a fifth with a 14.0 hole and the
+   0.40mm diode-relief pocket (the RELIEF layer of the plate DXF).
+   Test: does the 13.8 body pass the hole, does the clip lip
+   (0.9–1.3mm above the PCB) grab the 1.00mm underside, do the 14.8mm
+   ears seat on the 2.20mm top face, is the pocket 0.40mm and NOT
+   through. **If 14.0 does not catch, drop to 13.9 and re-cut the
+   coupon** — do not discover this after two plates and 44 switches.
+2. **Fabricator partial-depth capability.** The plate needs a 0.40mm
+   pocket in the underside of 1.2mm PC (0.80mm left under it). A
+   through-cut would leave the switch without plate support; a
+   through-cut vendor cannot do a partial pass is a real sourcing
+   constraint, not a detail. Ask the plate vendor before the order.
+3. **Keymap layer decisions** (`spec/keymap.md` §2) — the owner's
+   ergonomic call: L1 is functionally empty today, L2 is a transparent
+   placeholder, and Backspace/Delete have no home. The file has
+   recommendations (editing keys on the right thumb's L1, L2 as the
+   symbol layer with a real chord macro); it needs an edit, not a
+   discussion.
+
+### B. Not a pre-order gate — but do not forget it
+
+4. **Bluetooth SIG** — only if a unit is **sold or branded**
+   (the SIG's trigger: "selling, branding, manufacturing, or
+   representing a product as its own"). Adopter membership is $0; the
+   one-off Product Qualification Fee is $12,000 + a $1,250 Company
+   Identifier for one design, and our keyboard is an Unmodified Design
+   (Nordic's qualified nRF52840 + ZMK → listing, no new RF testing).
+   A self-built, never-sold pilot owes the SIG nothing. See
+   `spec/compliance.md`.
+5. **ACMA Responsible Supplier registration** — free, but the RCM may
+   not be applied to the product before it exists. Do it when the
+   first unit is built, not before.
+6. **The RCM label is a sticker**, not case printing, until the market
+   is fixed (AU/NZ now; the US/EU paths are in `spec/compliance.md`).
+
+### C. Physical first-article measurements (no offline check can settle these)
+
+- plate flatness and the 0.40mm pocket depth on the real part;
+- the magnet pull force at 8 stations per half (the retention
+  arithmetic says ≥3 kg against a ~200 g half — measure it);
+- the poron compression (the design assumes ~16.7% preload);
+- the LiPo polarity gate before the first plug-in (RAW-B+ / GND-B- /
+  RAW-VCC open / charge-ON);
+- the TRRS gap on the printed halves (20.42mm edge-to-edge, 22.40mm
+  mouth-to-mouth) and the 90-degree plug fit;
+- the 301230 cell's outline in the printed bay.
+
+### D. Process lessons from this round (do not repeat them)
+
+- **Research before deferring.** BLK-2 sat open for a session because
+  the PG1350 drawing was "not vendored" — the data was one search
+  away (Kailh's outline drawing + a community STEP model). Deferring
+  a task to a human who has to go and find the data is a cop-out; the
+  agent can find it. Two searches later the whole support strategy
+  had hard numbers.
+- **Measure, do not inherit.** The stack's "diodes are 1.35mm" was an
+  inherited comment, 0.09mm pessimistic; KiCad's own D_SOD-123.step
+  says **1.260mm**. Measuring it (one CadQuery bbox) changed the
+  relief depth and the clearance budget. Every dimension in this
+  design should have a source next to it — a drawing, a STEP, or a
+  measurement — not a number someone typed.
+- **A decided plan can be infeasible; prove it and take the fallback.**
+  "Diodes to B.Cu" was implemented and then **proven impossible** by
+  the geometry: the Choc socket is a bottom-side part with asymmetric
+  tabs and body whose orientation the switch fixes, so the two
+  halves' bottom copper cannot be mirror-symmetric. The decision
+  already carried a fallback (0.35mm plate relief) and it was used
+  (0.40mm at the final 1.00mm gap). Record *why* the primary path
+  died, or the next person will try it again.
+- **Quote fee schedules, not headlines.** The first summary said the
+  Bluetooth SIG Adopter tier costs $12,000; it is $0, and the $12,000
+  is a one-off qualification fee that only bites if you sell. Read the
+  actual schedule.
+- **A cheap test piece beats an expensive rework.** The cutout coupon
+  is a few dollars and a day; a wrong 0.2mm hole size costs two
+  plates, 44 switches and a re-cut of the case stack.
+- **Ask the question that ends the task.** "Why is this not fixed?"
+  was answered by implementing it; "wdym coupon" by writing the
+  coupon down as a drawing request.
