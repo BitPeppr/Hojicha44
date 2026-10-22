@@ -24,8 +24,12 @@ geometry, never hand-drawn):
              the assembly floats. Every switch + the encoder must sit near
              a tab root (MAX_TAB_DIST, set from evidence).
 
-Stack contract (spec/case.md): 1.5mm PC plate, 2.0mm PCB-to-plate gap
-(top-side diodes are 1.35mm, module underside 4.5mm).
+Stack contract (spec/case.md), rev 2 / support (b): 1.2mm PC plate,
+1.00mm PCB-to-plate gap, 14.0mm Choc cutout (the clip MUST engage: the
+lower body is 13.80, the clip lip sits 0.9-1.3 above the PCB and the
+14.8 ears bear on the plate's top at 2.20).  The 22 top-side diodes
+(1.260mm tall, MEASURED off KiCad's D_SOD-123.step) clear the plate
+through 0.40mm relief pockets in its underside (RELIEF layer).
 
 Usage:
   python3 plate/gen_plate.py          # writes plate/
@@ -33,7 +37,7 @@ Usage:
 
 Outputs (gitignored scratch, like out/fit):
   plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
-      OUTLINE/CUTOUT/PORON[reference-only])
+      OUTLINE/CUTOUT/PORON[reference-only]/RELIEF[machine 0.40 deep])
   plate/Hojicha44-{Left,Right}-plate.svg   (preview, lands hatched)
   plate/Hojicha44-{Left,Right}-lands.json  (gasket map for case design)
 
@@ -599,7 +603,7 @@ def build_half(tag):
 
     cuts = [cut_poly(x, y, CUTOUT, CUTOUT, rot) for _, x, y, rot in sw]
 
-    # Diode relief pockets (support b): a 0.35mm-deep pocket in the
+    # Diode relief pockets (support b): a 0.40mm-deep pocket in the
     # plate underside under every matrix diode, so the plate can come
     # down to GAP 1.05 without fouling the 1.26mm-tall SOD-123s.
     # The pocket follows the MEASURED body (2.566 x 1.416) + 0.15/side
@@ -1300,7 +1304,7 @@ def dxf_write(path, res):
     A('0\nTEXT\n8\nPORON\n10\n' + str(r2(ox)) + '\n20\n' + str(r2(oy + 6.0))
       + '\n30\n0.0\n40\n3.0\n1\n'
       'DO NOT CUT PORON - KNIFE/PUNCH TEMPLATE ONLY, REFERENCE\n')
-    # RELIEF: a PARTIAL-DEPTH pocket in the plate underside (0.35mm),
+    # RELIEF: a PARTIAL-DEPTH pocket in the plate underside (0.40mm),
     # not a through-cut.  Cutting it through would leave the switch
     # with no plate support; skipping it fouls the diodes.
     A('0\nTEXT\n8\nRELIEF\n10\n' + str(r2(ox)) + '\n20\n'

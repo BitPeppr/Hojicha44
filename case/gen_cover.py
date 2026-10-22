@@ -9,8 +9,9 @@ left a tab-shaped bite over every tab: the top poron pads pressed
 NOTHING; the review caught it). The rim-based interior bridges all 8
 tab zones and presses the top pads at the designed 16.7% preload,
 gated per pad. Retained by 8+8 recessed 4x2 N52 magnets whose faces
-meet AT the lip plane: tub magnet face-up to 6.0, ring magnet
-face-down to 6.0 — a rigid zero-gap stop that cannot crush the foam,
+meet AT the lip plane: tub magnet face-up to TOP_LIP_Z (4.70 in
+rev 2), ring magnet face-down to the same plane — a rigid zero-gap
+stop that cannot crush the foam,
 no heat-set inserts, nothing on the exterior.
 
   case/.venv/bin/python case/gen_cover.py            # both halves
@@ -271,7 +272,11 @@ def check_cover(tag, solid, info):
                 for a, b in zip(ring, ring[1:] + ring[:1]))
         if d < ant_lim:
             bad.append(f"cover antenna ring only {d:.2f} < {ant_lim}")
-    expect("no cover over antenna", ant[0], ant[1], 7.5, False)
+    # probe at the cover's MID height (derived, not a literal: the old
+    # 7.5 was the rev-1 cover's mid and would silently become a no-op
+    # if the cover height changed)
+    expect("no cover over antenna", ant[0], ant[1],
+           P.TOP_LIP_Z + P.COVER_T / 2, False)
 
     vol = solid.Volume()
     bstat = ""
