@@ -104,17 +104,19 @@ but every design-shaped field below has exactly one right answer.
   lip in this design; the ring magnet seats against the tub lip
   plane); JLC MJF build ~72h. Generate with
   `case/.venv/bin/python case/gen_case.py` +
-  `case/gen_cover.py` (STEP out; volumes 75.7/75.7 cm³ at OUTSET 8.2,
-  audit round 2026-10-20).
+  `case/gen_cover.py` (STEP out; volumes 71.1/71.1 cm³ at OUTSET 8.2,
+  measured 2026-10-22 with the current generators — 75.7 predates the
+  top-lip 4.70 rev).
 - **Plate at 1.2mm: PC (default, per spec/case.md — the generator's
   MATERIAL constant) or POM (the firmer upgrade) or CNC aluminum.**
   **1.2mm is not a free choice: the Choc v1 clip only engages a 1.2mm
   plate** (at 1.5/1.6mm the switch has no retention).  The plate also
-  carries a **0.40mm relief pocket in its underside under each of the
-  22 diodes** (RELIEF layer in the DXF) — machine that depth, do NOT
-  cut through it.  The **encoder window is 16.2 x 12.4** (rev 1's
-  12.7 square fouled the encoder's terminal blocks at the rev-2 plate
-  height — measured off the vendored EC11E STEP).  The
+  carries a **0.55mm relief pocket in its underside under each of the
+  22 diodes** (RELIEF layer in the DXF; the DXF text entity repeats the
+  depth) — machine that depth, do NOT cut through it.  The **encoder
+  window is 16.2 x 12.4** (rev 1's 12.7 square fouled the encoder's
+  terminal blocks at the rev-2 plate height — measured off the
+  vendored EC11E STEP).  The
   plate's W1 windows keep the MCU/battery/USB region clear, so even
   metal doesn't blanket the module; PC wins all-round for rev 1 (quiet,
   cheapest prototype, laser-cut, no antenna-second-guessing). Files:

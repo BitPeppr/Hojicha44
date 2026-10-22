@@ -37,7 +37,7 @@ Usage:
 
 Outputs (gitignored scratch, like out/fit):
   plate/Hojicha44-{Left,Right}-plate.dxf   (R12, mm, layers
-      OUTLINE/CUTOUT/PORON[reference-only]/RELIEF[machine 0.40 deep])
+      OUTLINE/CUTOUT/PORON[reference-only]/RELIEF[machine 0.55 deep])
   plate/Hojicha44-{Left,Right}-plate.svg   (preview, lands hatched)
   plate/Hojicha44-{Left,Right}-lands.json  (gasket map for case design)
 
@@ -145,8 +145,8 @@ GAP = 1.00             # PCB top -> plate underside
 # plate carries a 0.55mm RELIEF POCKET under every diode: the pocket
 # floor sits at GAP+0.55 = 1.55, i.e. 0.29mm above the MODELLED diode
 # top (1.26) and 0.15mm above the PART TOLERANCE ceiling (1.40).
-# 0.65mm of plate is left under the pocket (floor 0.60).  The 0.40mm
-# relief that shipped first was sized on the model alone and left
+# 0.65mm of plate is left under the pocket (gate: floor >= 0.60).  The
+# 0.40mm relief that shipped first was sized on the model alone and left
 # only 0.14mm — inside a real part's height tolerance, i.e. it would
 # have scraped a tall diode.
 # Alternatives rejected: (a) diodes on B.Cu — the Choc hotswap socket
@@ -1322,7 +1322,7 @@ def dxf_write(path, res):
     A('0\nTEXT\n8\nPORON\n10\n' + str(r2(ox)) + '\n20\n' + str(r2(oy + 6.0))
       + '\n30\n0.0\n40\n3.0\n1\n'
       'DO NOT CUT PORON - KNIFE/PUNCH TEMPLATE ONLY, REFERENCE\n')
-    # RELIEF: a PARTIAL-DEPTH pocket in the plate underside (0.40mm),
+    # RELIEF: a PARTIAL-DEPTH pocket in the plate underside (0.55mm),
     # not a through-cut.  Cutting it through would leave the switch
     # with no plate support; skipping it fouls the diodes.
     A('0\nTEXT\n8\nRELIEF\n10\n' + str(r2(ox)) + '\n20\n'

@@ -273,6 +273,8 @@ Note also that a **PCM'd cell is typically protected against over-charge only to
 
 **Recommended geometry for Hojicha44:** PCB **1.6 mm**, plate **1.2 mm**, PCB-top-to-plate-underside gap **1.3 mm** (i.e. standoffs/case features set 1.3 mm), switch cutout **14.0 mm nominal**.
 
+**Status (2026-10-22): superseded for Hojicha44 by §6 below.** The final design uses the measured PG1350 clip band: plate underside **1.00 mm** above the PCB top (a 1.2 mm plate occupies 1.00–2.20), because a 1.3 mm gap drives the plate top through the switch ears — see `spec/case.md` and `plate/gen_plate.py`. Cutout 14.0 stands.
+
 ### 5d. Failure mode of a too-large cutout (e.g. 15.0 mm with a 1.2 mm plate)
 
 Choc v1 retains itself in the plate via **two small flexible plastic clips on the top housing** that snap into the plate cutout. The effective retention width is therefore set by the clip engagement, not by the 15 × 15 mm switch body (Kailh's Choc body is 15 × 15 mm overall, https://m.kailhswitch.com/info/kailh-choc-switch-41232795.html).

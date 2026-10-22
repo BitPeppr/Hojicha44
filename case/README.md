@@ -19,7 +19,10 @@ Blender visualises.
 ## Conventions (match the rest of the repo)
 
 - Units mm. Frame = KiCad board frame (same as `lands.json` / plate DXF).
-- z = 0 is the PCB top surface. Plate underside +2.0, plate top +3.5.
+- z = 0 is the PCB top surface. Plate underside +1.00, plate top +2.20
+  (1.2mm plate, 1.00mm gap). Current generator census (2026-10-22):
+  tub **71.1 cm³**, cover **10.7 cm³** per half — the 75.7 figures in
+  the changelog are historical (pre-top-lip-4.70 geometry).
 - Single source of truth: `plate/Hojicha44-{half}-plate.dxf` (OUTLINE +
   tab geometry via `lands.json`). Spec numbers: `spec/case.md`.
 - Generators own geometry; `case/out/` is scratch like `out/fit`.

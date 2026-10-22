@@ -1,4 +1,4 @@
-# Part order list (v0.3.1) — with live-verified SKUs
+# Part order list (v0.5.0) — with live-verified SKUs
 
 Prices/stock verified 2026-10-19 against vendor pages — they WILL drift;
 re-check at cart time. PCB fab choices are NOT here: see
@@ -34,6 +34,7 @@ re-check at cart time. PCB fab choices are NOT here: see
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
 | ☐ | 2 | kriscables **301230 110mAh LiPo**, PCM + JST-PH pigtail | €8.90–18.90 ea (two listings seen; re-check at checkout) | spec-locked size (30×12×3 — 302030 does NOT fit); meter pigtail polarity vs JST pin 1 BEFORE first plug-in |
+| ☐ | 2 | **Polyfuse (PPTC), 0.5–1A hold, ≥16V** (axial/radial) | ~$1–2 | series with pack+ (1/half; the 10-half pilot buys 20) — wired, NOT on the PCB; research §2b/2d |
 | ☐ | 5 | Kailh **PG1350 Choc v1** switches (Typeractive, $5.50/10) | $27.50 | 44 needed; pick feel family; any PG1350 fits the hotswap socket |
 | ☐ | 44 | **Kailh Choc v1 hotswap SOCKETS** (socketed, bottom side) | ~$1–2 ea | **not in the released bom.csv** — the release BOM only lists parts with an MPN, and a footprint-only socket has none, so this line is the ONLY place the 44 sockets get ordered. Sockets solder on B.Cu under each switch; the diode sits beside its switch, not under it. Verify the variant matches the vendored `SW_Hotswap_Kailh_Choc_V1_1.00u` footprint (the spec fixes the footprint, not the SKU) |
 | ☐ | 1 | KEEBD **24cm dual right-angle TRRS cable**, 4-pole CTIA | $6.00 | both ends MUST be 90° — straight plugs collide across the 22.4mm mouth gap |
@@ -47,8 +48,8 @@ re-check at cart time. PCB fab choices are NOT here: see
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
 | ☐ | — | Rogers **PORON 4701-30** Very Soft ~3mm sheet (McMaster search "Rogers 4701-30" or silicone-foams.com) | ~$10–15 | 16 pads/half cut **7×4** (4/7mm punch — the audit-round carve; 8mm pads leave only 0.35mm to the plate edge, 7mm leaves 0.71mm); ≈12 pads per 90mm strip; Keebox 32-strip pack (AliExpress) is the sanctioned swap-in fallback; ladder −30→−40→−50, no CAD change |
-| ☐ | 2 | plate cut, **1.5mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | default material PC per `spec/case.md` (POM = the firmer upgrade, see MANUFACTURING.md); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp |
-| ☐ | — | case + ring cover **MJF PA12** (JLC), files from `gen_case.py`/`gen_cover.py` | per quote | volumes L 75.7 / R 75.7 cm³ (tub, OUTSET 8.2) + cover 10.7 cm³ — MJF quotes from volume, so quote THESE |
+| ☐ | 2 | plate cut, **1.2mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | **1.2mm is mandatory** — the Choc v1 clip only engages 1.2mm; 1.5/1.6 gives friction-only, no retention (`MANUFACTURING.md`). Default material PC per `spec/case.md` (POM = the firmer upgrade); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp |
+| ☐ | — | case + ring cover **MJF PA12** (JLC), files from `gen_case.py`/`gen_cover.py` | per quote | volumes L 71.1 / R 71.1 cm³ (tub, OUTSET 8.2) + cover 10.7 cm³ — measured 2026-10-22 (75.7 predates the top-lip 4.70 rev); MJF quotes from volume, so quote THESE |
 | ☐ | 1 roll | Kapton/polyimide tape ≥10mm | $2–5 | cell sandwich + nano underside |
 | ☐ | 1 | SAC305 no-clean 0.5mm solder (e.g. SRA) + **NC-559-class flux pen** | ~$25 + ~$10 | ENIG pads, hand work |
 

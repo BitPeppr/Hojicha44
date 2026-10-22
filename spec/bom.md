@@ -24,6 +24,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | Qty | Part | Notes |
 |---|---|---|
 | 22 | Kailh PG1350 (Choc v1) switches | top side, seat into sockets — PG1350 names the family/series; builder chooses the exact feel/variant as a kit part (e.g. linear/tactile/clicky) — any PG1350 Choc v1 fits |
+| 22 | MBK Choc v1 keycaps (PBT) | one per switch; 44–50 for the split incl. spares — order rows in `pcb/BOM_ORDER.md` §D |
 | 22 | Kailh Choc v1 hotswap sockets | SMD bottom (pads part of footprint) |
 | 1 | nice!nano v2 module | socketed, USB end to board notch |
 | 2 | machine-pin SIP strips 2×12, 2.54mm pitch | socket rows 15.24mm apart; ASSEMBLED STACK HEIGHT (socket + pins, no module) must measure 4.5–5.0mm — caliper at first article; the 2.11mm-height Mill-Max 315 variant is banned BY HEIGHT (cannot clear the 3.0 cell); the 43-112-41-003000 3.0-class socket + matching pins are the order |
@@ -59,9 +60,11 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 - Hard requirements any cell must meet: 301230 size (302030 does NOT fit —
   20mm fouls the socket pins), 3.7V, ≥100mAh, protection PCM (reject any
   unprotected pouch on arrival), JST-PH 2.0mm pigtail with red=pack+.
-- Pack+ (red) to switch common, pack− (black) to GND; charges only with
-  the switch ON. Meter the pigtail polarity against JST pin 1 BEFORE the
-  first plug-in (reverse polarity kills board and cell).
+- Pack+ (red) → PPTC fuse → switch common, pack− (black) → GND; charges
+  only with the switch ON. Meter the pigtail polarity against JST pin 1
+  BEFORE the first plug-in (reverse polarity kills board and cell).
+- Series PPTC polyfuse, 0.5–1 A hold, ≥16 V, in the pack+ lead — not a
+  PCB part; 1 per half (the first-article list buys 20 for 10 halves).
 - First-article DMM checks (both halves): RAW↔B+ short, GND↔B− short,
   RAW↔VCC open; charge-ON orange LED.
 - Charge-ON labeling: mark the case at each half "charge only when ON"

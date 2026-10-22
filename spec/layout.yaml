@@ -3,7 +3,7 @@
 # this file records the keymap and decisions around it.
 # Statuses: fixed | provisional | candidate | measured | undecided.
 
-version: 0.9.2
+version: 0.9.3  # mirrors layout/ergogen/config.yaml (v7/0.9.2 = frozen snapshot)
 status: provisional  # geometry agreed + PCB envelope added, awaiting print-test
 
 key_count:
@@ -51,12 +51,13 @@ thumbs:
     - Cluster arcs down-east into the split gap; inner key most rotated.
 
 encoder:
-  per_side: 1 # status: fixed — one EC11 per half (48 footprints/half incl. it)
+  per_side: 1 # status: fixed — one EC11 per half (54 footprints/half incl. it)
   position: south of the inner column, clear of the MCU zone at top-inner
   # Knock-through belongs to the PLATE/CASE, not the PCB: the EC11E body sits
   # ON the board and all seven of its pads need copper (the A/B/C row is within
   # 7.9mm of the knob centre, i.e. inside an 8mm-radius hole).
-  plate_cutout: 12.7mm square hole at the shaft, cut in plate/
+  plate_cutout: 16.2 x 12.4mm chamfered window at the shaft (terminal-block
+    envelope), cut in plate/
     (plate/Hojicha44-{Left,Right}-plate.dxf) — layout/generated/v2/outlines/plate.dxf
     is legacy ergogen output and no longer the cutout source
   footprint: Ergogen stock `rotary` (EC11), attached in the PCB phase

@@ -15,7 +15,7 @@ each half has a placed+routed board file — see [Schematic](#schematic).
 | KLE sketch (archive) | `layout/- FINAL/keyboard_layout_v1.json` | Original row-staggered sketch |
 | Layout decisions | `spec/layout.yaml` | Keymap, thumb roles, relocated keys |
 | Board outline | `layout/generated/v2/outlines/board.dxf` | PCB edge, no encoder hole — the EC11E needs copper under it |
-| Plate outline | `plate/Hojicha44-{Left,Right}-plate.dxf` | Same contour + tabs, 12.7mm square encoder hole |
+| Plate outline | `plate/Hojicha44-{Left,Right}-plate.dxf` | Same contour + tabs, 16.2 × 12.4mm chamfered encoder window |
 | Generators | `layout/generators/` | `export_kle.py` (points → KLE), `render_preview.mjs` (KLE → labeled PNG) |
 | Ergogen outputs | `layout/generated/v2/` | Points, outlines, demo SVGs, keymap render |
 | Snapshots | `layout/- FINAL/` | v1–v4 KLE, v5–v6 Ergogen, v7 config, v8 layout (frozen) |

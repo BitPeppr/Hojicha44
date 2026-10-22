@@ -5,8 +5,8 @@ in software — this is the release gate for the physical items. Prints:
 `out/fit/Hojicha44-{Left,Right}-fit.pdf` (Edge.Cuts + silk + fab + F.Cu
 pads, 1:1 — print at 100% / actual size, then calibrate: column-adjacent
 key centres must measure **19.00mm**; if not, the print scaled and nothing
-below counts). The fit sheet shows the PCB only; the 12.7mm square encoder
-hole lives in the laser plate (`plate/Hojicha44-{Left,Right}-plate.dxf`),
+below counts). The fit sheet shows the PCB only; the 16.2 x 12.4mm encoder
+window lives in the laser plate (`plate/Hojicha44-{Left,Right}-plate.dxf`),
 which is the cutout source — not the PCB print. (`layout/generated/v2/outlines/plate.dxf`
 is legacy ergogen output, superseded by `plate/`.)
 
@@ -173,17 +173,16 @@ poor bridger.
 - [ ] Encoder shaft hole over the anchor — **FIRST pre-order bench check,
   order (1) hole sample, (2) Choc clip fit + kerf on the 0.71mm pad
   margin (needs a laser-cut sample), (3) the plug slices below**. The
-  12.7mm square plate hole clears the vendored EC11 STEP body, which
-  measures **12.30 wide in the plate band (z 2.0..3.5)** — nominal
-  0.20/side (the old 12.5 was spec'd 0.4/side off the "11mm class";
-  the real part is wider) — drop the real (or spec-identical) encoder
-  through a laser-cut hole sample before ordering the plate batch:
-  ±0.2 fab tolerance can still rub; a further widen to 13.0 costs a
-  ~3.35mm web — but to the W2 TRRS window (3.65 -> 3.35), NOT to
-  SW_L17, whose web stays ~9.15mm (the mislabeled pairing a reviewer
-  caught, fixed 2026-10-20). The 13mm knob RIDES HIGH on
-  the 20mm shaft, its bore never enters the hole (verify ≥6mm shaft
-  engagement + spin clearance above the plate, not through it).
+  plate window is **16.2 x 12.4mm** (rev 2), sized to the encoder's
+  measured **14.95 x 11.70mm** terminal-block envelope at the 1.00mm
+  plate gap — ~0.34mm/side in y (gen_plate.py asserts >=0.2/side).
+  Drop the real (or spec-identical) encoder through a laser-cut window
+  sample before ordering the plate batch: ±0.2 fab tolerance can still
+  rub. The 13mm knob RIDES HIGH on the 20mm shaft, its bore never
+  enters the window (verify >=6mm shaft engagement + spin clearance
+  above the plate, not through it). If the calipered terminal blocks
+  do not protrude above ~1.5mm, the window may return to 12.7 square —
+  but only with that measurement in hand (see the coupon bullet above).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
 - [ ] TRRS gap on print/caliper: board-edge to board-edge **20.42mm** at
   the jack height; plastic mouth-to-mouth **22.40mm** with each mouth
@@ -389,9 +388,10 @@ Layers and chord:
 These ship as-is in rev-1; recorded so nobody re-litigates them, and so
 rev-2 has a list.
 
-- Left VBAT runs a 184.82mm loop around the matrix (0.78mm notch-to-pad
-  gap blocks the direct route). Functional: ~18.5mV drop @100mA. Rev-2:
-  revisit with B.Cu pour.
+- Left VBAT runs a 232.10mm loop around the matrix (0.78mm notch-to-pad
+  gap blocks the direct route; measured 2026-10-22 from the routed
+  board — the old 184.82 figure is stale). Functional: ~23mV drop
+  @100mA. Rev-2: revisit with B.Cu pour.
 - Ground is a 0.25mm daisy-chain, no pour. OK for prototype; rev-2 gets a
   B.Cu pour for EMC/robustness.
 - USB notch-to-socket-pad 0.78mm (see §4 inspection). Rev-2: buy clearance
