@@ -392,11 +392,31 @@ def generate(variant, lrows, rrows, tleft, tright):
 
 
 # ------------------------------------------------------------------ gates
+# The transform order the generator ASSUMES (audit-verified against
+# gpio-map.md and the PCB column contract: left scan cols 0-5 physical
+# outer->inner; the right half is mirrored at col-offset 6, so scan col 6
+# is physical outer too; thumbs RC(3,0..3) left outer->inner, RC(3,4)/(3,5)
+# the two ghost matrix slots, RC(3,6..9) right thumbs). Pinned so a hand
+# reorder/renumber of the dtsi map fails the gate instead of silently
+# relabeling every key under it.
+CANON_MAP_ORDER = (
+    [(r, c) for r in range(3) for band in (range(6), range(6, 12))
+     for c in band]
+    + [(3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5),
+       (3, 6), (3, 7), (3, 8), (3, 9)])
+
+
+def dtsi_map():
+    """The transform's RC() entries IN ORDER — the keymap's position order."""
+    t = re.sub(r"/\*[\s\S]*?\*/", "", open(DTSI).read())
+    return [tuple(map(int, m)) for m in
+            re.findall(r"RC\((\d+),\s*(\d+)\)", t)]
+
+
 def dtsi_position_count():
     """The transform's RC() count — the keymap must have exactly as many
     bindings per layer as the dtsi has positions (cross-file gate)."""
-    t = re.sub(r"/\*[\s\S]*?\*/", "", open(DTSI).read())
-    return len(re.findall(r"RC\(\d+,\s*\d+\)", t))
+    return len(dtsi_map())
 
 
 def validate(text, variant, lrows, rrows, tleft, tright):
@@ -405,6 +425,14 @@ def validate(text, variant, lrows, rrows, tleft, tright):
     npos = dtsi_position_count()
     if npos != 46:
         bad.append(f"dtsi has {npos} RC positions, want 46")
+    order = dtsi_map()
+    if order != CANON_MAP_ORDER:
+        for i, (got, want) in enumerate(zip(order, CANON_MAP_ORDER)):
+            if got != want:
+                bad.append(f"dtsi transform [{i}]: RC({got[0]}, {got[1]}) "
+                           f"!= RC({want[0]}, {want[1]}) — the map drifted, "
+                           "every key under it would mislabel")
+                break
     layers = []
     for m in re.finditer(
             r"^\s{8}(\w+_layer) \{([^{}]*?(?:\{[^{}]*\}[^{}]*?)*)\};",
@@ -451,16 +479,17 @@ def validate(text, variant, lrows, rrows, tleft, tright):
     # plain keys stay plain: G at 16, H at 22 (miryoku leaves them free)
     if toks[16] != "&kp G" or toks[22] != "&kp H":
         bad.append(f"G/H drifted: {toks[16]!r} {toks[22]!r}")
-    # the space-hand variant on the innermost thumbs (39 <-> 45)
-    if variant["space"] == "left":
-        if toks[39] != "&kp SPACE" or toks[45] != "&kp RET":
-            bad.append(f"left-space: thumbs {toks[39]!r}/{toks[45]!r}")
-    else:
-        if toks[39] != "&kp RET" or toks[45] != "&kp SPACE":
-            bad.append(f"right-space: thumbs {toks[39]!r}/{toks[45]!r}")
-    # layer keys fixed: mo 1 at 37, mo 2 at 43
-    if toks[37] != "&mo 1" or toks[43] != "&mo 2":
-        bad.append(f"layer keys drifted: {toks[37]!r}/{toks[43]!r}")
+    # every thumb slot is exactly the designed binding — no slot is left
+    # unchecked (Esc L1 Tab Space|Enter / ghost gap gap / Del L2 Backspace
+    # Enter|Space at positions 36-45)
+    thumb_want = ["&kp ESC", "&mo 1", "&kp TAB", None,
+                  "&none", "&none", "&kp DEL", "&mo 2", "&kp BSPC", None]
+    left_space = variant["space"] == "left"
+    thumb_want[3] = "&kp SPACE" if left_space else "&kp RET"
+    thumb_want[9] = "&kp RET" if left_space else "&kp SPACE"
+    for pos, w in zip(range(36, 46), thumb_want):
+        if w is not None and toks[pos] != w:
+            bad.append(f"thumb position {pos}: {toks[pos]!r} != {w!r}")
     # base legends: every non-mod, non-thumb binding matches spec/layout.yaml
     # (position order is row-major interleaved, same as base_layer)
     want = []
@@ -499,12 +528,17 @@ def validate(text, variant, lrows, rrows, tleft, tright):
             if adj_toks[pos] != want_b:
                 bad.append(f"adjust position {pos}: {adj_toks[pos]!r} "
                            f"!= {want_b!r} (boot/reset anchors moved)")
-    # the sideband: exactly one sideband node, and the push binding is Mute
+    # the sideband: exactly one sideband node, wired to the dtsi's
+    # direct-GPIO kscan, push key at row 0 / column 0 (the dtsi contract:
+    # `input-keys` emits row 0 / column 0 events), bound to Mute
     if text.count("zmk,kscan-sideband-behaviors") != 1 \
             or "push_mute: push_0" not in text \
+            or "kscan = <&enc_push_kscan>" not in text \
+            or "row = <0>" not in text or "column = <0>" not in text \
             or "&kp C_MUTE" not in text:
-        bad.append("the encoder-push sideband (Mute) must appear exactly "
-                   "once")
+        bad.append("the encoder-push sideband (Mute at row 0/column 0 on "
+                   "the enc_push_kscan) must appear exactly once with the "
+                   "dtsi wiring intact")
     # no transparent on the base layer
     if "&trans" in layers[0][1]:
         bad.append("transparent on the base layer")
