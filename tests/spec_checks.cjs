@@ -134,8 +134,12 @@ sys.exit(rc)
   fail("w1-gate", "see python output above");
 }
 
-// 5. ZMK structure: map RC count == bindings/layer, span + offset covered,
-//    BLE-only transport, diode-direction set (no toolchain needed).
+// 5. ZMK structure: map RC count, span + offset coverage, BLE-only
+//    transport, diode-direction set — no toolchain needed.  The KEYMAP
+//    CONTENT is validated by config/gen_keymap.py's own gate (regenerate
+//    + compare + structural checks): the keymap files are GENERATED from
+//    spec/layout.yaml, and one source of the rules beats a JS copy that
+//    drifted into a 3-layer/PLACEHOLDER world (M3.3 rework).
 try {
   const d = (p) => fs.readFileSync(path.join(REPO, p), "utf8");
   const strip = (s) => s
@@ -149,114 +153,11 @@ try {
   const rcs = [.../map\s*=\s*<([\s\S]*?)>/.exec(dtsi)[1]
     .matchAll(/RC\((\d+),\s*(\d+)\)/g)].map((m) => [+m[1], +m[2]]);
   const have = (r, c) => rcs.some(([a, b]) => a === r && b === c);
-  const km = strip(d("config/hojicha44.keymap"));
-  const ki = km.indexOf("keymap");
-  let depth = 0, end = -1;
-  const start = km.indexOf("{", ki);
-  for (let i = start; i < km.length; i++) {
-    if (km[i] === "{") depth++;
-    else if (km[i] === "}") { depth--; if (!depth) { end = i; break; } }
-  }
-  const body = km.slice(start, end);
-  // Layer-1 (lower) and layer-2 (raise) placeholders: all-transparent
-  // except the deliberately-unbound left R3C4-C5 (&none, floating row).
-  const PLACEHOLDER = [
-    ...Array(36).fill("&trans"),
-    "&trans", "&trans", "&trans", "&trans",
-    "&none", "&none",                          // unpopulated left R3C4-C5
-    "&trans", "&trans", "&trans", "&trans",
-  ];
-  // Full token sequence per layer (binding + args, in position order),
-  // checked against the ROW-MAJOR INTERLEAVED signature so the B1-class
-  // bug (bindings listed left-half-first instead of per-row) can never
-  // ship silently again. The default layer's signature is now DERIVED
-  // from spec/layout.yaml's keymap legends — single source, so a legend
-  // edit must ride with a keymap edit or the compare fails. (The old
-  // hardcoded DEFAULT_EXP silently pinned a stale draft binding set.)
-  const toks = (s) => s.match(/&[A-Za-z][\w-]*(?:\s+[A-Za-z0-9_+]+)*/g) || [];
-  const layerBlocks = [
-    ...body.matchAll(/(?<!sensor-)bindings\s*=\s*<([\s\S]*?)>/g),
-  ].map((m) => toks(m[1]));
-  const kmY = yaml.load(fs.readFileSync(
-    path.join(REPO, "spec", "layout.yaml"), "utf8"));
-  const legends = {
-    left: kmY.keymap.left, right: kmY.keymap.right, thumbs: kmY.thumbs,
-  };
-  const colNames = ["outer", "pinky", "ring", "middle", "index", "inner"];
-  // US-layout composite legends -> UNSHIFTED ZMK keycode (| is shift-\,
-  // } is shift-]; the digits on ":;0" live on L1, still pending).
-  // Thumb/mod legends name side-specific modifiers per export_kle's
-  // mirror map (Ctrl->Shift, Cmd->Opt across the halves).
-  const KP = {
-    Q: "Q", W: "W", E: "E", R: "R", T: "T", Y: "Y", U: "U", I: "I",
-    O: "O", P: "P", A: "A", S: "S", D: "D", F: "F", G: "G", H: "H",
-    J: "J", K: "K", L: "L", Z: "Z", X: "X", C: "C", V: "V", B: "B",
-    M: "M", N: "N",
-    "~`": "GRAVE", "{[_-": "LBKT", "|\\": "BSLH", "}]": "RBKT",
-    ":;0": "SCLN", "<": "COMMA", ">.": "DOT", "?/": "SLASH",
-    Tab: "TAB", Esc: "ESC",
-    Ctrl: "LCTRL", Cmd: "LGUI", Space: "SPACE",
-    Shift: "RSFT", Opt: "RALT", Enter: "ENTER",
-  };
-  const mkBinding = (lg) => {
-    if (lg === "L1") return "&mo 1";
-    if (lg === "L2") return "&mo 2";
-    if (!KP[lg]) throw new Error(
-      `unmapped legend in spec/layout.yaml keymap: "${lg}"`);
-    return `&kp ${KP[lg]}`;
-  };
-  const exp = [];
-  for (let r = 0; r < 3; r++) {
-    for (const c of colNames) exp.push(mkBinding(legends.left[c][r]));
-    for (const c of colNames) exp.push(mkBinding(legends.right[c][r]));
-  }
-  // Thumbs: left list is west->east == position order (outer..inner);
-  // the right list is west->east == inner->outer (gap side), so position
-  // order reads it mirrored end-first. 2 &none close the left row (the
-  // floating R3C4-C5).
-  for (const lg of legends.thumbs.left) exp.push(mkBinding(lg));
-  exp.push("&none", "&none");
-  for (const lg of [...legends.thumbs.right].reverse())
-    exp.push(mkBinding(lg));
+  // all 4 variants + the active one must match spec/layout.yaml; a
+  // legend edit without regenerating (or vice versa) fails here.
+  execFileSync("python3", [path.join(REPO, "config/gen_keymap.py"), "--check"],
+    { stdio: "inherit", cwd: REPO });
   const problems = [];
-  // Sensor bindings may reference only sensor-capable behaviors: the
-  // pinned ZMK v0.3 build-user-config workflow rejects &trans there
-  // ("/behaviors/transparent lacks #sensor-binding-cells" — this killed
-  // CI on the first v0.3.1 push). Structure checks stop short of
-  // devicetree semantics, so guard the class most likely to recur.
-  const sensorLines = body.match(/^\s*sensor-bindings.*$/gm) || [];
-  if (sensorLines.length !== layerBlocks.length) {
-    problems.push(`want one sensor-bindings per layer ` +
-      `(${layerBlocks.length}), got ${sensorLines.length}`);
-  }
-  for (const sl of sensorLines) {
-    if (/&(?:trans|none)(?![\w-])/.test(sl)) {
-      problems.push(`sensor-bindings &trans/&none rejected by ZMK v0.3 ` +
-        `(its node "lacks #sensor-binding-cells"): ${sl.trim()}`);
-    }
-  }
-  if (layerBlocks.length !== 3) {
-    problems.push(`want exactly 3 layers (default + lower + L2 raise ` +
-      `placeholder), got ${layerBlocks.length}`);
-  }
-  for (const [i, got] of layerBlocks.entries()) {
-    if (got.length !== rcs.length) {
-      problems.push(`layer ${i}: ${got.length} bindings vs ${rcs.length} map positions`);
-    }
-    const expArr = [exp, PLACEHOLDER, PLACEHOLDER][i];
-    if (expArr && got.length === rcs.length) {
-      const want = expArr.join("\u0000");
-      if (got.join("\u0000") !== want) {
-        for (let j = 0; j < rcs.length; j++) {
-          if (got[j] !== expArr[j]) {
-            problems.push(`layer ${i} position ${j} is RC(${rcs[j][0]},${rcs[j][1]})=` +
-              ` got ${got[j]}, want ${exp[j]}`);
-            break;
-          }
-        }
-      }
-    }
-  }
   for (const [r, c] of rcs) {
     if (r >= rows || c >= cols) {
       problems.push(`RC(${r},${c}) outside ${rows}x${cols} span`);
@@ -307,8 +208,8 @@ try {
       " != 30 (detents)");
   }
   if (problems.length) fail("zmk-structure", problems.slice(0, 4).join("; "));
-  else ok(`zmk-structure (${rcs.length} positions, ${layerBlocks.length} layers, ` +
-    `binding order verified, BLE-only)`);
+  else ok(`zmk-structure (${rcs.length} positions, keymap gate CLEAN, ` +
+    `BLE-only, col2row)`);
 } catch (e) {
   fail("zmk-structure", e.message);
 }

@@ -1,87 +1,205 @@
-# Keymap review — Hojicha44 (status: DRAFT, decisions listed)
+# Keymap — Hojicha44 (status: FINAL, rev 3 / M3.3)
 
-Reviewed 2026-10-21 against `config/hojicha44.keymap` (ZMK) and
-`spec/layout.yaml`. The structural gates pass (`npm test` →
-`zmk-structure`: 46 positions, 3 layers, binding order verified, BLE
-only), so the map is *mechanically* sound. What is left is the
-ergonomic content — these are the decisions, with a recommendation for
-each, so the file is one edit away from shipping.
+Reviewed and finalised 2026-10-22. The keymap files are **generated** by
+`config/gen_keymap.py` from `spec/layout.yaml` and gated by
+`npm test` → `zmk-structure` (which runs the generator's `--check`).
+Do not hand-edit `config/hojicha44.keymap`; change `spec/layout.yaml`
+or the generator and regenerate.
 
-## 1. What is already right
+Locked constraints (from the layout spec):
+- QWERTY letters and the digit order 1234567890 are **not moved**.
+- Every modifier, Space, Backspace, Tab, `` `~ `` and punctuation has a
+  home on the board: nothing lives only inside a catch-22 chord.
+- Inspiration: miryoku (home-row mods, thumb blocks, letters left
+  plain), Corne/Sofle (digits + F-keys on L1, nav cluster on L2,
+  `conditional_layers` adjust), precondition's home-row-mod guide
+  (mod-frequency placement and hold/tap tuning).
 
-- **Position order** is the transform's own order (row-major, both
-  halves per row), and the layer-1/layer-2 blocks are `&trans` mirrors
-  of it — so a layer can be filled without re-deriving the index
-  arithmetic.
-- **Encoder**: volume on the default layer, scroll on L1. The pinned
-  ZMK v0.3 build rejects `&trans` inside `sensor-bindings`, so the
-  layers carry the volume pair rather than a transparent sensor — that
-  is the right workaround and it is already commented.
-- **Right thumb** carries RSFT / RALT / mo2 / ENTER with ENTER on the
-  outer thumb (the natural split-board choice); the left thumb carries
-  LCTRL / LGUI / mo1 / SPACE.
-- **Encoder push → C_MUTE** via the kscan sideband, keeping the
-  46-cell matrix untouched.
-- The export mirror (Ctrl→Shift, Cmd→Opt) is handled by the KLE
-  export, not by the keymap — nothing to change.
+## 1. Variants
 
-## 2. Open decisions (with the recommendation)
+Four firmware variants, differing ONLY in the home-row mod order and in
+which thumb carries Space (spec/layout.yaml `keymap.variants`):
 
-### 2.1 L1 (lower layer) is currently empty of function
-Layer 1 is a `&trans` mirror of the default with a scroll encoder
-binding — i.e. L1 does nothing except the encoder. The layout spec's
-`open_points` still carries "Backspace/Delete live on layers (unmapped
-so far): decide L1 positions".
+| variant      | mod order (pinky→index) | Space thumb | for |
+|--------------|-------------------------|-------------|-----|
+| `mac_left`   | CAGS (Ctrl Alt Gui Shft)| left        | macOS-heavy (default) |
+| `mac_right`  | CAGS                    | right       | macOS |
+| `win_left`   | GACS (Gui Alt Ctrl Shft)| left        | Windows/Linux |
+| `win_right`  | GACS                    | right       | Windows/Linux |
 
-**Recommendation:** make L1 the *editing/navigation* layer and put the
-two editing keys on the **right thumb's L1** (the same two positions
-that carry RSFT/RALT on the default layer) — Backspace on the inner
-right thumb, Delete on the outer. Reasons: the right thumb is the
-hand that is already on the home row's outer edge for Delete in a
-split board, and it keeps the left thumb free for SPACE/LCTRL/LGUI.
-The change is 2 lines in `lower_layer` (positions 42/43 of the 46-cell
-list) plus a `&kp BSPC` / `&kp DEL`.
+The active variant is `config/hojicha44.keymap` (what CI builds and what
+`MANIFEST.txt`-tracked firmware ships from); the default is `mac_left`
+(macOS-heavy). Switch with:
+`python3 config/gen_keymap.py --use win_right` — it rewrites
+`config/hojicha44.keymap`, commit it, CI builds it. All four are always
+regenerated into `config/variants/` for diffing and local flashing.
 
-### 2.2 L2 (raise layer) is a placeholder
-Layer 2 is all `&trans`; its own comment says it exists only to prove
-reachability. The intended behaviour is a **Fn chord = L1+L2**.
+Mod-order rationale (precondition's frequency data; both orders keep
+**Shift on F/J** — the index fingers, the strongest):
+- Windows/Linux frequency: GUI < Alt < Ctrl < Shift → GACS (miryoku's
+  order): Ctrl on D/K, Alt on S/L, GUI on A/;.
+- macOS adds Cmd (=GUI, second-most-used) and demotes Ctrl → CAGS:
+  Ctrl on A/;, Cmd on D/K, Alt on S/L.
+Mods are side-specific codes: `L*` on the left hand (A S D F in position
+order), `R*` on the right (; L K J).
 
-**Recommendation:** implement it the standard way — make L2 the
-**shifted/symbol layer** (the shifted characters of the 36 matrix
-keys), and implement L1+L2 as a ZMK **chord macro** (`&mt L1 L2` /
-`&lt`) so the chord resolves to a single keypress instead of leaving
-the user holding a modifier. Note the caveat already in the file:
-during the chord the rotation currently reads volume rather than L1's
-scroll — a proper chord macro fixes that too, because the layer is
-resolved before the sensor is read.
+## 2. Base layer (`default_layer`, layer 0)
 
-### 2.3 "Tab via L1+Space"
-Also a chord, also better as a macro (or a plain L1+Space binding in
-ZMK's `&mt` form) than as a documented convention the user has to
-remember.
+```
+Q W E R T  ~`    |  P O I U Y  |\
+hml? A S D F  G [ |  ; L K J  H  ]}
+Z X C V B  -     |  / . , M N  '
+Esc  L1  Tab  Space    |    Del  L2  Bksp  Enter
+```
+(`hml`/`hmr` = the per-hand home-row mod-tap behaviors; `?` is one of
+GUI/Ctrl depending on the variant. `|` = shift-\ parses to BSLH. Left
+thumbs outer→inner; right thumbs outer→inner too — the spec's
+`thumbs.right` list is written west→east = inner→outer and the generator
+reverses it.)
 
-### 2.4 Layer 1/2 access
-`mo 1` is on the **left** thumb and `mo 2` on the **right** thumb —
-reasonable (one layer per hand), and it should stay that way: it is
-what makes the L1+L2 chord reachable with two thumbs.
+- Letters and `/ . , M N ; : '` are plain `&kp` — no layer games on the
+  hot alphabetic keys; G and H stay plain too (miryoku: keeps roll space
+  in the middle and leaves the workingest keys untouched).
+- `[ { ] }` on the inner home keys (unchanged from rev 2), `` ` ~ `` on
+  the inner top (unchanged), **`-` on the left inner-bottom and `'` on
+  the right inner-bottom are NEW (rev 3)** — Tab and Esc moved to the
+  thumbs, so the "third symbol" of those columns is now useful on the
+  base layer: `-` beside `, .` for ranges/negatives, `'` for quotes.
+  The shifted forms (`_` `"` via the mods/Shift) need no dedicated keys.
 
-## 3. Not a decision, but worth stating
+### Thumbs — measured placement
 
-The map is a **DRAFT** and the file says so. Nothing in it should be
-certified as "final" until §2 is closed — the firmware is the one
-part of the kit that can be changed by a keystroke later, but the
-*keymap* is what the user learns in the first hour, so it is worth
-getting right before the pilot batch is built.
+Thumb-joint circle R = 91.2 mm; the four keys sit ~13.9° apart: the
+innermost keys are the arc's ends (21° off neutral = strained to hold,
+fine to tap), the middle two are 6.66°/7.25° off neutral (comfortable).
+Therefore the rare keys take the extremes, the **holds** take the
+comfortable mids, the frequent primaries take the inner palm-side:
 
-## 4. How to close it
+| left (outer→inner) | right (outer→inner) | why |
+|--------------------|---------------------|-----|
+| Esc                | Delete              | rare + recoverable = outermost |
+| **L1 hold**        | **L2 hold**         | long holds want low strain |
+| Tab / Backspace    | Backspace / Tab*    | used pairs near the pinkie |
+| Space / Enter*     | Enter / Space*      | Space on the palm-side inner |
 
-1. Decide §2.1–§2.3 (the recommendations above are the defaults).
-2. Edit `config/hojicha44.keymap` (the layers are positional — the
-   index arithmetic is the transform's, so only the changed cells
-   move).
-3. Re-run `npm test` (`zmk-structure` re-verifies the 46 positions, the
-   layer count and the binding order).
-4. Re-verify on the first article that: the right thumb's L1 sends
-   Backspace/Delete, the L1+L2 chord resolves to the symbol layer, and
-   the encoder still reads volume on the default layer and scroll on
-   L1.
+(*left/right per the space-hand variant: left-space is the spec's
+canonical order; right-space swaps Space↔Enter between the two
+innermost positions, everything else fixed.)
+
+## 3. Home-row mods — ZMK's "timeless" recipe
+
+One behavior per hand so the hold-trigger lists can differ:
+
+```
+hml/hmr: zmk,behavior-hold-tap
+  flavor = "balanced"          hold also fires when another key resolves
+  require-prior-idle-ms = 150  fast rolls (of letters) resolve to taps
+  tapping-term-ms = 280        high: the POSITIONAL triggers decide, not the timer
+  quick-tap-ms = 175           tap-then-hold auto-repeats the LETTER
+  bindings = <&kp>, <&kp>
+  hold-trigger-key-positions = <the OTHER hand's 22 positions>
+  hold-trigger-on-release      lets same-hand mod+key combos still work
+```
+
+Sourced from ZMK's own hold-tap documentation ("timeless home row
+mods", balanced + require-prior-idle + positional triggers), which is
+also what v0.3's binding schema supports (verified against the pinned
+v0.3 `zmk,behavior-hold-tap` YAML: `tapping-term-ms`, `quick-tap-ms`,
+`require-prior-idle-ms`, the flavor enum, all present).
+
+How it resolves:
+- type "ao" fast: O is on A's OTHER hand? no — O is same-hand as A →
+  A resolves on O's press+release before the term → tap → "ao" ✓.
+- hold A, press K: K is other-hand list → hold fires on K's release
+  (hold-trigger-on-release) → instant cross-hand shortcuts ✓.
+- hold A, press G (same hand): G is not in the list → A still resolves
+  to GUI if held ≥ the term or when a listed key resolves ✓ (rare
+  same-hand chord, deliberately slower than the term — this is the
+  accidental-mod insurance).
+- typist rolls like "the quick": require-prior-idle keeps zoom-mid-roll
+  taps as taps even past 150 ms.
+
+The trigger position lists are COMPUTED (the other hand's 22 of 46
+positions, row-major interleaved), not hand-typed — the gate asserts
+them against the layout.
+
+## 4. L1 (lower, layer 1) — editing numbers: digits, shifts, F-keys
+
+```
+ 1  2  3  4  5  6   |  7  8  9  0  -  =
+ !  @  #  $  %  ^   |  &  *  (  )  _  +
+ F1 F2 F3 F4 F5 F6  |  F7 F8 F9 F10 F11 F12
+ thumbs: transparent (the row keeps working), L1 encoder = scroll
+```
+Digits in QWERTY order under 1–0 exactly as printed (Corne/Sofle
+standard: one mental mapping, no relearning); equal/minus mirrored at
+the inner ends for the `=`-`-` pairs of ranges; shifted symbols sit
+directly under their digits. Encoder: `C_AC_SCROLL_*` (v0.3 has no bare
+`C_SCROLL_*`).
+
+## 5. L2 (raise, layer 2) — navigation, media, BT
+
+```
+ BT CLR  P0 .  P3 | Scr  Ins  Cap
+ MUTE PREV PLAY NEXT V+ V- |  PgUp    ↑
+ UNDO CUT COPY PAST    |  PgDn ←  ↓  →  Del  Bksp
+ thumbs: transparent; L2 encoder = prev/next track
+```
+Left half = media/BT (Sofle's raise pattern; BT profiles 0–4 for the
+split's central+peripheral+hosts), right half = an inverted-T arrow
+cluster on the strong columns with PgUp/PgDn on the outer rail and
+Home/End/Ins/PrtSc/Caps on the top rail. Delete/Backspace repeat here so
+the editing trio lives under one thumb-hand reach.
+
+## 6. Adjust (layer 3, the L1+L2 chord)
+
+```
+conditional_layers: if-layers = <1 2>, then-layer = <3>
+- &bootloader at W's position, &sys_reset at E's (miryoku: reset on the
+  top-row pinky column, both thumbs already busy holding the chord)
+- every other key &none (there is nothing safe to type mid-chord)
+- encoder = volume (harmless while reaching for boot)
+```
+
+## 7. Encoder
+
+| layer | rotation | push |
+|-------|----------|------|
+| base  | volume ± | Mute (kscan sideband `enc_push_sideband`, both halves) |
+| L1    | scroll ± | — |
+| L2    | prev/next track | — |
+| adjust| volume ± | — |
+
+The push stays a **sideband**: the 46-cell matrix is untouched, the EC11
+press maps through `enc_push_kscan` → `C_MUTE` on each half.
+
+## 8. Gates
+
+`npm test` → `zmk-structure` shells `python3 config/gen_keymap.py
+--check`, which:
+1. re-derives every binding from `spec/layout.yaml` and byte-compares
+   the tracked active keymap + all 4 variants (a legend edit without
+   regeneration, or vice versa, fails);
+2. structurally validates each emitted keymap: exactly 4 layers × 46
+   bindings matching the dtsi `RC()` count, one real `sensor-bindings`
+   per layer (`&trans`/`&none` there is rejected by pinned v0.3 and
+   would kill CI), mods exactly on the 8 home positions with the right
+   variant codes, Space/Enter on the variant's thumb pair, `&mo 1`/`&mo
+   2` fixed, hold-trigger lists == the other hand's 22 positions,
+   hold-trigger-on-release present, the L1+L2→3 chord present, exactly
+   one sideband Mute.
+
+Negative controls (proven non-vacuous 2026-10-22, each reverts to
+CLEAN): wrong tap keycode → caught as position drift AND stale-file;
+deleted binding → 45-want-46; legend drift in the spec → both halves
+stale; truncated hold-trigger list → caught; thumbs canonical-order edit
+→ spec-parse assert.
+
+## 9. First-article bench (firmware half)
+
+See `spec/first-article.md` §firmware-bench; the items: per-half matrix
+type-through, per-half encoder push = Mute, per-layer encoder direction
+check, home-row hold/tap on all 8 positions × both flavors of muscle
+memory (slow deliberate hold, fast roll), same-hand mod chord
+(press-hold-past-term), the L1+L2 chord → Adjust, and the bootloader key
+with a re-flash before anything else ("reply-btn" recovery proven).

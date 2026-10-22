@@ -44,7 +44,7 @@ poor bridger.
   *What to ask for:* a **100 x 100mm sheet of 1.2mm PC** with four
   **20 x 20mm squares**, one hole each of **13.8 / 14.0 / 14.2 /
   15.0mm**, all holes concentric in their square, PLUS one extra
-  20x20mm square with a 14.0mm hole **and a 0.40mm-deep pocket in its
+  20x20mm square with a 14.0mm hole **and a 0.55mm-deep pocket in its
   underside** (the diode relief, 2.87 x 1.72mm, offset 9.5mm from the
   hole centre — the fabricator needs the DXF, and it is the RELIEF
   layer of the plate file). Cost: a few dollars; turnaround: a day.
@@ -56,7 +56,7 @@ poor bridger.
   13.8 may be line-to-line (a switch that will not insert); 15.0
   reproduces the old rev-1 failure (the ears fall into the hole, no
   retention, the switch rocks out). On the relief square: the pocket
-  must be 0.40mm deep, NOT through (0.80mm of material must remain),
+  must be 0.55mm deep, NOT through (0.65mm of material must remain),
   and the plate must still sit flat on the switch housings.
   *Why it is worth a day:* the decisions are 0.1–0.2mm of hole size
   and 0.05mm of ear seating — smaller than the datasheet tolerance
@@ -64,14 +64,16 @@ poor bridger.
   drop to 13.9 and re-cut the coupon, rather than discovering it
   after ordering 2 plates and 44 switches.
 - [ ] **Plate relief pocket (PRE-ORDER, new in rev 2)** — the plate
-  carries a 0.40mm-deep pocket in its UNDERSIDE under each of the 22
-  diodes (RELIEF layer in the plate DXF: machine 0.40mm, do NOT cut
+  carries a 0.55mm-deep pocket in its UNDERSIDE under each of the 22
+  diodes (RELIEF layer in the plate DXF: machine 0.55mm, do NOT cut
   through; a through-cut leaves the switch without plate support).
-  Test on the coupon: with the pocket floor 1.40mm above the PCB top
-  and the diode top measured at 1.26mm, there must be no contact and
-  the plate must still sit flat on the switch housings. Verify the
-  pocket is 0.40mm, NOT through: the remaining material under it is
-  0.80mm.
+  Test on the coupon: with the pocket floor 1.55mm above the PCB top
+  there must be no contact with the diode (worst-case part is 1.40mm
+  high: floor−top = 0.15mm; a measured 1.26mm SOD-123 gives 0.29mm)
+  and the plate must still sit flat on the switch housings. Verify
+  the pocket is 0.55mm, NOT through: the remaining material under it
+  is 0.65mm. (0.40/1.40/0.14 numbers anywhere are rev-2-audit STALE —
+  the part ceiling rose to 1.40mm, hence 0.55; gen_plate asserts it.)
   The stack to check on the same coupon: the plate underside 1.00mm
   above the PCB top, the plate top 2.20mm — the switch's clip lip
   (0.9–1.3mm above the PCB) must grab the underside and the 14.8mm
@@ -317,8 +319,9 @@ poor bridger.
   the spare dead with no error.
 - [ ] After flashing both halves: BLE-pair halves, confirm keys from each
   side, then verify the encoder push-click registers. If it is dead,
-  re-flash that half with `--erase` before suspecting hardware. Keymap
-  content is still DRAFT — this step proves the inputs, not the layout.
+  re-flash that half with `--erase` before suspecting hardware. Then run
+  the firmware bench below — the keymap of record is the generated
+  variant (spec/keymap.md), so prove behaviors, not just inputs.
 - [ ] The SPARE input (D10) has no keymap binding and no test pad, so
   it cannot be "verified by toggling" — check it with a DMM: the spare
   pin is MCU **D10 = P0.09** (module header pin 13, the pin labelled
@@ -327,6 +330,53 @@ poor bridger.
   and a scope/DMM shows the level. A "toggling spare" test would need a
   binding (or a test pad) that does not exist — do not read a pass here
   as a dead pin (audit 2026-10-21).
+
+## 5b. Firmware bench — keymap (M3.3; spec/keymap.md is the reference)
+
+Record which variant was flashed: ________ (files:
+`config/variants/hojicha44_<v>.keymap`; active = `config/hojicha44.keymap`).
+
+Matrix/base:
+- [ ] Two per-half type-throughs on the base layer (finger-by-finger on
+  each 6-column half while the sample text is visible): every QWERTY
+  letter and `` `~ | \ - ' [ { ] } , . : ; /`` appears exactly as
+  printed. A missing key = matrix/kscan, a WRONG key = keymap position
+  bug (file which).
+- [ ] Both thumbs: Space (or Enter on right-space variants) and
+  Tab/Backspace fire from the correct thumbs; Esc/Delete reachable.
+- [ ] Encoder per layer: base = volume ±, L1 = scroll ±, L2 =
+  track prev/next, and rotating looks RIGHT compared to the printed
+  detent direction on both halves (per-half).
+- [ ] Encoder push on EACH half = Mute only (the sideband also proves
+  `--erase`'s NFC-pin unlock).
+
+Home-row mods (all 8 home positions A S D F / ; L K J):
+- [ ] Deliberate hold (slow press, other hand key, release): the intended
+  modifier fires — test `Cmd+C`-style copy (`D`+`C` mac / `A`+`C` gacs —
+  doesn't matter which half does the C) and Shift combos on the tap keys.
+- [ ] Fast roll (type "asa", "dfd", ";l", "jk j" quickly): letters only,
+  no stray modifier bursts (require-prior-idle doing its job).
+- [ ] Same-hand chord: hold a home-row mod past ~0.3 s, then tap a
+  same-hand key — the mod applies (balanced + hold-trigger-on-release
+  path).
+- [ ] Double-tap-hold a letter (quick-tap-ms): it repeats the LETTER,
+  not the modifier.
+Layers and chord:
+- [ ] Left mid-outer thumb hold = L1: digits 1–0 in QWERTY order; the
+  shifted symbols row; F1–F12 sanity (F1/F10).
+- [ ] Right mid-outer thumb hold = L2: arrows as an inverted-T
+  (↑ above ↓), PgUp/PgDn/Home/End/Ins/PrtSc/Caps, media cluster, BT
+  select 0 (pair ring must not leave the host — cancel with one press).
+- [ ] L1+L2 chord → Adjust: `&bootloader` reachable at W — BEFORE pressing,
+  stage a recovery: have the second .uf2 + flasher ready and confirm
+  the half re-enters the bootloader (this is the deliberate-brick
+  protection test, not an accident).
+- [ ] While ADJUST is active, normal keys stay dead (&none) — type a
+  few letters and confirm nothing appears.
+- [ ] Tapping term / flavor belong to the generator (spec/keymap.md
+  §3); if rolls or holds misfire on the bench, record which position,
+  timing and intent — retune `config/gen_keymap.py` constants, never
+  the generated files.
 
 ## 6. Case labels (apply before daily use)
 

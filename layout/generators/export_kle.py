@@ -38,30 +38,33 @@ def R3(x):
     return round(x + 1e-9, 3)
 
 
-# Ergogen key name -> KLE label. Left-hand legends reuse the v1 strings
-# (including layer legends); thumb keys are plain.
+# Ergogen key name -> KLE label. Left-hand legends, keycap convention
+# (shifted symbol on the first line, base below).  Labels show BASE-layer
+# + shift only; the per-layer keymap of record is spec/keymap.md + the
+# generated keymaps (config/gen_keymap.py) — a KLE label is a render aid,
+# never the binding.
 LAB = {
     "matrix_outer_bottom": "Z",
-    "matrix_outer_home": "A\n\nBD\n1",
-    "matrix_outer_top": "Q\n\nBU\n!",
+    "matrix_outer_home": "A",
+    "matrix_outer_top": "Q",
     "matrix_pinky_bottom": "X",
-    "matrix_pinky_home": "S\n\nVD\n2",
-    "matrix_pinky_top": "W\n\nVU\n@",
+    "matrix_pinky_home": "S",
+    "matrix_pinky_top": "W",
     "matrix_ring_bottom": "C",
-    "matrix_ring_home": "D\n\n\n3",
-    "matrix_ring_top": "E\n\n\n#",
+    "matrix_ring_home": "D",
+    "matrix_ring_top": "E",
     "matrix_middle_bottom": "V",
-    "matrix_middle_home": "F\n\n\n4",
-    "matrix_middle_top": "R\n\n\n$",
+    "matrix_middle_home": "F",
+    "matrix_middle_top": "R",
     "matrix_index_bottom": "B",
-    "matrix_index_home": "G\n\n\n5",
-    "matrix_index_top": "T\n\n\n%",
-    "matrix_inner_bottom": "Tab",
-    "matrix_inner_home": "{\n[\n_\n-",
+    "matrix_index_home": "G",
+    "matrix_index_top": "T",
+    "matrix_inner_bottom": "_\n-",     # base -, shift _ (L1 repeats -)
+    "matrix_inner_home": "{\n[",       # base [, shift {
     "matrix_inner_top": "~\n`",
-    "thumbs_t_ctrl_cluster": "Ctrl",
-    "thumbs_t_cmd_cluster": "Cmd",
-    "thumbs_t_l1_cluster": "L1",
+    "thumbs_t_ctrl_cluster": "Esc",      # west->east on the left half
+    "thumbs_t_cmd_cluster": "L1",
+    "thumbs_t_l1_cluster": "Tab",
     "thumbs_t_space_cluster": "Space",
     "encoder": "Enc",
 }
@@ -69,13 +72,14 @@ LAB = {
 # Left label -> right-hand counterpart (mirrored side).
 MLAB = {
     "Enc": "Enc",
-    "Space": "Enter", "L1": "L2", "Cmd": "Opt", "Ctrl": "Shift",
-    "Tab": "Esc", "{\n[\n_\n-": "}\n]\n+\n=", "~\n`": "|\n\\",
-    "Q\n\nBU\n!": "P\n\n\n)", "A\n\nBD\n1": ":\n;\n\n0", "Z": "?\n/",
-    "W\n\nVU\n@": "O\n\n\n(", "S\n\nVD\n2": "L\n\n\n9", "X": ">\n.",
-    "E\n\n\n#": "I\n\n\n*", "D\n\n\n3": "K\n\n\n8", "C": "<\n,",
-    "R\n\n\n$": "U\n\n\n&", "F\n\n\n4": "J\n\n\n7", "V": "M",
-    "T\n\n\n%": "Y\n\n\n^", "G\n\n\n5": "H\n\n\n6", "B": "N",
+    "Space": "Enter", "L1": "L2",
+    "Tab": "Backspace", "Esc": "Delete",
+    "_\n-": "\"\n'", "{\n[": "}\n]", "~\n`": "|\n\\",
+    "Q": "P", "A": ":\n;", "Z": "?\n/",
+    "W": "O", "S": "L", "X": ">\n.",
+    "E": "I", "D": "K", "C": "<\n,",
+    "R": "U", "F": "J", "V": "M",
+    "T": "Y", "G": "H", "B": "N",
 }
 
 LCOLS = ["outer", "pinky", "ring", "middle", "index", "inner"]

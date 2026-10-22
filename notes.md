@@ -1735,23 +1735,22 @@ decisions that are the owner's to make.
 1. **Choc cutout test coupon** (`spec/first-article.md` §1). One
    100 x 100mm sheet of 1.2mm PC: four 20x20mm squares with 13.8 /
    14.0 / 14.2 / 15.0mm holes, plus a fifth with a 14.0 hole and the
-   0.40mm diode-relief pocket (the RELIEF layer of the plate DXF).
+   0.55mm diode-relief pocket (the RELIEF layer of the plate DXF).
    Test: does the 13.8 body pass the hole, does the clip lip
    (0.9–1.3mm above the PCB) grab the 1.00mm underside, do the 14.8mm
-   ears seat on the 2.20mm top face, is the pocket 0.40mm and NOT
+   ears seat on the 2.20mm top face, is the pocket 0.55mm and NOT
    through. **If 14.0 does not catch, drop to 13.9 and re-cut the
    coupon** — do not discover this after two plates and 44 switches.
-2. **Fabricator partial-depth capability.** The plate needs a 0.40mm
-   pocket in the underside of 1.2mm PC (0.80mm left under it). A
+2. **Fabricator partial-depth capability.** The plate needs a 0.55mm
+   pocket in the underside of 1.2mm PC (0.65mm left under it). A
    through-cut would leave the switch without plate support; a
    through-cut vendor cannot do a partial pass is a real sourcing
    constraint, not a detail. Ask the plate vendor before the order.
-3. **Keymap layer decisions** (`spec/keymap.md` §2) — the owner's
-   ergonomic call: L1 is functionally empty today, L2 is a transparent
-   placeholder, and Backspace/Delete have no home. The file has
-   recommendations (editing keys on the right thumb's L1, L2 as the
-   symbol layer with a real chord macro); it needs an edit, not a
-   discussion.
+3. ~~**Keymap layer decisions**~~ **CLOSED 2026-10-22** (M3.3;
+   see the entry at the end of this log): L1 = digits/shifted/F-keys,
+   L2 = nav/media/BT, the L1+L2 chord = Adjust, all four modifiers are
+   home-row mod-taps, Backspace/Delete have thumb + L2 homes, and the
+   map is a GENERATED artifact (4 variants) with a proven gate.
 
 ### B. Not a pre-order gate — but do not forget it
 
@@ -1839,3 +1838,55 @@ still wrong for the hole.
 - **Ask the question that ends the task.** "Why is this not fixed?"
   was answered by implementing it; "wdym coupon" by writing the
   coupon down as a drawing request.
+
+## M3.3: keymap finalisation — 4 generated variants, home-row mods (2026-10-22)
+
+The owner's four calls: macOS-heavy (offer both mac and win variants),
+left-space AND right-space variants (4 total), thumb table confirmed.
+Implementation:
+
+- **The keymap is a generated artifact now.** `config/gen_keymap.py`
+  derives every binding from `spec/layout.yaml` (legends + thumbs +
+  `keymap.variants`) and emits `config/hojicha44.keymap` (the ACTIVE
+  variant, what CI builds — default `mac_left`) plus all 4 variant
+  files in `config/variants/`. Hand-editing them is an anti-pattern;
+  `--use <variant>` switches (one commit, CI rebuilds). CI deliberately
+  builds only the ACTIVE variant: the upstream v0.3 reusable workflow
+  pins one `ZMK_CONFIG` per call, so per-variant CI would need 4 config
+  dirs (a follow-up if wanted, not a pilot blocker).
+- **Home-row mods = ZMK's own "timeless" recipe**, verified against the
+  pinned v0.3 binding schema (all properties exist there, incl.
+  `require-prior-idle-ms`): `flavor = "balanced"`,
+  `require-prior-idle-ms 150`, `tapping-term-ms 280` (high — the
+  positional triggers decide), `quick-tap-ms 175`,
+  `hold-trigger-key-positions` = COMPUTED other-hand 22 positions,
+  `hold-trigger-on-release`. One behavior per hand. GACS (win) /
+  CAGS (mac): Shift on F/J both ways; Cmd(GUI) moves D/K on macOS.
+- **Layer content**: L1 = 1–0 in QWERTY order + shifted row + F1–F12
+  (sensor: scroll); L2 = BT profiles + media + clipboard (left) and the
+  nav inverted-T + Home/End/PgUp/PgDn/Ins/Caps/PrtSc (right), sensor:
+  prev/next; Adjust = L1+L2 chord via `conditional_layers`, `&bootloader`
+  at W / `&sys_reset` at E (the v0.3 label is `bootloader`; `&boot` is a
+  later rename — the dev-docs page says `&boot` and v0.3 does not), else
+  `&none`.
+  Thumbs: Esc | L1 | Tab | Space /// Del | L2 | Backspace | Enter
+  (right-space variant swaps Space↔Enter only). Inner-bottom leaves
+  the thumb layer: `-` (left) and `'` (right) joined the base layer;
+  letters/digits/QWERTY order untouched.
+- **Gates**: `zmk-structure` now shells `gen_keymap.py --check`
+  (byte-compare of 5 files + structural validation: 46×4 bindings vs
+  the dtsi RC count, sensor rules, mod positions, trigger lists,
+  chord, sideband). Five negative controls all fail loudly and revert
+  clean (incl. legend drift in the spec — the "single source" claim is
+  enforced, not asserted).
+- **Doc drift found and fixed while writing the bench**: the rev-2
+  audit had bumped `DIODE_RELIEF_D` 0.40→0.55 but the coupon, BOM
+  vendor instruction and case-spec relief sentences still said 0.40 /
+  floor 1.40 / 0.14 — now 0.55 / floor 1.55 / 0.15 worst-case
+  (0.65mm of plate stays under the pocket). Coupon/vendor text must
+  track the generator, so they now quote the assert, not a number.
+- No board-affecting path touched (`pcb/…`, `spec/electronics.yaml`,
+  `layout/generated/v2/{points,outlines}`, `pcb/stock` all unaffected;
+  legends live in `spec/layout.yaml` and firmware is not in the
+  release bundle) — **no release re-cut required**; release stays
+  v0.5.0 @4adf5fbf8e9c.

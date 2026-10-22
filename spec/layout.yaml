@@ -32,10 +32,19 @@ thumbs:
   # clock-tangent rotations (tangent error <=1.6deg), so every key sits ON
   # the curve facing along it. Edge clearance >=1.3mm on every cap pair
   # (verified by polygon check, not center distance).
-  left: [Ctrl, Cmd, L1, Space]
-  right: [Enter, L2, Opt, Shift]
+  left: [Esc, L1, Tab, Space]              # west->east == outer->inner
+  right: [Enter, Backspace, L2, Delete]     # west->east == inner->outer
   notes:
-    - Cmd is Super; Opt is Alt (status: fixed).
+    - Rev 3 (home-row mods): all four modifiers live on the home row, so
+      the thumbs are freed for the frequent keys.  Measured off the
+      thumb-joint circle (R=91.2mm, even ~13.9deg steps): the two MIDDLE
+      keys sit 7.25/6.66deg off the arc's neutral and the extremes 21deg,
+      so the rare keys (Esc/Delete) take the outermost, the layer HOLDS
+      take the accessible mid-outer (comfort for a long hold), Tab and
+      Backspace the mid-inner, and Space/Enter the innermost primaries.
+      The space-hand variants swap Space and Enter between the two
+      innermost thumbs; everything else is fixed (status: fixed).
+    - Cmd is Super; Opt is Alt — both now live on the home row (rev 3).
     - L1 and L2 stay separate layers (status: fixed).
     - Fn is the L1+L2 chord, not a key (status: provisional).
     - Tab is an L1+Space combo (status: provisional).
@@ -152,34 +161,61 @@ board:
     columns so the contour runs gentle there
   note: plate truth is pure-Python plate/gen_plate.py; this is a preview
 
-relocated_keys:  # v1 -> v2 dispositions (status: fixed unless noted)
-  Tab_1_5u: inner-bottom-left
-  Cmd_1_5u: left thumb
-  Shift_1_5u: right thumb
-  quote_column: L1 layer
-  Func_key: dropped  # superseded by the Fn chord
+relocated_keys:  # v1 -> v2/v3 dispositions (status: fixed unless noted)
+  Tab_1_5u: left thumb (rev 3; was inner-bottom-left, was v1 1.5u key)
+  Cmd_1_5u: home row (rev 3; was left thumb)  # GUI: A for GACS, D for CAGS
+  Shift_1_5u: home row (rev 3; was right thumb)  # F/J, the index home keys
+  Ctrl: home row (rev 3; was left thumb)  # A for CAGS, D for GACS
+  Opt_Alt: home row (rev 3; was right thumb)  # S/L, the ring home keys
+  quote_column: base layer, right inner-bottom (rev 3; was planned for L1)
+  dash_key: base layer, left inner-bottom (rev 3; new on the base)
+  Esc: left thumb outermost (rev 3; was right inner-bottom)
+  Delete: right thumb outermost (rev 3; new)
+  Backspace: right thumb (rev 3; new)
+  Func_key: dropped  # superseded by the L1+L2 chord -> Adjust
   blank_placeholders: dropped
 
 keymap:
   # (column, row): left-hand legends; right hand mirrors per
-  # layout/generators/export_kle.py MLAB. Inner-bottom Tab/Esc status: provisional.
+  # layout/generators/export_kle.py MLAB.  Rev 3 (keymap finalisation):
+  # the inner-bottom keys became dash and quote (Tab/Esc moved to the
+  # thumbs); the letters are UNCHANGED QWERTY.  This block is the single
+  # source for config/gen_keymap.py — the keymap files are GENERATED from
+  # it and gated (see spec/keymap.md).
   left:
     outer: [Q, A, Z]
     pinky: [W, S, X]
     ring: [E, D, C]
     middle: [R, F, V]
     index: [T, G, B]
-    inner: ["~`", "{[_-", Tab]
+    inner: ["~`", "{[_-", "-_"]
   right:
-    inner: ["|\\", "}]", Esc]
+    inner: ["|\\", "}]", "'\""]
     index: [Y, H, N]
     middle: [U, J, M]
     ring: [I, K, "<"]
     pinky: [O, L, ">."]
     outer: [P, ":;0", "?/"]
+  variants:
+    # name -> [mod order, space thumb].  Mod orders are the HOME-ROW mod
+    # order, pinky->index (see spec/keymap.md for the sourcing):
+    #   GACS = miryoku / precondition's Windows-Linux default
+    #          (GUI Alt Ctrl Shift; Shift on the index, the strongest
+    #          finger, gets the most-used modifier)
+    #   CAGS = the macOS adaptation (Cmd=GUI outranks Ctrl, so GUI moves
+    #          to the middle finger: Ctrl Alt GUI Shift)
+    # space: which thumb carries Space (the other carries Enter).
+    default: mac_left
+    mac_left: [CAGS, left]
+    mac_right: [CAGS, right]
+    win_left: [GACS, left]
+    win_right: [GACS, right]
 
 open_points:
-  # (resolved: left-Shift chords no longer depend on hand gymnastics —
-  #  right thumbs carry RSFT on the third layer; see keymap.thumbs)
-  - Backspace/Delete live on layers (unmapped so far): decide L1 positions.
+  # RESOLVED 2026-10-22 (keymap finalisation, spec/keymap.md): all four
+  # modifiers are home-row mod-taps (mirrored by column), so no thumb
+  # carries a modifier and no Shift chord needs hand gymnastics;
+  # Backspace = right thumb mid-inner (and L2), Delete = right thumb
+  # outermost (and L2); digits in QWERTY order on L1 row 0; nav/media/BT
+  # on L2; the L1+L2 chord is the Adjust layer (boot/reset).
   - Print-test at 1:1, then tag layout baseline in git.
