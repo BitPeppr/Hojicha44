@@ -53,7 +53,7 @@ re-check at cart time. PCB fab choices are NOT here: see
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
 | ☐ | — | Rogers **PORON 4701-30** Very Soft ~3mm sheet (McMaster search "Rogers 4701-30" or silicone-foams.com) | ~$10–15 | 16 pads/half cut **7×4** (4/7mm punch — the audit-round carve; 8mm pads leave only 0.35mm to the plate edge, 7mm leaves 0.71mm); ≈12 pads per 90mm strip; Keebox 32-strip pack (AliExpress) is the sanctioned swap-in fallback; ladder −30→−40→−50, no CAD change |
-| ☐ | 2 | plate cut, **1.2mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | **1.2mm is mandatory** — the Choc v1 clip only engages 1.2mm; 1.5/1.6 gives friction-only, no retention (`MANUFACTURING.md`). Default material PC per `spec/case.md` (POM = the firmer upgrade); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp. **The DXF carries four layers — paste this into the order:** OUTLINE + CUTOUT cut **through**; **RELIEF = 22 × 0.55mm-deep pockets milled into the UNDERSIDE — machine that depth, do NOT cut through** (0.65mm of plate must remain; a diode fouls a through-cut plate); **PORON = gasket punch template, do not cut it**. **Ask the shop FIRST whether they can mill the 0.55mm partial depth** (a plain laser cut cannot) — if not, this order waits (see `spec/bom.md` vendor instruction + first-article coupon) |
+| ☐ | 2 | plate cut, **1.2mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | **1.2mm is mandatory** — the Choc v1 clip only engages 1.2mm; 1.5/1.6 gives friction-only, no retention (`MANUFACTURING.md`). Default material PC per `spec/case.md` (POM = the firmer upgrade); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp. **The DXF carries four layers — paste this into the order:** OUTLINE + CUTOUT cut **through**; **RELIEF = 22 × 0.55mm-deep pockets milled into the UNDERSIDE — machine that depth, do NOT cut through** (0.65mm of plate must remain; a diode fouls a through-cut plate); **PORON = gasket punch template, do not cut it**. **Ask the shop FIRST whether they can do the 0.55mm partial depth** (a plain laser CUT cannot; controlled-depth laser ENGRAVING or CNC depth milling can — PCBWay's Z-Axis Milling is a documented service, depth tolerance ±0.15mm → order **0.70mm nominal** and caliper the delivered 0.55–0.85 on the coupon; JLCPCB publishes no controlled-depth service, checked 2026-10-23) — if not, this order waits (see `spec/bom.md` vendor instruction + first-article coupon) |
 | ☐ | — | case + ring cover **MJF PA12** (JLC), files from `gen_case.py`/`gen_cover.py` | per quote | volumes L 71.1 / R 71.1 cm³ (tub, OUTSET 8.2) + cover 10.7 cm³ — measured 2026-10-22 (75.7 predates the top-lip 4.70 rev); MJF quotes from volume, so quote THESE |
 | ☐ | 1 roll | Kapton/polyimide tape ≥10mm | $2–5 | cell sandwich + nano underside |
 | ☐ | 1 | SAC305 no-clean 0.5mm solder (e.g. SRA) + **NC-559-class flux pen** | ~$25 + ~$10 | ENIG pads, hand work |
@@ -62,7 +62,16 @@ re-check at cart time. PCB fab choices are NOT here: see
 
 The outline is CONCAVE and the measured minimum copper-to-edge is
 **0.292mm** — below the 0.3mm a V-cut wants, so the board MUST be
-tab-routed. Put this in the order verbatim:
+tab-routed. Tab-routing's own copper-to-edge rule is **0.2mm**
+(JLCPCB 2026 layout guide: "0.3mm for V-cut panelization and 0.2mm
+for tab-routing"; outline blog: "at least 0.2mm clearance from routed
+edges to copper features"), so 0.292mm passes the applicable published
+rule with 0.092mm margin — no written fab confirmation needed
+(re-verified against JLCPCB's pages 2026-10-23). CNC routing
+tolerance is ±0.1mm (precision) / ±0.2mm (regular) per JLCPCB's
+capabilities page — if the quote offers the precision tier for a
+small fee, prefer it to protect the notch corridor. Put this in the
+order verbatim:
 
 ```
 CONCAVE OUTLINE — TAB-ROUTE ONLY, NO V-CUT / V-SCORE

@@ -69,9 +69,15 @@ but every design-shaped field below has exactly one right answer.
   identical design-frame reflection (same project rules), because
   KiCad compares footprint-local geometry to the libraries.
 - **Concave outline — TAB-ROUTE ONLY, NO V-CUT / V-SCORE.** The
-  measured minimum copper-to-edge is 0.292mm, below the 0.3mm a V-cut
-  wants, and the outline is concave (V-cut wants a straight edge). Put
-  this in the fab order verbatim:
+  measured minimum copper-to-edge is 0.292mm — below the 0.3mm a V-cut
+  wants (and the outline is concave: V-cut wants a straight edge), but
+  ABOVE the 0.2mm **tab-route** rule (JLCPCB 2026 layout guide: "0.3mm
+  for V-cut panelization and 0.2mm for tab-routing"; outline blog:
+  "at least 0.2mm clearance from routed edges to copper features"), so
+  the notch corridor passes the applicable published rule with 0.092mm
+  margin (re-verified 2026-10-23). CNC routing tolerance ±0.1mm
+  precision / ±0.2mm regular (capabilities page) — prefer the
+  precision tier at quote if offered. Put this in the fab order verbatim:
   `CONCAVE OUTLINE — TAB-ROUTE ONLY, NO V-CUT / V-SCORE`
 - The ENIG pick in the **gbrjob is informational only** — the form's
   Surface Finish choice is what the fab actually executes. Pick ENIG

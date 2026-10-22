@@ -2076,3 +2076,59 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
   explicitly deferred (next-re-cut batch: R3-03, A-01, A-03). Remaining
   before orders = user-action gates only (coupon, partial-depth
   confirm, copper-edge confirm, Bluetooth-SIG).
+
+## M3.5: fab-capability research — clearances, partial depth; BT-SIG gate dropped (2026-10-23)
+
+- **Bluetooth-SIG gate DROPPED (owner decision)**: the build carries an
+  off-the-shelf pre-certified module (nice_nano_v2) and the units are a
+  hobby build, not marketed for sale — the SIG self-listing requirement
+  re-appears only if units are ever sold. Decision recorded in the
+  research-open-items Bluetooth row; the fee analysis there (:85–104)
+  stands as reference.
+- **Copper-to-edge 0.292mm: PASSES the applicable rule — written fab
+  confirmation gate collapsed.** The "0.3mm fab rule" was the V-CUT
+  rule all along. JLCPCB's 2026 layout guide: "minimum
+  board-edge-to-copper clearance of 0.3mm for V-cut panelization and
+  0.2mm for tab-routing"; outline blog: "at least 0.2mm clearance from
+  routed edges to copper features". Our order is TAB-ROUTE → 0.292mm ≥
+  0.2mm with 0.092mm margin. CNC routing tolerance ±0.1mm (precision) /
+  ±0.2mm (regular) per the capabilities page (fetched 2026-10-23) —
+  prefer the precision tier at quote if offered, to protect the notch
+  corridor. BOM_ORDER + MANUFACTURING updated with the sources; the
+  verbatim TAB-ROUTE order note stays (concave outline still forbids
+  V-cut on its own terms).
+- **Trace/space**: unchanged and comfortably inside JLCPCB's published
+  limits (repo check 2026-10-14 in spec/bom.md; our 0.25mm tracks and
+  ≥0.2mm clearances vs fab minimums an order of magnitude lower) —
+  no action.
+- **Partial depth (0.55mm relief pockets in the 1.2mm plate) —
+  researched:**
+  - JLCPCB: NO published controlled-depth milling service. Full
+    capabilities fetch (2026-10-23): outline options are V-scoring
+    (±0.4mm) and CNC routing (±0.1/0.2mm); no Z-axis/depth row anywhere.
+  - PCBWay: Z-Axis Milling IS documented — help page (updated
+    2026-02-02) lists "Pocket milling" among applications, "in general,
+    milling does not require any additional charges", contours drawn as
+    0.2mm lines; capabilities page states "depth tolerance is
+    controlled 0.15mm". Depth math for us: order **0.70mm nominal** →
+    delivered 0.55–0.85 (±0.15) — the minimum still clears the
+    worst-case diode, floor stays 0.35–0.65mm; the coupon calipers the
+    delivered depth before any plate batch. Quote-time questions: does
+    PCBWay accept a no-copper FR4 plate board, and confirm the "refrain
+    from milling the copper" rule is moot (bare FR4, no copper layers).
+  - Laser route (plan A, unchanged): plain laser CUTTING cannot make
+    the pockets, but controlled-depth laser ENGRAVING on FR4/G10 is
+    standard laser-shop work — the coupon-first procedure stays; no
+    major online service confirmed for depth engraving, so plan A =
+    the laser shop already in BOM_ORDER (ask-first), plan B = PCBWay
+    Z-milling with the 0.70mm-nominal spec.
+- Net effect on the order gates: (1) coupon — STANDS (now also verifies
+  delivered pocket depth if PCBWay is chosen); (2) partial-depth
+  confirm — RESEARCHED, reduces to the quote-time ask with the PCBWay
+  fallback documented; (3) copper-edge confirm — DROPPED (documented
+  pass at 0.2mm tab-route rule); (4) Bluetooth-SIG — DROPPED (owner
+  decision). Sources: jlcpcb.com/blog/pcb-board-outline;
+  jlcpcb.com/blog/pcb-layout-process-guide-2026-mastering-pcb-design;
+  jlcpcb.com/capabilities/pcb-capabilities; pcbway.com/helpcenter/
+  ordering_parameter_instruction/What_is_PCB_Z_Axis_Milling_.html;
+  pcbway.com/capabilities.html.
