@@ -263,8 +263,8 @@ poor bridger.
   0.5mm feeler under the plate over each diode row on the real build; any
   contact/scrape means relief pockets over the diodes or a gap increase
   (case-side fix). Validate on the build.
-- [ ] Plate fit (rev-1 plate in `plate/`): 1:1 print over the real PCB —
-  every 15×15 cutout frames its switch footprint, the 12.7² hole frames
+- [ ] Plate fit (rev-2 plate in `plate/`): 1:1 print over the real PCB —
+  every 14×14 cutout frames its switch footprint, the 16.2×12.4 window frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
   outline matches edge-for-edge including the USB notch. Seat one real
   Choc switch per region (corner/edge/thumb): clips engage, no rock.

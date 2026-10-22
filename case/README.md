@@ -91,10 +91,10 @@ entry below is the current truth for every number it quotes.)
   web probes caught it), antenna ≥10.1, spacing ≥14, slots snapped at
   perimeter/8 with both rings rotated to the USB anchor for mirror
   symmetry. Ø4.2×2.2 pockets, faces flush at the lip plane. **Ring
-  cover v1** (`gen_cover.py`): flush ring z 6.0..9.0 reusing the tub's
+  cover v1** (`gen_cover.py`): flush ring z 4.70..7.70 reusing the tub's
   helpers verbatim — W1 full-depth (the plug's overmold pokes ~0.2 past the top; the module
   tops 7.7, below the ring),
-  TRRS = the same Ø9.5 cylinder as a BLIND tunnel in the 6..9 slice
+  TRRS = the same Ø9.5 cylinder as a BLIND tunnel in the 4.70..7.70 slice
   (tops 7.25 > boot swing 6.75; chord ≤4.82, ring NOT split), pwrsw
   full-depth but keeping a 1.1 inner web (W1 stays the only radial
   severance → single solid; hard-won: hand-placed ring-resume

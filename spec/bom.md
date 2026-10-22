@@ -28,7 +28,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 | 1 | nice!nano v2 module | socketed, USB end to board notch |
 | 2 | machine-pin SIP strips 2×12, 2.54mm pitch | socket rows 15.24mm apart; ASSEMBLED STACK HEIGHT (socket + pins, no module) must measure 4.5–5.0mm — caliper at first article; the 2.11mm-height Mill-Max 315 variant is banned BY HEIGHT (cannot clear the 3.0 cell); the 43-112-41-003000 3.0-class socket + matching pins are the order |
 | 1 | Alps EC11E15244G1 | vertical, 30 detents / 15 pulses, knob ~10mm proud (trim shaft fallback) |
-| 1 | Knob, 6mm bore, ≤13×13mm square (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | 13×13mm square knob overhangs the 12.7mm square plate hole edges but rides high on the 20mm shaft (bore never enters) — first-article: spin + push clearance vs plate |
+| 1 | Knob, 6mm bore, ≤13×13mm square (kriscables anodized aluminium EC11 knob, 13×13mm, €4.90) | the 13×13 knob overhangs the plate's 16.2×12.4 encoder window by 0.3mm/side in y, but it rides high on the 20mm shaft (the bore never enters the window) — first-article: spin + push clearance vs the plate and the cover's inner edge (the cover's underside is at z 4.70) |
 | 1 | XKB PJ-320A TRRS 3.5mm | bring-up/debug link only; 90° cable required |
 | 1 | TRRS cable, 4-pole CTIA, right-angle 3.5mm both ends, short | mouths face each other across a 22.40mm gap — straight plugs collide head-on; measure the boot, must clear the recessed mouths (0.99mm). No vendor link guessed; any CTIA right-angle cable meeting the fit check in §1 does |
 | 1 | Kapton (polyimide) tape, ≥10mm wide | cell sandwich: pouch face + nano underside before the cell goes in |
@@ -40,7 +40,7 @@ other part is identified by exact `MPN` text — no guessed vendor links.
 
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | Switch plate, 1.5mm, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); 22× 15×15 Choc cutouts, 12.7² encoder hole, component windows, 8 gasket tabs (NO screws/holes beyond openings) |
+| 1 | Switch plate, **1.2mm**, laser-cut | `plate/Hojicha44-{Left,Right}-plate.dxf` (R12, mm); material per `spec/case.md` (default PC); **22× 14×14 Choc cutouts** (the 13.8 lower body must pass and the clip must overlap the plate edge — 15.0 gave no retention), **16.2×12.4 encoder window** (clears the encoder's 14.95mm terminal-block envelope at the rev-2 plate height), component windows, 8 gasket tabs (NO screws/holes beyond openings). **EXTRA INSTRUCTION TO THE VENDOR: the RELIEF layer is a 0.40mm PARTIAL-DEPTH pocket in the UNDERSIDE under each of the 22 diodes — machine it, do NOT cut through** (0.80mm of plate must remain) |
 | ~2 | Poron gasket stock, 4701-30 Very Soft 240kg/m³, 3mm adhesive (sheet/strip cut to 90×4; Keebox 32-pack -40 strips are the drop-in fallback) | per half: 16 pads (8 tabs × 2 faces) cut 7×4 (audit-round carve, corner-edge 0.71mm); swap ladder -30-15 → -40 → -50, no CAD change |
 | 16 | N52 disc magnet Ø4×2×2mm (nickel-plated) | TUB magnet pockets (8 per half, Ø4.3×2.2 recess, face-UP flush at the lip plane) |
 | 16 | N52 disc magnet Ø4×1.5mm (nickel-plated) | COVER magnet pockets (8 per half, Ø4.3×1.7 recess, face-DOWN flush — T4 review fix: 1.3mm pocket floor; asymmetric pair with the tub's 2.0s is fine, faces meet at the lip plane); supermagnete/GK-class stocked size |

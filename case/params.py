@@ -246,7 +246,8 @@ PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.55, -22.0),
 # NOT split),
 # the pwrsw flick slot, and the magnet pockets. Outer face = the skin
 # face FLUSH (an intentional lid seam).
-COVER_T = 3.0          # 6.0..9.0; 1.3 floor over the 1.7 magnet pockets
+COVER_T = 3.0          # 4.70..7.70 (TOP_LIP_Z + 3.0); 1.3 floor over the
+                    # 1.7 magnet pockets
 SLOT_PAST_TOP = 0.5    # bore cut extends past the case top plane so the
 #   mouth's top face is the solid's own face, not a coincident-face seam
 SLOT_IN = 2.0          # bore starts inside the cavity (anchored in material)

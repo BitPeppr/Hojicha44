@@ -201,16 +201,17 @@ exterior.
   at perimeter/8 spacing (8 per half — measured 8/8 exact mirrors at
   band min 7.68 / web min 1.69; the gate floor is ≥8).
 - **Pockets**: vertical cylinders cut down from the band top, faces
-  flush at the lip plane (z 6.0) — the magnet (2.0 thick) glues in
+  flush at the lip plane (z 4.70) — the magnet (2.0 thick) glues in
   face-UP. The cover glues its magnets FACE-DOWN opposite, so the
-  adjacent faces meet exactly at 6.0: a rigid zero-gap stop (the 0.2mm
+  adjacent faces meet exactly at 4.70: a rigid zero-gap stop (the 0.2mm
   glue seat in the 2.2 pocket is the only compliance). The preload
-  stays geometric: uncompressed top foam 6.5 vs the 6.0 ring underside
+  stays geometric: uncompressed top foam 5.20 (plate top 2.20 + 3.0)
+  vs the 4.70 ring underside
   = the designed 15-20% poron compression from this spec, enforced by
   the magnet stack instead of pressing force. 8 pairs of 4×2 N52 hold
   the cover far beyond the ~200g half-load.
 - **Ring cover** (`case/gen_cover.py`, gates exit-0):
-  prism(skin) z 6.0..9.0 minus prism(rim + RIM_CLEAR) — the inner edge
+  prism(skin) z 4.70..7.70 minus prism(rim + RIM_CLEAR) — the inner edge
   follows the PCB RIM, not the plate outline, the outer face is the
   skin face itself (the lid seam is intentional and flush), and the
   ring bridges all 8 tab pockets so its underside presses the top
@@ -234,7 +235,7 @@ exterior.
     radial severance or the cover falls into two pieces (the
     single-solid gate proves one piece; the lever reaches through, the
     nail enters from above).
-  Magnet pockets cut up from the underside (faces at 6.0, 1.3mm floor
+  Magnet pockets cut up from the underside (faces at 4.70, 1.3mm floor
   above). Gates: bbox z window, single solid, ring census ≥5.0,
   passage voids at real band t, pwrsw inner web solid, trrs ceiling
   solid, pocket void/floor/web battery, station floor, antenna rings +
@@ -279,7 +280,7 @@ against crack initiation in every material.
 
 ## Plate openings (both halves)
 
-- 22× 15×15mm Choc cutouts at switch centers/rotations — **body
+- 22× 14×14mm Choc cutouts at switch centers/rotations (rev 2) — **body
   clearance, not a clip fit**: the PG1350 lower body passes at 13.8
   square (Kailh's plate-footprint datum; the 15.0 outline is the CLIP
   WING span).  Rev-2 (support strategy b, ADOPTED) uses a **14.0mm

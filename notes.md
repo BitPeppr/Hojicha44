@@ -1825,8 +1825,9 @@ still wrong for the hole.
   the geometry: the Choc socket is a bottom-side part with asymmetric
   tabs and body whose orientation the switch fixes, so the two
   halves' bottom copper cannot be mirror-symmetric. The decision
-  already carried a fallback (0.35mm plate relief) and it was used
-  (0.40mm at the final 1.00mm gap). Record *why* the primary path
+  already carried a fallback (a plate relief pocket) and it was used —
+  0.35mm at the first 1.05mm gap, then 0.40mm at the final 1.00mm
+  gap so the pocket floor stays at 1.40mm. Record *why* the primary path
   died, or the next person will try it again.
 - **Quote fee schedules, not headlines.** The first summary said the
   Bluetooth SIG Adopter tier costs $12,000; it is $0, and the $12,000
