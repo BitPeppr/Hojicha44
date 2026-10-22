@@ -29,7 +29,7 @@ Encoder push over the window zone stays soft by design.
 | Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z **4.70..7.70** across the wall band (the lip follows the plate top: PLATE_TOP 2.20 + 2.5) (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
 | Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), 3mm thick |
 | Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
-| Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.55mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.55mm into the underside, do NOT cut through; `plate/gen_plate.py` `DIODE_RELIEF_D`, asserted against `DIODE_TOP_MAX_Z = 1.40`). Body 2.566 × 1.416mm from KiCad's own `D_SOD-123.step` (measured top **1.260mm**), but the reliefs are sized to the worst-case **1.40mm** part top (rev-2-audit fix): relief floor at 1.00 + 0.55 = **1.55mm**, **0.15mm** over the worst case (0.29mm over the measured one) and 0.65mm of plate under it |
+| Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.55mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.55mm into the underside, do NOT cut through; `plate/gen_plate.py` `DIODE_RELIEF_D`, asserted against `DIODE_TOP_MAX_Z = 1.40`). The pocket XY is the **SOD-123 outline MAX (DS30086 rev 31-2: E 2.55–2.85 long, D 1.40–1.70 wide — `D` is width, A 1.00–1.35 is the height)**, which also covers the KiCad STEP's widest section (2.700 × 1.550 at the plate plane; the earlier 2.566 × 1.416 was the chamfered top face), + **0.15/side** → pocket **3.15 × 2.00** (measured top **1.260mm**; relief floor at 1.00 + 0.55 = **1.55mm**, **0.15mm** over the 1.40 window top and 0.65mm of plate under it) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
 | Bottom gaskets | Same 7×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
@@ -294,18 +294,22 @@ against crack initiation in every material.
   friction and the hotswap sockets alone.  First-article coupon
   (spec/first-article.md): cut 13.8 / 14.0 / 14.2 / 15.0 squares in
   1.2mm PC and measure insertion + retention before the plate order.
-  **Tolerance stack (the clip band is only 1.3mm tall):** the lip
-  engages at 0.9–1.3 above the PCB and the 14.8 ears bear on the
-  plate's top from 2.2, so the usable gap window is
-  **0.9 ≤ gap ≤ 2.2 − plate_thickness** — for a 1.2mm plate that is
-  **0.90…1.00**, and the design sits at 1.00, the top of the window.
-  There is no tolerance-free setting: a +0.1mm plate (1.3) at gap 1.00
-  puts the plate's top at 2.30, i.e. 0.10 into the ears, which pushes
-  the switch 0.10 up — and the lip, moving with the switch, is then at
-  1.00–1.10, still inside its band. **The out-of-tolerance failure
-  mode is therefore "the switch sits high", not "the switch falls
-  out"** — verify that on the first article (caliper the gap, confirm
-  the switch sits flush with its neighbours and the clip catches).
+  **Tolerance stack (the clip band is only 1.3mm tall):** the capture
+  window for the plate's underside is the clip-lip band z **0.9–1.3**
+  (below 0.9 the plate falls out of the band = friction-only, which is
+  the documented 1.5/1.6 failure; above 1.3 the lip never reaches the
+  underside). In the assembled state the ears seat the plate from
+  above, so the settled gap = **2.2 − plate_thickness**: for a 1.2mm
+  plate that is **1.00**, between the capture limits with **0.10 of
+  margin below and 0.30 above**. The ±0.1 laser slice tolerance spends
+  the entire bottom margin at 1.3mm (lip tip, marginal capture), which
+  is why the coupon gate rejects any plate thicker than 1.25 and the
+  first article calipers the real plate. The +0.1 plate does NOT push
+  the switch off the stack: the ears seat the plate 0.1 lower and the
+  switch stays put (the failure mode of a too-thick plate is "no
+  scan-row retention", not "the switch sits high") — verify both on
+  the first article (caliper the plate and the gap, confirm every
+  switch is flush with its neighbours and the clip catches).
 - **16.2 × 12.4mm encoder window** (instance rot 0, body axis-aligned).
   **CHANGED IN REV 2, and it was a blocker.** The rev-1 hole was a
   12.7mm square sized off the vendored ROT_EC11E STEP for the rev-1
@@ -318,9 +322,10 @@ against crack initiation in every material.
   sits **inside the terminal blocks**: the 12.7 hole fouled the
   encoder by up to **1.41mm/side** and the encoder would not pass
   through the plate at all. The window is now sized to the measured
-  ENVELOPE, not the waist: 16.2 × 12.4 gives ~0.34/side over
-  14.95 × 11.70, and stays symmetric about the shaft so the two
-  halves' windows remain exact mirrors (the encoder is a translated,
+  ENVELOPE, not the waist: 16.2 × 12.4 gives **0.625/side in x (0.375
+  on the tight side — the shaft is 0.25 off the envelope's centre) and
+  0.35/side in y** over 14.95 × 11.70, and stays symmetric about the
+  shaft so the two halves' windows remain exact mirrors (the encoder is a translated,
   NOT mirrored, part — an offset window would break the mirror gate).
   Nothing is lost: the encoder is located by its PCB pins, and the
   rev-1 hole had 0.20/side, i.e. clearance only. `gen_plate.py` asserts
@@ -335,15 +340,20 @@ against crack initiation in every material.
   tangency would need a 0.85 fillet or the 13.0-hole fallback, both
   rejected as needless (hand insert).
   The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
-  the hole. A 17mm round hole was rejected: the encoder SHAFT center
+  the hole. Note the knob is SQUARE: as it turns it sweeps an
+  Ø18.4mm circumscribed circle about the shaft centre, so any rub
+  against a case wall would come from the corners at 45°, not the
+  faces — the first-article spin check is what verifies the corners
+  (the knob sits above the plate and below the cover's inner edge,
+  its own z window). A 17mm round hole was rejected: the encoder SHAFT center
   sits 24.04mm from the nearest switch center (SW_L17; the old "18.18"
   was the raw EC11 footprint origin, not the shaft center — the "18.2
   pitch" cited by earlier revs is the same off-center figure), so a
   17mm hole plus that neighbour's 15mm key cutout leaves next to no
   web once the rows' splay is accounted. The generator now prints the
-  definitive webs each run (`gen_plate.py`): **enc↔cutouts 9.15,
-  enc↔windows 3.65, enc↔port rects 5.62 (both halves — the audit-round
-  mirroring removed the old 5.62 L / 5.21 R asymmetry)**
+  definitive webs each run (`gen_plate.py`): **enc↔cutouts 7.90,
+  enc↔windows 3.80, enc↔port rects 4.38 (both halves — the audit-round
+  mirroring removed the old L/R asymmetry)**
   — the old "~3.55" figure was approximately the window web, not the
   cutout web.
 - W1 windows: slide-switch strip + MCU/cell/USB core (tall top-side parts).

@@ -269,5 +269,42 @@ try {
   }
 }
 
+// 6. print-order manifest (audit-2 F-12): the shops are sent exactly the
+//    files hashed in generated/print/vX.Y.Z/MANIFEST.txt — a tracked plate
+//    file that drifted from the manifest must fail the gate (in CI the
+//    case/out solids are gitignored and not buildable, so their hashes are
+//    order-time records verified only where the files exist locally).
+try {
+  const crypto = require("crypto");
+  const mpath = "generated/print/v0.5.0/MANIFEST.txt";
+  const txt = fs.readFileSync(path.join(REPO, mpath), "utf8");
+  const entries = new Map();
+  for (const line of txt.split("\n")) {
+    const m = /^([0-9a-f]{64})\s+(\S+)$/.exec(line);
+    if (m) entries.set(m[2], m[1]);
+  }
+  const problems = [];
+  const sha = (f) =>
+    crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  let verifiedPlate = 0, verifiedCase = 0;
+  for (const [f, h] of entries) {
+    const p = path.join(REPO, f);
+    if (!fs.existsSync(p)) {
+      if (f.startsWith("plate/"))
+        problems.push(`${f} listed in manifest but missing`);
+      continue; // gitignored case/out: record-only outside the local tree
+    }
+    if (sha(p) !== h) problems.push(`${f} drifted from ${mpath}`);
+    else if (f.startsWith("case/out/")) verifiedCase += 1;
+    else verifiedPlate += 1;
+  }
+  if (problems.length)
+    fail("print-manifest", problems.slice(0, 4).join("; "));
+  else ok(`print-manifest (${verifiedPlate} tracked plate files + ` +
+    `${verifiedCase} local case solids verified against the order record)`);
+} catch (e) {
+  fail("print-manifest", e.message);
+}
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nall static checks pass");
 process.exit(failures ? 1 : 0);

@@ -32,6 +32,9 @@ layout/generated/**
 /generated/*
 !/generated/release/
 !generated/release/**
+# print-order manifest (audit-2 F-12): the hashes the shops are sent
+!/generated/print/
+!generated/print/**
 
 # regenerable render exports (kicad-cli sch export ...)
 pcb/kicad/export/

@@ -1,0 +1,25 @@
+# Hojicha44 print-order manifest — v0.5.0 (records exactly which geometry
+# went to the laser/MJF shops; the PCB release MANIFEST covers only gerbers).
+# geometry anchor at recording: the audit2 batch (2026-10-22, print
+# artifacts = plate regen under the 3.15x2.00 relief pockets; case solids
+# = the 2026-10-22 16:17/16:18 build, verified byte-identical on regen;
+# board stamp = release v0.5.0 @4adf5fbf8e9c).
+# plate files are tracked + CI-verifiable (tests/spec_checks print-manifest gate);
+# case/out files are gitignored outputs — these hashes are the order-time record:
+# if any generator constant changes, regenerate everything and re-record this
+# manifest in the SAME commit (never order from a stale hash).
+
+13f51135177ffc4c4d6178453dcd4d68ef41268a74cb4f8309a968e7a6001b43  plate/Hojicha44-Left-plate.dxf
+b4d3bdc06522476bdd7cfe076de97e6a8af2033aeb5a63646b3ec03fa8a0a363  plate/Hojicha44-Left-plate.svg
+963d638df14fe69aeb07e709e55aec7a660dd44ae463cb55132d79f25fb226a8  plate/Hojicha44-Right-plate.dxf
+8cc403e9e38de7cd85ae8a78b13507275bb159a6588f2fe703959ebe9d5bea0e  plate/Hojicha44-Right-plate.svg
+636dc405dcd42b3473de1208c82293fc939bcce0b06880fdbfc1fef510fcb544  plate/Hojicha44-Left-lands.json
+4ac6a9a5700181f512b21f351c69a5ad79700d1eb160c250674a16a6eb4040ab  plate/Hojicha44-Right-lands.json
+4322f45d147b402607bf6f90382ca1a885574cb2e0e827c53314139141e45751  case/out/Hojicha44-Left-tub.step
+2d7b361ded1b75dbb3f42113486942a2639778ae7852eb515f6a35787c3f5cee  case/out/Hojicha44-Left-tub.stl
+81d1cd37d752fddfa11d36acabdd5901b9b3ce77843b72e939c4b1516a2acc9d  case/out/Hojicha44-Left-cover.step
+311abb7a62416e916aa8e6631bcad5a4f9c1f6cb0ed6b4af777dd5ff31e4beef  case/out/Hojicha44-Left-cover.stl
+d48250832235f5c96a37295ccc83893a44ae0edb2409a59e68032feba98f7da3  case/out/Hojicha44-Right-tub.step
+95e8fae6e20b87b78409673bec8f16816ea5e7fec5e140b880113b04318315be  case/out/Hojicha44-Right-tub.stl
+79b53e6bf790de0ce6b62602e3341a65db4317d6d3e6c1657065feb6cda3ea2f  case/out/Hojicha44-Right-cover.step
+6e14796dc4cb39deb1faecf08c725a94ef4219d83d1a4772e3cc9d1a1c49c570  case/out/Hojicha44-Right-cover.stl

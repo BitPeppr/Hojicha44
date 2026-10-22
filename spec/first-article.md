@@ -45,10 +45,14 @@ poor bridger.
   **20 x 20mm squares**, one hole each of **13.8 / 14.0 / 14.2 /
   15.0mm**, all holes concentric in their square, PLUS one extra
   20x20mm square with a 14.0mm hole **and a 0.55mm-deep pocket in its
-  underside** (the diode relief, 2.87 x 1.72mm, offset 9.5mm from the
-  hole centre — the fabricator needs the DXF, and it is the RELIEF
-  layer of the plate file). Cost: a few dollars; turnaround: a day.
-  *What to do with it:* for each square (a) drop a PG1350 in — does
+  underside** (the diode relief, **3.15 x 2.00mm** — the error bars of
+  the SOD-123 outline max (2.85 x 1.70) + 0.15/side; the fabricator
+  takes it from the RELIEF layer of the plate file). Cost: a few
+  dollars; turnaround: a day.
+  *What to do with it:* caliper the coupon's thickness first — it must
+  be **≤1.25mm** (the capture margin for the plate's underside is the
+  0.9–1.3mm lip band, and thickness spends it: 1.3 = lip tip).
+  Then for each square (a) drop a PG1350 in — does
   the body pass the hole? (b) press the switch down onto the coupon
   and LIFT it — does the clip arm catch the plate's underside?
   Expected: at 14.0 the lip (0.9–1.3mm above the PCB) grabs the
@@ -148,12 +152,12 @@ poor bridger.
   (68.42,64.16) — the LEFT set is the SOURCE and Right is its exact
   mirror x->291.5-x). Cross-check one per half in
   the slicer against the STEP. Tests: dry-fit the cover with NO
-  magnets and NO plate — it sits level at the 6.0 lip plane; then drop
+  magnets and NO plate — it sits level at the 4.70 lip plane; then drop
   the plate in (pads live on its tabs) and reseat the cover: the ring
   underside must now PRESS each tab pad — a visible cushion gap at any
   tab zone is a reject (the foam compression mark check), and the
   stack rides ~0.5mm lower than the no-plate seat (uncompressed top
-  pads 6.5 vs the 6.0 ring underside = the designed 16.7% preload);
+  pads 5.20 vs the 4.70 ring underside = the designed 16.7% preload);
   then with magnets it must snap-seat without rocking; poron must not
   stick to either case part. **Pull test (M4 gate): with the plate
   installed, a straight lift must hold ≥1.5 kg before the ring lifts**
@@ -180,7 +184,12 @@ poor bridger.
   sample before ordering the plate batch: ±0.2 fab tolerance can still
   rub. The 13mm knob RIDES HIGH on the 20mm shaft, its bore never
   enters the window (verify >=6mm shaft engagement + spin clearance
-  above the plate, not through it). If the calipered terminal blocks
+  above the plate, not through it). Two knob notes: the knob is SQUARE
+  (13x13) so it sweeps an ~18.4mm circumscribed circle when turned —
+  spin it through every 45° while seated toward the cover plane and
+  feel for corner rub, not just face rub; and the shaft carries a
+  D-flat — press the bore on with the flat aligned (it transmits the
+  torque and prevents a 90° mis-seat). If the calipered terminal blocks
   do not protrude above ~1.5mm, the window may return to 12.7 square —
   but only with that measurement in hand (see the coupon bullet above).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.

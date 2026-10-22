@@ -27,7 +27,7 @@ re-check at cart time. PCB fab choices are NOT here: see
 | ☐ | 2 | JST **PHR-2** housing | $0.10 | |
 | ☐ | 1 | JST **SPH-002T-P0.5S** contacts, strip of 100 | $4.09 | 4 needed; strip = cheapest entry + spares |
 | ☐ | 2 | XKB **PJ-320A** (LCSC **C2884926**, MOQ 5) | $0.75 | footprint is PJ-320A-specific — don't substitute PJ-3xx variants |
-| ☐ | 2 | kriscables **anodized EC11 knob 13×13mm**, 6mm bore | €4.90 | ≤13×13 square constraint per `spec/bom.md` (first-article spin/push check) |
+| ☐ | 2 | kriscables **anodized EC11 knob 13×13mm**, 6mm bore | €4.90 | ≤13×13 square constraint per `spec/bom.md` (first-article spin/push check; square knobs sweep Ø18.4 at the corners — spin-check every 45°). Shaft is D-flat: align the bore's flat on press-on |
 
 ## D. Keyboard-specialty pass
 
@@ -41,14 +41,19 @@ re-check at cart time. PCB fab choices are NOT here: see
 | ☐ | 44–50 | **MBK Choc keycaps** (PBT, Typeractive ~$1/cap) | ~$44 | Choc v1 stems only (MX won't fit); MBK legend sets spotted sold out at splitkb — CFX (~$25/set) is the budget fallback |
 | ☐ | 1 | supermagnete **S-04-02-N** ×20 (Ø4×2mm) | €5.60 | TUB magnets, face-up flush, 16 needed |
 | ☐ | 1 | supermagnete **S-04-1.5-N** ×20 (Ø4×1.5mm) | €4.60 | COVER magnets, face-down flush, 16 needed; the height pair is deliberate — faces meet at the lip plane |
-| ☐ | 1 | glue for the magnets: **B-7000** | $5 | flexible, nylon-safe (PA12); JB-Weld rigid alt; no hot glue |
+| ☐ | — | glue for the magnets: **B-7000** | $5 | flexible, nylon-safe (PA12); JB-Weld rigid alt; no hot glue |
 
 ## E. Case-shop pass
+
+> **Send exactly the files hashed in `generated/print/v0.5.0/MANIFEST.txt`**
+> (sha256, both shops: plate DXF/SVG for the laser, case STEP/STL for MJF).
+> If any generator constant changed, regenerate everything and re-record
+> the manifest in the same commit — never order from a stale hash.
 
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
 | ☐ | — | Rogers **PORON 4701-30** Very Soft ~3mm sheet (McMaster search "Rogers 4701-30" or silicone-foams.com) | ~$10–15 | 16 pads/half cut **7×4** (4/7mm punch — the audit-round carve; 8mm pads leave only 0.35mm to the plate edge, 7mm leaves 0.71mm); ≈12 pads per 90mm strip; Keebox 32-strip pack (AliExpress) is the sanctioned swap-in fallback; ladder −30→−40→−50, no CAD change |
-| ☐ | 2 | plate cut, **1.2mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | **1.2mm is mandatory** — the Choc v1 clip only engages 1.2mm; 1.5/1.6 gives friction-only, no retention (`MANUFACTURING.md`). Default material PC per `spec/case.md` (POM = the firmer upgrade); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp |
+| ☐ | 2 | plate cut, **1.2mm**, from `plate/Hojicha44-{Left,Right}-plate.dxf` (mm) | ~$10–20 ea | **1.2mm is mandatory** — the Choc v1 clip only engages 1.2mm; 1.5/1.6 gives friction-only, no retention (`MANUFACTURING.md`). Default material PC per `spec/case.md` (POM = the firmer upgrade); 42keebs/PCBWay/JLCCNC accept DXF; ask no kerf comp. **The DXF carries four layers — paste this into the order:** OUTLINE + CUTOUT cut **through**; **RELIEF = 22 × 0.55mm-deep pockets milled into the UNDERSIDE — machine that depth, do NOT cut through** (0.65mm of plate must remain; a diode fouls a through-cut plate); **PORON = gasket punch template, do not cut it**. **Ask the shop FIRST whether they can mill the 0.55mm partial depth** (a plain laser cut cannot) — if not, this order waits (see `spec/bom.md` vendor instruction + first-article coupon) |
 | ☐ | — | case + ring cover **MJF PA12** (JLC), files from `gen_case.py`/`gen_cover.py` | per quote | volumes L 71.1 / R 71.1 cm³ (tub, OUTSET 8.2) + cover 10.7 cm³ — measured 2026-10-22 (75.7 predates the top-lip 4.70 rev); MJF quotes from volume, so quote THESE |
 | ☐ | 1 roll | Kapton/polyimide tape ≥10mm | $2–5 | cell sandwich + nano underside |
 | ☐ | 1 | SAC305 no-clean 0.5mm solder (e.g. SRA) + **NC-559-class flux pen** | ~$25 + ~$10 | ENIG pads, hand work |

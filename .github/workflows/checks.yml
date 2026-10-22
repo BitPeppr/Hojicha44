@@ -88,3 +88,7 @@ jobs:
       # M6 (multi-model review): the ring cover was committed ungated —
       # its pad-press / single-solid / passage gates must run in CI too
       - run: python3 case/gen_cover.py
+      # H-7 left/right mirror gate — was manual-only (MANUFACTURING);
+      # the negative control (0.5mm Right translation) must still fail
+      # whenever the gate is touched
+      - run: python3 case/mirror_gate.py

@@ -6,7 +6,8 @@ geometry, never hand-drawn):
 
   outline  = PCB Edge.Cuts loop, identical (USB notch included, so the
              plug housing passes the plate edge exactly as it passes the PCB)
-  cutouts  = 22x 15x15mm Choc PG1350 squares at switch instances/rotations
+  cutouts  = 22x 14.0mm-square Choc PG1350 squares (CUTOUT constant) at
+              instances/rotations
   encoder  = 16.2x12.4mm window (instance rot 0, body axis-aligned):
              clears the encoder's 14.95x11.70 terminal-block envelope
              (measured off the vendored STEP, which the rev-2 plate band
@@ -89,6 +90,13 @@ STOCK_FP = os.environ.get(
 #     14.2 / 15.0 squares in 1.2mm PC and measure retention before
 #     the plate order.
 CUTOUT = 14.0          # Choc PG1350 plate cutout (13.8 body + 0.1/side)
+assert 13.98 <= CUTOUT <= 14.02, (
+    "CUTOUT must stay 14.0 +/-0.02 (13.8 body + 0.1/side). This is the "
+    "single highest-volume mechanical decision — the first-article coupon "
+    "ladder tests 13.8/14.0/14.2/15.0. If it must change, change "
+    "spec/first-article.md, spec/case.md and pcb/BOM_ORDER.md in the same "
+    "commit and cut a new plate release; a silent drift here is what rev-1 "
+    "shipped (15.0 gave no retention).")
 # ENCODER WINDOW.  rev-1 used a 12.7mm SQUARE hole, sized off the
 # vendored ROT_EC11E STEP for the OLD plate band (z 2.0..3.5), where
 # the encoder's body is 12.30 wide.  The rev-2 plate moved the band to
@@ -122,33 +130,49 @@ ENC_ENV_Y = 11.70       # measured: body depth (vendored STEP)
 assert ENC_W >= ENC_ENV_X + 0.2, f"encoder window {ENC_W} < envelope {ENC_ENV_X} + 0.2"
 assert ENC_H >= ENC_ENV_Y + 0.2, f"encoder window {ENC_H} < envelope {ENC_ENV_Y} + 0.2"
 PLATE_THICK = 1.2      # mm PC -- Choc v1 clip engagement (Keebio: 1.2mm)
+assert 1.0 <= PLATE_THICK <= 1.25, (
+    "PLATE_THICK must stay 1.0..1.25mm: the Choc v1 capture window for "
+    "the plate's underside is the clip-lip band z 0.9..1.3, and the "
+    "settled gap is 2.2 - PLATE_THICK (the ears seat the plate from "
+    "above, the strap pockets are compliant). At 1.3mm the underside "
+    "sits exactly at the lip's tip (capture margin 0 — laser tolerance "
+    "eats it); at 1.5/1.6 it falls BELOW the band = friction only, no "
+    "retention (the Kailh/Keebio 1.2mm plate rule). Keep 1.2 nominal.")
 # PCB top -> plate underside.  MEASURED from the Kailh Choc v1 outline
 # drawing and a community STEP model (spec/research-open-items-2026-10-21.md
 # §PG1350; the memo's S1/S3): the stack above the PCB is
 #   0.0-0.9   skirt
-#   0.9-1.3   the flexible clip arms, whose retaining lip engages the
-#             plate's UNDERSIDE
+#   0.9-1.3   the flexible clip arms, whose retaining lip captures the
+#             plate's underside (the capture window FOR THE PLATE is
+#             exactly this z band)
 #   2.2-3.0   the 14.8-15.0 "ears" (the flange) that bear on the
 #             plate's TOP surface
-# so the plate must lie between the lip (<=1.3) and the ears (2.2):
-# a 1.2mm plate on a 1.00mm gap occupies 1.00..2.20 — the lip grabs
-# the underside and the ears seat exactly on the top.  A 1.05 gap
-# would lift the ears 0.05 into the plate, and a 1.3 gap would put the
-# plate top at 2.5, straight through the ears: no grab at all.
-GAP = 1.00             # PCB top -> plate underside
+# In the ASSEMBLED state the ears force the plate down until they seat,
+# so the settled gap is 2.2 - PLATE_THICK (the strap pockets only stay
+# the plate's xy; a +/-0.1 slice tolerance lands the gap at 0.90..1.10,
+# inside the capture band with the 1.3 plate AT the lip tip — the guard
+# above keeps 1.2 nominal).  AT DESIGN TIME the alternative frame
+# (case straps setting the plate's z exactly at 1.00) contradicts the
+# capture ladder: with a 1.5mm plate the underside would sit at 0.70 —
+# below the lip band = friction-only, which is exactly the documented
+# 1.5/1.6 no-retention failure.  The design's 1.00 = the middle of the
+# [0.9, 1.3] capture band as measured (better: 2.2 - 1.2).
+GAP = 1.00             # PCB top -> plate underside (design point;
+                       # settled gap = 2.2 - PLATE_THICK, see above)
 # DIODE RELIEF.  The 22 matrix diodes (1N4148W SOD-123) stand on the
 # PCB's TOP side and are the only thing under the plate in the matrix
-# field.  MEASURED from KiCad's own D_SOD-123.step (the vendored
-# model): body 2.566 x 1.416mm, TOP AT 1.260mm above the seating
-# plane (the repo's old "1.35" comment was 0.09 pessimistic).  With
-# GAP 1.00 the plate underside would foul the diode by 0.26mm, so the
+# field.  Their Z-extent: KiCad's own D_SOD-123.step (the vendored
+# model) tops out at 1.260mm above the PCB plane; the Diodes Inc
+# DS30086 package outline (Rev. 31-2, 2024-09, p4) gives the REAL
+# tolerance: A 1.00..1.35 = total HEIGHT (A1 0.00..0.10 = the terminal
+# seat), so a real part can be 0.14mm taller than the model.  With GAP
+# 1.00 the plate underside would foul the diode by up to 0.40mm, so the
 # plate carries a 0.55mm RELIEF POCKET under every diode: the pocket
 # floor sits at GAP+0.55 = 1.55, i.e. 0.29mm above the MODELLED diode
 # top (1.26) and 0.15mm above the PART TOLERANCE ceiling (1.40).
-# 0.65mm of plate is left under the pocket (gate: floor >= 0.60).  The
-# 0.40mm relief that shipped first was sized on the model alone and left
-# only 0.14mm — inside a real part's height tolerance, i.e. it would
-# have scraped a tall diode.
+# 0.65mm of plate is left under the pocket (gate: floor >= 0.60).
+# (The old 0.40mm relief left only 0.14mm — inside the part's height
+# tolerance, it would have scraped a tall diode.)
 # Alternatives rejected: (a) diodes on B.Cu — the Choc hotswap socket
 # is a bottom-side part whose solder tabs and plastic body are
 # asymmetric, and the switch fixes the socket's orientation, so the
@@ -157,13 +181,27 @@ GAP = 1.00             # PCB top -> plate underside
 # functional gain; (b) no relief at all — needs GAP >= 1.4, outside
 # the switch's clip band.
 DIODE_RELIEF_D = 0.55  # relief pocket depth in the plate underside
-DIODE_BODY_L = 2.566   # measured diode body length (its local x)
-DIODE_BODY_W = 1.416   # measured diode body width (its local y)
+# The pocket's XY: the diode occupies the pocket at the plate's UNDER-
+# SIDE band (z 1.00..1.55) where the SOD-123 body is at its WIDEST
+# cross-section (the chamfer is at the top, z > 1.0; the old 2.566 x
+# 1.416 was the model's top face — the section AT the plate plane is
+# 2.700 x 1.550, and the DS30086 outline grows to E 2.85 x D 1.70).
+# Size the pocket to the LARGEST of those, + 0.15/side (audit-1/M3.2
+# fix: the old basis left 0.008mm/side against a DS-max part, which a
+# +/-0.1mm mill tolerance eats entirely).
+DIODE_BODY_L = 2.85    # DS30086 E_max = body length (STEP widest 2.700)
+DIODE_BODY_W = 1.70    # DS30086 D_max = body WIDTH (STEP widest 1.550;
+                       # 1.70 is width, NOT height — the outline labels
+                       # A(1.00..1.35)=height, D=width, E=length)
 DIODE_RELIEF_CLR = 0.15  # pocket margin around the body, per side
 DIODE_TOP_Z = 1.26     # measured diode top above the PCB top surface
-DIODE_TOP_MAX_Z = 1.40  # the part tolerance ceiling (a real SOD-123 is
-                        # 1.25..1.40) -- the relief is sized against
-                        # THIS, not against the model alone
+DIODE_TOP_MAX_Z = 1.40  # the part tolerance ceiling (DS30086 A_max 1.35 +
+                       # seat margin; the relief is sized against THIS,
+                       # not against the model alone)
+assert DIODE_BODY_L >= 2.70 and DIODE_BODY_W >= 1.55, (
+    "diode pocket basis must cover the STEP's widest section "
+    "(2.700 x 1.550) — the old 2.566 x 1.416 top-face basis undersized "
+    "the pocket")
 TAB_W = 10.0             # tab width along the rim
 TAB_L = 5.0              # tab protrusion past the outline
 TAB_FILLET = 2.0         # root fillets (crack control, esp. carbon/acrylic)
@@ -611,10 +649,10 @@ def build_half(tag):
     cuts = [cut_poly(x, y, CUTOUT, CUTOUT, rot) for _, x, y, rot in sw]
 
     # Diode relief pockets (support b): a 0.55mm-deep pocket in the
-    # plate underside under every matrix diode, so the plate can come
-    # down to GAP 1.05 without fouling the 1.26mm-tall SOD-123s.
-    # The pocket follows the MEASURED body (2.566 x 1.416) + 0.15/side
-    # and is rotated with the placed diode.
+    # plate underside under every matrix diode, clearing the SOD-123s
+    # at the GAP 1.00 band. Sized at the constants (DS30086 outline-max
+    # body 2.85 x 1.70, which also covers the vendored STEP's widest
+    # section) + DIODE_RELIEF_CLR per side, rotated with the diode.
     diodes = [(r, v[1], v[2], v[3]) for r, v in inst.items()
               if DIODE_RE.match(r)]
     assert len(diodes) == 22, f'{tag}: want 22 diodes, got {len(diodes)}'
@@ -817,16 +855,17 @@ def build_half(tag):
 
     # NOTE (2026-10-15): a pads-vs-cutout containment check lived here
     # and was reverted — socket solder pads sit on the FAR side of the PCB
-    # and legitimately extend past the 15mm plate cutout, which clears the
-    # SWITCH BODY. Plate and PCB provably share one frame instead: both
-    # derive cutouts/placements from the same parsed instance (x, y, rot)
-    # through the same clockwise-positive convention, whose correctness
-    # on real geometry was already measured end-to-end (TRRS mouth
-    # 22.40mm in spec matches placed boards to 0.01). Encoder to nearest
-    # switch is 18.2mm center-to-center in both files (4.45 plate
-    # edge-to-edge vs ~4.9 body-to-body on copper) — same spacing,
-    # different ink. (PCB renders are y-flipped vs this north-up plate,
-    # which makes identical layouts read as shifted side by side.)
+    # and legitimately extend past the 14.0mm plate cutout, which clears
+    # the SWITCH BODY. Plate and PCB provably share one frame instead:
+    # both derive cutouts/placements from the same parsed instance
+    # (x, y, rot) through the same clockwise-positive convention, whose
+    # correctness on real geometry was already measured end-to-end (TRRS
+    # mouth 22.40mm in spec matches placed boards to 0.01). Encoder to
+    # nearest switch: 24.04mm shaft-to-(SW_L17 pad) — the 18.2 figure
+    # was the raw EC11 footprint origin, not the shaft center
+    # (spec/case.md has the derivation). (PCB renders are y-flipped vs
+    # this north-up plate, which makes identical layouts read as shifted
+    # side by side.)
 
     # -- gasket TABS (tab-and-jacket suspension).
     # The plate grows discrete tongues that slot into silicone jackets in
@@ -1378,7 +1417,7 @@ def svg_write(path, res):
              f'T = gasket tab (poron pads top+bottom, yellow)'
              f'</text>')
     o.append(f'<text x="8" y="26" fill="#fff" font-size="10">'
-             f'white square = Choc cutout 15x15'
+             f'white square = Choc cutout {CUTOUT:g} square (see DXF)'
              f'</text>')
     o.append(f'<text x="8" y="38" fill="#ff9800" font-size="10">'
              f'solid orange = encoder window {ENC_W:g}x{ENC_H:g} / dashed orange = '
@@ -1400,11 +1439,74 @@ def svg_write(path, res):
     open(path, 'w').write('\n'.join(o))
 
 
+def emit(tag, out_dir, res):
+    """Write the three vendor/order artifacts for one half."""
+    dxf_write(os.path.join(out_dir, f'Hojicha44-{tag}-plate.dxf'), res)
+    svg_write(os.path.join(out_dir, f'Hojicha44-{tag}-plate.svg'), res)
+    json.dump({
+        'half': tag, 'units': 'mm (KiCad board frame)',
+        'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
+        'poron': {'spec': PORON_SPEC, 'pad': [PORON_PAD_L,
+                  PORON_PAD_W], 'faces': ['top', 'bottom'],
+                  'center': 'tab root center + 2.0 outward '
+                            '(fully on tongue)'},
+        'tabs': res['tabs'],
+        'diode_relief': {
+            'depth': DIODE_RELIEF_D,
+            'pockets': len(res['relief']),
+            'floor_z': round(GAP + DIODE_RELIEF_D, 3),
+            'diode_top_z': DIODE_TOP_Z,
+            'clearance': round(GAP + DIODE_RELIEF_D - DIODE_TOP_Z, 3),
+            'note': 'partial-depth pocket in the plate UNDERSIDE; '
+                    'machine 0.55mm, do not cut through',
+        },
+    }, open(os.path.join(out_dir, f'Hojicha44-{tag}-lands.json'),
+            'w'), indent=1)
+
+
+def check_artifacts():
+    """Regen-compare gate: regenerate into a temp dir and byte-compare the
+    tracked DXF/SVG/lands.json.  Without this, a drift between the
+    generator and the COMMITTED order artifacts is invisible (the frame
+    gate checks cutout positions, not sizes: a CUTOUT of 15.0 regenerated
+    nothing and passed everything)."""
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix='plate-check-') as tmp:
+        drift = []
+        for tag in ('Left', 'Right'):
+            res, bad = build_half(tag)
+            if bad:
+                print(f'{tag} FAIL:')
+                for b in bad:
+                    print(f'  !! {b}')
+                drift.append('build failed')
+                continue
+            emit(tag, tmp, res)
+            for ext in ('dxf', 'svg'):
+                name = f'Hojicha44-{tag}-plate.{ext}'
+                fresh = open(os.path.join(tmp, name), 'rb').read()
+                tracked = open(os.path.join(OUT_DIR, name), 'rb').read()
+                if fresh != tracked:
+                    drift.append(name)
+            name = f'Hojicha44-{tag}-lands.json'
+            fresh = open(os.path.join(tmp, name)).read()
+            tracked = open(os.path.join(OUT_DIR, name)).read()
+            if fresh != tracked:
+                drift.append(name)
+        if drift:
+            print('plate artifacts: STALE — regenerate with '
+                  '`python3 plate/gen_plate.py` (drifted: '
+                  f'{", ".join(drift)})')
+            return False
+        print('plate artifacts: CLEAN (DXF/SVG/lands match the generator)')
+        return True
+
+
 def main():
     check_only = '--check' in sys.argv
     os.makedirs(OUT_DIR, exist_ok=True)
     failed = False
-    for tag in ('Left', 'Right'):
+    for tag, in (('Left',), ('Right',)):
         res, bad = build_half(tag)
         if bad:
             print(f'{tag} FAIL:')
@@ -1413,28 +1515,7 @@ def main():
             failed = True
             continue
         if not check_only:
-            dxf_write(os.path.join(OUT_DIR, f'Hojicha44-{tag}-plate.dxf'),
-                      res)
-            svg_write(os.path.join(OUT_DIR, f'Hojicha44-{tag}-plate.svg'), res)
-            json.dump({
-                'half': tag, 'units': 'mm (KiCad board frame)',
-                'plate': f'{PLATE_THICK}mm {MATERIAL}', 'gap': GAP,
-                'poron': {'spec': PORON_SPEC, 'pad': [PORON_PAD_L,
-                          PORON_PAD_W], 'faces': ['top', 'bottom'],
-                          'center': 'tab root center + 2.0 outward '
-                                    '(fully on tongue)'},
-                'tabs': res['tabs'],
-                'diode_relief': {
-                    'depth': DIODE_RELIEF_D,
-                    'pockets': len(res['relief']),
-                    'floor_z': round(GAP + DIODE_RELIEF_D, 3),
-                    'diode_top_z': DIODE_TOP_Z,
-                    'clearance': round(GAP + DIODE_RELIEF_D - DIODE_TOP_Z, 3),
-                    'note': 'partial-depth pocket in the plate UNDERSIDE; '
-                            'machine 0.55mm, do not cut through',
-                },
-            }, open(os.path.join(OUT_DIR, f'Hojicha44-{tag}-lands.json'),
-                    'w'), indent=1)
+            emit(tag, OUT_DIR, res)
         print(f'{tag}: 22 cutouts + enc {ENC_W}x{ENC_H} + {len(res["wins"])} '
               f'windows + {len(res["tabs"])} gasket tabs — CLEAN')
         ew = res['enc_web']
@@ -1442,8 +1523,12 @@ def main():
               f'windows {ew["windows"]:.2f}, ports {ew["ports"]:.2f}')
         print(f'{tag}: poron pad {PORON_PAD_L}x{PORON_PAD_W} — corner-edge '
               f'margin {res["poron_edge"]:.3f}mm (floor {PORON_EDGE_MIN})')
-    sys.exit(1 if failed else 0)
+    if check_only and not failed:
+        return 0 if check_artifacts() else 1
+    if failed:
+        return 1
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
