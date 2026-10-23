@@ -1,6 +1,11 @@
 # dependencies
 node_modules/
 
+# agent-harness scratch: run logs, probe scripts, and gen_pcb's pre-regen
+# board archive (pcb/kicad/hand-copper.txt documents the convention) —
+# untracked by design; the archived snapshots are cited from notes.md
+opencode/
+
 # macOS
 .DS_Store
 

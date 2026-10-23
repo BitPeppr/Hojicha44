@@ -6,6 +6,25 @@ Roadmap: `KEYBOARD_PROJECT_ROADMAP.md`.
 `layout/ergogen/config.yaml` (frozen snapshot: `layout/- FINAL/keyboard_layout_v7`);
 each half has a placed+routed board file — see [Schematic](#schematic).
 
+## Repository layout (what every top-level thing is)
+
+| Path | Tracked? | What it is |
+|---|---|---|
+| `boards/shields/hojicha44/` | yes | The **ZMK shield definition** (devicetree `hojicha44.dtsi`, left/right overlays, Kconfig) — standard ZMK module layout; consumed by the firmware build via `zephyr/module.yml` |
+| `config/` | yes | **ZMK build inputs** — `hojicha44.keymap` (+ 4 variant keymaps), `*.conf` Kconfig, `west.yml`. The keymaps are **generated** by `config/gen_keymap.py` from the spec (byte-compared by CI every run) |
+| `spec/` | yes | **Engineering source of truth** (human-authored): `layout.yaml`, `electronics.yaml`, `case.md`, `bom.md`, `first-article.md`, open items. Generators read this; `config/` is its firmware-facing output — same pipeline, different roles: spec = source, config = consumed by west/Zephyr |
+| `zephyr/module.yml` | yes | Declares this repo as a **Zephyr module** (makes `boards/` + `config/` visible to west) |
+| `zmk/gpio-map.md` | yes | Machine-generated pin-map doc (cross-checked against the dtsi) |
+| `build.yaml` | yes | **CI firmware matrix** consumed by `.github/workflows/build.yml` (one ZMK build per shield, pinned ZMK v0.3) |
+| `pcb/` | yes | KiCad project + generators (`gen_schematic.py`, `gen_pcb.py`, `gen_route.py`) + the committed `.net` netlists CI parses (no KiCad in CI) + vendored stock |
+| `plate/`, `case/`, `layout/` | yes | Generators + tracked outputs (plate DXF/SVG/lands; case scripts; layout points). `case/.venv/` and `case/out/` are local-only |
+| `generated/` | yes, selective | **Derived artifacts worth versioning**: `release/v0.5.0` (the shipped gerbers/reports bundle), `renders/v0.5.0` (final PNGs), layout points, print manifest. The regenerable mesh tree `generated/renders/assets/` is ignored |
+| `tests/` | yes | `spec_checks.cjs` — the static gate suite (`npm test`) |
+| `renders/` | yes | Phase-10 render pipeline scripts (see `renders/README.md`) |
+| `node_modules/` | **no** | npm deps for the gate suite — recreated with `npm ci`; pinned by `package-lock.json` |
+| `out/` | **no** | Local build outputs: `out/firmware` (west/Zephyr build destination — the build *result* stays out of git; the CI rebuilds it), `out/fit` (fit prints) |
+| `opencode/` | **no** | Agent-harness scratch: run logs, probe scripts, and `gen_pcb`'s **pre-regen board archive** (rejected/`pre-regen-*` snapshots cited from notes and `hand-copper.txt`) |
+
 ## Layout
 
 | What | Where | Notes |
