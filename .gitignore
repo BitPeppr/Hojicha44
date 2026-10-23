@@ -47,3 +47,9 @@ pcb/kicad/export/
 out/
 case/.venv/
 case/out/
+
+# renders: the regenerable mesh/asset tree is a dev artifact; scripts +
+# final PNGs under generated/renders/v0.5.0/ ARE tracked (see renders/README)
+!/generated/renders/
+!generated/renders/**
+generated/renders/assets/
