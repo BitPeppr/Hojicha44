@@ -2132,3 +2132,17 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
   jlcpcb.com/capabilities/pcb-capabilities; pcbway.com/helpcenter/
   ordering_parameter_instruction/What_is_PCB_Z_Axis_Milling_.html;
   pcbway.com/capabilities.html.
+- Follow-up (same day, owner question "what if no shop does both"):
+  PCBWay's own tolerances page confirms profile-to-copper 0.3mm
+  ("Normal Width between profile and copper 0.3mm"; safety-spacing
+  blog: "preferably not less than 0.3mm") — the perceived conflict
+  DISSOLVES because the pockets are a PLATE feature (bare FR4, no
+  copper → no profile-to-copper rule applies on that order) while the
+  0.292mm corridor is a PCB feature (JLCPCB, 0.2mm tab-route rule).
+  Also: JLCCNC (JLC's CNC family, already on the plate vendor list)
+  publishes FR4 CNC machining with cavity-depth capability ("aim for
+  cavity depth within 2–3× tool") — a same-vendor-group plan B′ for
+  the pockets. Last-resort fallback if every pocket route failed:
+  one gen_plate.py constant flips pockets to through-cut relief holes
+  (plain laser-cuttable; gen_plate is not a board-affecting path, no
+  re-cut) at the cost of 22 open holes.
