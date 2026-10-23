@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "10.0.6"
     },
-    "CreationDate": "2026-10-22T16:16:40+11:00"
+    "CreationDate": "2026-10-23T13:25:58+11:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "Hojicha44-Right",
       "GUID": "486f6a69-6368-4613-9434-2d5269676874",
-      "Revision": "0.3"
+      "Revision": "0.5"
     },
     "Size": {
       "X": 150.599,
