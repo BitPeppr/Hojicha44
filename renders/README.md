@@ -14,7 +14,7 @@ renders/build_assets.py         # case/.venv — kicad-cli STEP export, plate
                                 # placements.json from the committed boards
 renders/scene.py                # Blender 5.2 headless — design-frame assembly,
                                 # plate-hole registration gate, PBR materials,
-                                # lighting setups, render queue
+                                # procedural textures, studio floor, render queue
 ```
 
 Reproduce the deliverable (bright hero + exploded):
@@ -43,7 +43,7 @@ gitignored; the scripts, this README, and the final PNGs are committed.
 braindefender (Nikita Shirokov) — **CC-BY-SA 4.0**, Choc stem + Choc size,
 pinned to commit `8e4b89b484cafe3bcaced6b459a4e29660991a40` (see
 `generated/renders/assets/PROVENANCE.json`). Variants used: flat Saddle on
-all finger rows, Saddle Homing on the index-column home keys (F/J), Thumb
+all finger rows, Saddle Homing on the inner index home keys (G/H), Thumb
 on the four thumb keys. Per the license, attribution to the author is
 required alongside any use of these shapes.
 
@@ -67,5 +67,20 @@ required alongside any use of these shapes.
   spine, which is why the visible inner recess is wider than the seam.
 - Stack (z = 0 at the PCB top): substrate −1.60..0; plate 1.00..2.20;
   switch body 0.30..3.30; cap stem tip 1.50; flat cap top 7.58; cover
-  4.70..7.70. The encoder top is 24.54; the 10 mm knob seats on the
-  bushing (top 14.50) with its top 0.1 mm past the shaft (base 14.64).
+  4.70..7.70. The encoder top is 24.54; the encoder is left bare — the
+  product views carry no knob (the sourced knob is a stand-in and read
+  too tall and too fat).
+
+## Surface textures and studio floor
+
+All surface detail is procedural, so the render has no external image
+maps to lose: generated-coordinate noise drives a bump normal and a
+roughness range on the PA12 tub/cover (sintered grain), the PBT caps
+(finer orange-peel), the PC plate, the PCB soldermask/silk and the
+metal pads. Feature sizes are chosen for the 1600 px delivery (~3 px/mm),
+not for powder-scale detail that would disappear.
+
+The studio floor is a 4 m plane 0.2 mm under the tub bottom, with the
+same procedural treatment. It is created after the assembly bbox is
+measured, so it never affects camera framing, registration, or the
+explode distances; the soft key lights draw the contact shadow.

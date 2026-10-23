@@ -23,7 +23,7 @@ STACK (z=0 is the PCB top):
   switch body              0.30..3.30, cap stem tip 1.50
   flat KLP Saddle top      7.58           (cover bezel plane 7.70)
   cover ring               4.70..7.70
-  knob (10 mm) seats on the bushing, top just above the 24.54 shaft
+  encoder left bare (no knob in the product views)
 
 The assembled halves are used at their committed positions — the case
 files already place them in one shared layout; no artificial split gap.
@@ -44,10 +44,8 @@ SCALE = 0.001            # design-frame mm -> Blender meters
 PCB_TOP_IN_STEP = 1.60   # substrate top inside the kicad-cli STEP
 PLATE_Z = 1.00           # plate underside above the PCB top (GAP)
 CAP_STEM_Z = 1.5         # cap stem tip above the PCB top (inside switch)
-KNOB_TOP_CLEAR = 0.1     # knob top sits 0.1 mm above the shaft top, so the
-                         # 10 mm knob seats on the encoder bushing (top 14.5)
 # exploded view: keep the tub/PCB/switch stack, lift the top layers apart
-EXPLODE = {"cover": 46.0, "caps": 26.0, "plate": 14.0, "knobs": 12.0}
+EXPLODE = {"cover": 46.0, "caps": 26.0, "plate": 14.0}
 # nice!nano courtyard in the FOOTPRINT's local (file) frame, from the
 # embedded Socket_Strips_2x12_P2.54mm_NiceNano footprint (KiCad 10)
 NANO_COURT = (-17.07, -29.94, 2.85, 2.60)   # x0, y0, x1, y1
@@ -67,6 +65,8 @@ def parse_args():
     p.add_argument("--hide-cover", action="store_true")
     p.add_argument("--hide-case", action="store_true")
     p.add_argument("--hide-plate", action="store_true")
+    p.add_argument("--no-floor", action="store_true",
+                   help="omit the studio floor (debug/compare)")
     return p.parse_args(argv)
 
 
@@ -118,6 +118,42 @@ def pbr(name, color, rough=0.5, metal=0.0):
     return mat
 
 
+def micro_texture(mat, scale, bump, dist, rough_lo=None, rough_hi=None,
+                  detail=3.5):
+    """Procedural surface texture in generated (per-object 0..1) space.
+
+    One noise drives a bump normal plus an optional roughness range. The
+    rendered board is ~3 px/mm, so the scale is chosen for features that
+    read at that size (0.5-3 mm), not for powder-grain detail. Idempotent:
+    materials are shared between halves, so repeated calls are no-ops.
+    """
+    if mat.get("micro_texture"):
+        return mat
+    mat["micro_texture"] = True
+    nt = mat.node_tree
+    bsdf = nt.nodes.get("Principled BSDF")
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = scale
+    noise.inputs["Detail"].default_value = detail
+    noise.inputs["Roughness"].default_value = 0.55
+    nt.links.new(tc.outputs["Generated"], noise.inputs["Vector"])
+    bmp = nt.nodes.new("ShaderNodeBump")
+    bmp.inputs["Strength"].default_value = bump
+    bmp.inputs["Distance"].default_value = dist
+    nt.links.new(noise.outputs["Fac"], bmp.inputs["Height"])
+    nt.links.new(bmp.outputs["Normal"], bsdf.inputs["Normal"])
+    if rough_lo is not None and rough_hi is not None:
+        mr = nt.nodes.new("ShaderNodeMapRange")
+        mr.inputs["From Min"].default_value = 0.0
+        mr.inputs["From Max"].default_value = 1.0
+        mr.inputs["To Min"].default_value = rough_lo
+        mr.inputs["To Max"].default_value = rough_hi
+        nt.links.new(noise.outputs["Fac"], mr.inputs["Value"])
+        nt.links.new(mr.outputs["Result"], bsdf.inputs["Roughness"])
+    return mat
+
+
 def assign(objs, mat):
     for o in objs:
         if o.type != "MESH":
@@ -154,6 +190,14 @@ def materialize_pcb(objs):
     m_silk = pbr("pcb_silk", (0.86, 0.86, 0.83), rough=0.55)
     m_comp = pbr("pcb_component", (0.045, 0.045, 0.050), rough=0.35)
     m_diode = pbr("pcb_diode", (0.020, 0.020, 0.022), rough=0.25)
+    # fine soldermask / substrate / silk grain; metal pads get only a
+    # slight roughness break-up so the ENIG stays specular
+    micro_texture(m_sub, 120, 0.25, 0.00006, 0.42, 0.50)
+    micro_texture(m_mask, 180, 0.20, 0.00004, 0.28, 0.38)
+    micro_texture(m_cu, 300, 0.10, 0.00002, 0.22, 0.30)
+    micro_texture(m_silk, 300, 0.20, 0.00003, 0.50, 0.60)
+    micro_texture(m_comp, 100, 0.15, 0.00004, 0.32, 0.40)
+    micro_texture(m_diode, 200, 0.10, 0.00002, 0.22, 0.28)
     census = {}
     for o in objs:
         if o.type != "MESH":
@@ -245,7 +289,7 @@ def setup_world_and_lights(setup, cx, cy):
     if setup == "bright":
         bg_cam.inputs[0].default_value = (0.86, 0.88, 0.91, 1.0)
         bg_cam.inputs[1].default_value = 1.0
-        # reflections/ambient: a bright studio wall the metal knob can see
+        # reflections/ambient: a bright studio wall the metal parts can see
         bg_amb.inputs[0].default_value = (0.80, 0.84, 0.90, 1.0)
         bg_amb.inputs[1].default_value = 0.40
     else:
@@ -345,11 +389,23 @@ def main():
 
     m_cap = pbr("cap_pbt", (0.032, 0.031, 0.034), rough=0.44)
     m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
-    m_knob = pbr("knob_alu", (0.58, 0.59, 0.61), rough=0.30, metal=1.0)
     m_nano = pbr("nano_pcb", (0.012, 0.055, 0.032), rough=0.42)
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
     m_usb = pbr("usb_shell", (0.62, 0.63, 0.65), rough=0.28, metal=1.0)
     m_sock = pbr("nano_socket", (0.028, 0.028, 0.030), rough=0.45)
+    m_case = pbr("case_pa12", (0.042, 0.044, 0.048), rough=0.60)
+    m_plate = pbr("plate_pc", (0.050, 0.050, 0.055), rough=0.36)
+    # PBT caps ~0.7 mm orange-peel; PA12 case a coarser sintered grain;
+    # both get a roughness range so highlights break up instead of
+    # reading as flat plastic
+    micro_texture(m_cap, 24, 0.45, 0.00055, 0.38, 0.56, detail=4.0)
+    micro_texture(m_sw, 40, 0.20, 0.00004, 0.34, 0.42)
+    micro_texture(m_nano, 60, 0.15, 0.00003, 0.38, 0.48)
+    micro_texture(m_chip, 120, 0.10, 0.00002, 0.28, 0.34)
+    micro_texture(m_usb, 200, 0.10, 0.00002, 0.24, 0.32)
+    micro_texture(m_sock, 50, 0.15, 0.00003, 0.42, 0.50)
+    micro_texture(m_case, 100, 0.35, 0.0005, 0.48, 0.64, detail=4.5)
+    micro_texture(m_plate, 160, 0.20, 0.00006, 0.32, 0.42)
 
     parts = {}
     for half in ("Left", "Right"):
@@ -383,12 +439,9 @@ def main():
             assign(parts[h]["cover"], pbr(f"dbg_cover_{h}",
                                           (0.9, 0.7, 0.1), rough=0.5))
         else:
-            assign(parts[h]["plate"], pbr("plate_pc", (0.050, 0.050, 0.055),
-                                          rough=0.36))
-            assign(parts[h]["tub"], pbr("case_pa12", (0.042, 0.044, 0.048),
-                                        rough=0.60))
-            assign(parts[h]["cover"], pbr("case_pa12",
-                                          (0.042, 0.044, 0.048), rough=0.60))
+            assign(parts[h]["plate"], m_plate)
+            assign(parts[h]["tub"], m_case)
+            assign(parts[h]["cover"], m_case)
 
         # ---- registration: plate holes are the physical master
         pl = placements[half]
@@ -413,9 +466,8 @@ def main():
         print(f"[scene] {half}: REGISTRATION 22/22 switch footprints on "
               f"plate holes, worst {worst:.4f} mm", flush=True)
 
-        # ---- cap variant map: thumbs by position, homing on the index
-        # home key. The index column is the tallest stagger column (F/J:
-        # left home row A S D F G [ — the 4th key from the outer edge).
+        # ---- cap variant map: thumbs by position, homing on the INNER
+        # index home key (G/H), one column inboard of the F/J stagger peak.
         cols = {}
         for p in sw:
             if p["y"] < -10.0:
@@ -423,9 +475,12 @@ def main():
             cols.setdefault(round(p["x"], 1), []).append(p)
         if len(cols) != 6:
             sys.exit(f"[scene] ABORT {half}: {len(cols)} finger columns")
-        index_x = max(cols, key=lambda x: max(q["y"] for q in cols[x]))
+        peak_x = max(cols, key=lambda x: max(q["y"] for q in cols[x]))
+        inboard = [x for x in cols
+                   if (x > peak_x if half == "Left" else x < peak_x)]
+        index_x = max(inboard, key=lambda x: max(q["y"] for q in cols[x]))
         home = sorted(cols[index_x], key=lambda q: q["y"])[1]
-        print(f"[scene] {half}: index column x={index_x:.1f}, "
+        print(f"[scene] {half}: inner index column x={index_x:.1f}, "
               f"homing key ({home['x']:.1f},{home['y']:.1f})", flush=True)
 
         # ---- caps (KLP Lamé; flat Saddle profile stays under the bezel)
@@ -516,45 +571,19 @@ def main():
                                    1.5 * SCALE),
                                   (2.6, 29.0, 3.0), m_sock))
 
-        # ---- knob on the encoder shaft (measured encoder top)
-        enc_objs = [o for o in parts[h]["board"]
-                    if o.name.startswith("ENC")]
-        enc_top = None
-        bpy.context.view_layer.update()
-        if enc_objs:
-            enc_top = bbox_mm(enc_objs)[1][2]
-        wins = [c for c in cuts if 15.5 <= c["w"] <= 16.9
-                and 11.5 <= c["h"] <= 13.3]
-        for win in wins:
-            _, roots_k, objs = import_glb(os.path.join(
-                ASSETS, "parts", "knob.glb"),
-                f"knob_{h}_{win['x']}")
-            assign(objs, m_knob)
-            parts[h].setdefault("knobs", []).extend(objs)
-            (_, _, kz0), (_, _, kz1) = bbox_mm(objs)
-            knob_h = kz1 - kz0
-            base = ((enc_top - knob_h + KNOB_TOP_CLEAR * SCALE)
-                    if enc_top is not None
-                    else (14.54 + KNOB_TOP_CLEAR) * SCALE)
-            for o in roots_k:
-                o.location.x += win["x"] * SCALE
-                o.location.y += win["y"] * SCALE
-                o.location.z += base - kz0
-            print(f"[scene] {half}: knob at ({win['x']:.2f},{win['y']:.2f}) "
-                  f"base {base*1000:.2f} mm, knob {knob_h*1000:.2f} mm, "
-                  f"encoder top {enc_top*1000:.2f}", flush=True)
+        # the EC11 is left bare: the product views show the encoder, not a
+        # knob (the sourced knob is a stand-in and was visually too tall)
 
     # ---- smooth curved parts (welded glbs make this effective)
     for h in parts:
         smooth(parts[h].get("caps", []), 35.0)
-        smooth(parts[h].get("knobs", []), 35.0)
 
     all_objs = [o for h in parts for lst in parts[h].values()
                 for o in (lst if isinstance(lst, list) else [])]
     # ---- diagnostics: where every group actually landed
     bpy.context.view_layer.update()
     for h in parts:
-        for grp in ("board", "plate", "tub", "cover", "caps", "knobs",
+        for grp in ("board", "plate", "tub", "cover", "caps",
                     "swbodies", "nano"):
             objs = parts[h].get(grp, [])
             if not objs:
@@ -589,6 +618,20 @@ def main():
     cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
     print(f"[scene] assembly centre ({cx*1000:.1f},{cy*1000:.1f}) mm",
           flush=True)
+
+    # ---- studio floor: grounds the product and gives the soft key lights
+    # a surface to draw a contact shadow on. Placed 0.2 mm under the tub
+    # bottom; the 4 m plane fills the camera frame (no horizon visible).
+    if not args.no_floor:
+        bpy.ops.mesh.primitive_plane_add(
+            size=4.0, location=(cx, cy, bz0 - 0.0002))
+        floor = bpy.context.active_object
+        floor.name = "studio_floor"
+        m_floor = pbr("studio_floor", (0.52, 0.53, 0.56), rough=0.82)
+        micro_texture(m_floor, 800, 0.60, 0.0008, 0.70, 0.88, detail=3.0)
+        assign([floor], m_floor)
+        print(f"[scene] floor at z {bz0*1000 - 0.2:.2f} mm", flush=True)
+
     setups = args.setups.split(",")
     shots = args.shots.split(",")
     for setup in setups:

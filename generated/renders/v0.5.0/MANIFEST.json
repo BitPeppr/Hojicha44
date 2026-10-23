@@ -20,8 +20,8 @@
   "python": "3.12.13"
  },
  "renders": {
-  "bright/exploded.png": "290e09302ddf621eaab0ba992346edf8a81d0bf9b6294cf698fba9f3120343a9",
-  "bright/hero.png": "9c3f368ebcf5cd62689c885784f3afcf2671b02ead3cdea822b5e7134eb7fa29"
+  "bright/exploded.png": "5b75bbf76128e3dd076cdd9795a85d782e5b781ed2944f7aaded64c6095ceab1",
+  "bright/hero.png": "564dd13a91806408a060e36ae5f7219f8f83f12430af7f41847acab0b130687a"
  },
  "note": "regenerate: renders/README.md; assets tree is derived (gitignored), final PNGs are committed"
 }
