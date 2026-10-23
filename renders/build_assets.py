@@ -18,8 +18,8 @@ Outputs:
   assets/parts/knob.glb                procedural EC11 knob (13x13, knurl)
   assets/parts/screw.glb               procedural M2 pan-head
   assets/placements.json               every footprint (ref,x,y,rot) parsed
-                                       from the COMMITTED boards — the scene
-                                       script's single source for positions
+                                       from the COMMITTED boards and converted
+                                       to the DESIGN frame (y-up; see below)
   assets/PROVENANCE.json               tool versions + source hashes
 """
 import json
@@ -72,9 +72,14 @@ def export_pcb_step(half, dst):
     print(f"  pcb step: {dst} ({os.path.getsize(dst) // 1024} KiB)")
 
 
-def step_to_named_glb(step_path, glb_path, tess_tol=0.12):
+def step_to_named_glb(step_path, glb_path, tess_tol=0.12, weld=False):
     """Convert a STEP (possibly multi-solid, KiCad-named) to glTF with named
-    nodes. Uses OCCT's CAF reader so footprint reference names survive."""
+    nodes. Uses OCCT's CAF reader so footprint reference names survive.
+
+    weld=True merges coincident vertices. OCCT triangulates face-by-face
+    with duplicated vertices, which forces flat shading; welding is what
+    lets Blender's smooth-by-angle show the keycaps' curved tops as
+    curves instead of facets."""
     from OCP.STEPCAFControl import STEPCAFControl_Reader
     from OCP.TDocStd import TDocStd_Document
     from OCP.TCollection import TCollection_ExtendedString
@@ -144,6 +149,10 @@ def step_to_named_glb(step_path, glb_path, tess_tol=0.12):
             key = f"{name}#{n + 1}"
         import trimesh as _t
         mesh = _t.Trimesh(vertices=verts, faces=faces, process=False)
+        if weld:
+            n0 = len(mesh.vertices)
+            mesh.merge_vertices()
+            print(f"    weld {key}: {n0} -> {len(mesh.vertices)} verts")
         scene.add_geometry(mesh, node_name=key, geom_name=key)
 
     def walk(lab, depth=0):
@@ -210,8 +219,9 @@ def plate_glb(half, glb_path):
     for pts in reliefs:
         plate = plate.cut(cq.Workplane("XY").polyline(pts).close()
                           .extrude(0.55))
-    # render mesh: flip to y-up-equivalent later happens nowhere — the DXF
-    # frame matches the board storage frame, so keep as-is
+    # The DXF is authored in the design frame (y up) — the same frame the
+    # board STEP export and the case STLs use — so export the plate exactly
+    # as written, with no flip.
     shape = plate.val()
     verts, faces = [], []
     from OCP.TopExp import TopExp_Explorer
@@ -242,6 +252,59 @@ def plate_glb(half, glb_path):
     bb = mesh.bounds
     print(f"  plate glb: {glb_path}  bbox x {bb[0][0]:.1f}..{bb[1][0]:.1f} "
           f"y {bb[0][1]:.1f}..{bb[1][1]:.1f} z {bb[0][2]:.2f}..{bb[1][2]:.2f}")
+
+
+def cutouts_json(dst):
+    """Plate CUTOUT polygons in the DESIGN frame — exactly the coordinates
+    written in the tracked DXF. No origin offsets, no y flip: this file is
+    a straight transcription so the plate holes can act as the render's
+    registration master.
+
+    Each item: center (x, y), bbox (w, h) and `angle` = longest-edge
+    direction folded to (-45, 45]. For the 18 axis-aligned finger holes
+    angle=0; the four thumb holes carry the real fan angle (0.5/13.5/
+    27.5/41.5 deg) and the scene rotates those caps with the holes. The
+    scene asserts that every switch footprint lands on one of these
+    centers (<= 0.05 mm) before rendering."""
+    import ezdxf
+    import math
+    out = {}
+    for half in ("Left", "Right"):
+        doc = ezdxf.readfile(os.path.join(REPO, "plate",
+                                          f"Hojicha44-{half}-plate.dxf"))
+        items = []
+        for e in doc.modelspace():
+            if e.dxf.layer != "CUTOUT":
+                continue
+            pts = ([(p[0], p[1]) for p in e.get_points()]
+                   if e.dxftype() == "LWPOLYLINE"
+                   else [(v.dxf.location.x, v.dxf.location.y)
+                         for v in e.vertices])
+            # bbox center — NOT the vertex mean: the closed POLYLINEs carry
+            # a duplicated first vertex, which biases a mean by (w/10, h/10)
+            cx = (max(p[0] for p in pts) + min(p[0] for p in pts)) / 2
+            cy = (max(p[1] for p in pts) + min(p[1] for p in pts)) / 2
+            # rotation from the longest polygon edge (squares are exact)
+            best_len, ang = 0.0, 0.0
+            for i in range(len(pts)):
+                x0, y0 = pts[i]
+                x1, y1 = pts[(i + 1) % len(pts)]
+                ln = math.hypot(x1 - x0, y1 - y0)
+                if ln > best_len:
+                    best_len = ln
+                    ang = math.degrees(math.atan2(y1 - y0, x1 - x0)) % 90.0
+            if ang > 45.0:
+                ang -= 90.0
+            items.append({"x": r2(cx), "y": r2(cy),
+                          "w": r2(max(p[0] for p in pts)
+                                  - min(p[0] for p in pts)),
+                          "h": r2(max(p[1] for p in pts)
+                                  - min(p[1] for p in pts)),
+                          "angle": r2(ang)})
+        out[half] = items
+        print(f"  cutouts {half}: {len(items)} polygons (design frame, raw DXF)")
+    with open(dst, "w") as f:
+        json.dump(out, f, indent=1)
 
 
 # ------------------------------------------------------------- knob + screw
@@ -289,9 +352,11 @@ def knob_glb(glb_path):
                 faces.append((base + a - 1, base + b - 1, base + c - 1))
         exp.Next()
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    mesh.merge_vertices()
     scene = trimesh.Scene({"knob": mesh})
     scene.export(glb_path)
-    print(f"  knob glb: {glb_path} ({len(mesh.faces)} tris)")
+    print(f"  knob glb: {glb_path} ({len(mesh.faces)} tris, "
+          f"{len(mesh.vertices)} verts)")
 
 
 def screw_glb(glb_path):
@@ -330,6 +395,7 @@ def screw_glb(glb_path):
                 faces.append((base + a - 1, base + b - 1, base + c - 1))
         exp.Next()
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    mesh.merge_vertices()
     scene = trimesh.Scene({"screw": mesh})
     scene.export(glb_path)
     print(f"  screw glb: {glb_path}")
@@ -338,7 +404,17 @@ def screw_glb(glb_path):
 # ------------------------------------------------------------- placements
 
 def placements_json(dst):
-    """Every footprint of the COMMITTED boards: (ref, x, y, rot)."""
+    """Every footprint of the COMMITTED boards, converted to the DESIGN
+    frame (x right, y up) — the frame of the board STEP export, the plate
+    DXF and the case STLs.
+
+    KiCad stores boards y-down, and kicad-cli's STEP export negates y
+    (verified: Edge.Cuts y -60.00..54.63 -> STEP/glb y -54.63..60.00).
+    The plate/case generators author in the same design frame, so:
+        x_design = x_file,  y_design = -y_file
+    `x_file`/`y_file`/`rot` are kept for provenance and for the
+    nice!nano courtyard transform (which must be applied in the file
+    frame before the y flip)."""
     sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
     import audit_silk as A
     placements = {}
@@ -346,9 +422,12 @@ def placements_json(dst):
         path = os.path.join(REPO, "pcb", "kicad", f"Hojicha44-{half}.kicad_pcb")
         out = []
         for ref, fx, fy, frot, blk in A.footprints(path):
-            out.append({"ref": ref, "x": r2(fx), "y": r2(fy), "rot": float(frot)})
+            out.append({"ref": ref,
+                        "x": r2(fx), "y": r2(-fy),      # design frame
+                        "x_file": r2(fx), "y_file": r2(fy),
+                        "rot": float(frot)})
         placements[half] = out
-        print(f"  placements {half}: {len(out)} footprints")
+        print(f"  placements {half}: {len(out)} footprints (design frame)")
     with open(dst, "w") as f:
         json.dump(placements, f, indent=1)
 
@@ -395,14 +474,15 @@ def main():
         if not os.path.exists(src):
             sys.exit(f"missing keycap source {src} — run the fetch step")
         step_to_named_glb(src, os.path.join(OUT, "parts", f"klp_{v.lower()}.glb"),
-                          tess_tol=0.05)
+                          tess_tol=0.012, weld=True)
 
     print("== 6. knob + screw (procedural)")
     knob_glb(os.path.join(OUT, "parts", "knob.glb"))
     screw_glb(os.path.join(OUT, "parts", "screw.glb"))
 
-    print("== 7. placements from the committed boards")
+    print("== 7. placements (design frame) + plate cutout centers (raw DXF)")
     placements_json(os.path.join(OUT, "placements.json"))
+    cutouts_json(os.path.join(OUT, "cutouts.json"))
 
     print("== 8. provenance")
     import platform

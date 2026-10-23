@@ -1,0 +1,27 @@
+{
+ "release": "generated/release/v0.5.0 (boards @8eef566357b8)",
+ "renderer": "Blender 5.2.3 LTS",
+ "keycaps": {
+  "project": "braindefender/KLP-Lame-Keycaps",
+  "license": "CC-BY-SA-4.0 (attribution required)",
+  "pinned_commit": "pinned commit: 8e4b89b484cafe3bcaced6b459a4e29660991a40 | 2026-10-10T17:27:25Z",
+  "files": [
+   "klp_Saddle.step",
+   "klp_Saddle_Tilted.step",
+   "klp_Saddle_Homing.step",
+   "klp_Normal_Tilted.step",
+   "klp_Thumb.step"
+  ]
+ },
+ "cad_tools": {
+  "kicad_cli": "10.0.6",
+  "cadquery": "2.5.2",
+  "trimesh": "5.1.1",
+  "python": "3.12.13"
+ },
+ "renders": {
+  "bright/exploded.png": "290e09302ddf621eaab0ba992346edf8a81d0bf9b6294cf698fba9f3120343a9",
+  "bright/hero.png": "9c3f368ebcf5cd62689c885784f3afcf2671b02ead3cdea822b5e7134eb7fa29"
+ },
+ "note": "regenerate: renders/README.md; assets tree is derived (gitignored), final PNGs are committed"
+}
