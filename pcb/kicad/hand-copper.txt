@@ -32,9 +32,22 @@ segment /VBAT_SW_L B.Cu 103.80,50.50 -> 86.50,37.50
 segment Net-(J_L2-Pin_1) B.Cu 92.50,36.50 -> 92.50,41.00
 segment Net-(J_L2-Pin_1) B.Cu 92.50,41.00 -> 106.30,50.50
 segment Net-(J_L2-Pin_1) B.Cu 106.30,50.50 -> 106.30,51.00
+# M3.6 (2026-10-23): the /COL0_L notch-corridor corner pulled one grid
+# step south — min copper-to-edge 0.292 -> 0.536 (passes JLCPCB's 0.2mm
+# tab-route rule AND PCBWay's 0.3mm profile rule with routing-tolerance
+# headroom; measured sweep in the M3.6 note). Manifest lines are
+# design-frame (y-up), like every line in this file.
+segment /COL0_L B.Cu 54.15,-23.53 -> 17.25,-23.25
+segment /COL0_L B.Cu 17.25,-23.25 -> 12.00,-18.25
 
 [Right]
-# none — Right is 100% router-owned per the M3 record.
+# M3.6 (2026-10-23): first Right hand items — the two copper-edge nudges
+# (TRRS_T tip corner 0.330 -> 0.575; COL0_R corner 0.332 -> 0.576; same
+# PCBWay/JLCPCB rationale as the Left note above). Design-frame coords.
+segment /TRRS_T F.Cu 158.85,-19.70 -> 159.00,7.75
+segment /TRRS_T F.Cu 159.00,7.75 -> 164.50,13.50
+segment /COL0_R B.Cu 231.75,-25.50 -> 265.50,-25.25
+segment /COL0_R B.Cu 265.50,-25.25 -> 272.75,-18.25
 
 # Deliberately NOT preserved (router-owned, regenerated): the Left battery
 # west-flank corridor chain J_L2-Pin_1 F (116.5,7)->(99,-10.5)->(78,-10.5) +

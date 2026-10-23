@@ -306,5 +306,30 @@ try {
   fail("print-manifest", e.message);
 }
 
+// 7. title-block revision tracks the spec version (audit-3 A-01): the
+//    generators derive REV = spec MAJOR.MINOR, so a committed board/sch
+//    whose (rev …) lags the spec is exactly the drift A-01 caught — the
+//    gate pins the title blocks to the spec on every CI run.
+try {
+  const ver =
+    /^version: ([\d.]+)/m.exec(
+      fs.readFileSync(path.join(REPO, "spec/electronics.yaml"), "utf8"))[1];
+  const want = ver.split(".").slice(0, 2).join(".");
+  const probs = [];
+  for (const f of ["pcb/kicad/Hojicha44-Left.kicad_pcb",
+                   "pcb/kicad/Hojicha44-Right.kicad_pcb",
+                   "pcb/kicad/Hojicha44-Left.kicad_sch",
+                   "pcb/kicad/Hojicha44-Right.kicad_sch"]) {
+    const txt = fs.readFileSync(path.join(REPO, f), "utf8");
+    const m = /\(rev "([^"]*)"\)/.exec(txt);
+    if (!m) probs.push(`${f}: no (rev …) in title block`);
+    else if (m[1] !== want) probs.push(`${f}: rev ${m[1]} != spec ${want}`);
+  }
+  if (probs.length) fail("rev-track", probs.join("; "));
+  else ok(`rev-track (board/sch title blocks = spec ${want})`);
+} catch (e) {
+  fail("rev-track", e.message);
+}
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nall static checks pass");
 process.exit(failures ? 1 : 0);

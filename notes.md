@@ -2146,3 +2146,54 @@ stamp). Commits: bc27556, 8b5f99d, 7ef1296, 62caad9 (round 1), 4066571
   one gen_plate.py constant flips pockets to through-cut relief holes
   (plain laser-cuttable; gen_plate is not a board-affecting path, no
   re-cut) at the cost of 22 open holes.
+
+## M3.6: copper-edge nudge past 0.3mm — fab-agnostic PCB; the parked re-cut batch lands (2026-10-23)
+
+- Owner question: "can we raise the copper-edge clearance past 0.3mm
+  so PCBWay can also quote the PCB?" → **YES, measured and done.** The
+  binding spots were three track corners: /COL0_L at (17.25,23.50)
+  B.Cu (rim 0.292 to the notch edge), /TRRS_T (0.330), /COL0_R
+  (0.332). An on-grid candidate search (whole re-aimed segments swept
+  against every edge primitive AND other-net copper) picked
+  one-grid-step moves:
+  - Left /COL0_L corner → (17.25,23.25): rim **0.536**, 1.325 to the
+    MT_L tool hole, nothing else within 2mm of the old corner.
+  - Right /TRRS_T corner → (159.00,−7.75): rim **0.575** (was 0.330),
+    zero other copper in the corridor.
+  - Right /COL0_R corner → (265.50,25.25): rim **0.576** (was 0.332),
+    0.756 to the nearest net-4 segment.
+  New board minima: **Left 0.406** (pre-existing TRRS corridor,
+  unchanged, already >0.3) / **Right 0.575** — both halves now pass
+  JLCPCB's 0.2mm tab-route rule AND PCBWay's 0.3mm profile rule with
+  routing-tolerance headroom (±0.1 precision / ±0.2 regular).
+- Regen-stability by construction: the six moved segments are declared
+  in `pcb/kicad/hand-copper.txt` (first Right hand items; 11 Left /
+  4 Right) — on regen they are preserved verbatim and the router
+  re-plans de-conflicting around them. Trap caught: manifest lines are
+  DESIGN-FRAME (y-up) — the first draft copied storage-frame (y-down)
+  board coordinates and would have hard-failed the regen ("claims
+  items the committed board does not contain"); verified with the
+  faithful pipeline (frame.to_design → extract_copper_text →
+  copper_signature): 11/11 + 4/4 match.
+- The parked next-re-cut batch lands with this (the nudge made the
+  board bytes change, so the stamp must move anyway):
+  - **R3-03**: the .net (source) absolute machine path relativized in
+    both committed netlists AND in gen_pcb's export-neutralize step
+    (future exports write "pcb/kicad/<project>.kicad_sch"); the
+    (date "") nulling unchanged.
+  - **A-01**: title-block rev re-stamped 0.3 → 0.5 in all four
+    board/sch files (gen_schematic derives REV = spec MAJOR.MINOR; the
+    frozen 0.3 predated the 0.4/0.5 spec bumps); the gbrjob Revision
+    heals via the re-cut. New KiCad-free gate **rev-track** in
+    spec_checks pins all four title blocks to spec MAJOR.MINOR on
+    every run.
+  - **A-03**: gen_pcb docstring corrected — the .net export is
+    byte-stable (no uuids); the BOARDS are only geometry-stable
+    (uuid/date churn).
+- Verification chain: check_board CLEAN (full + self-test: notch,
+  containment, antenna keepout, mirror 0.0000, frame outline); npm
+  test green incl. rev-track (= spec 0.5); plate --check CLEAN;
+  hand-manifest 11/11 + 4/4. Release re-cut follows in the next
+  commit (board bytes changed → the stamp must move; the cut packages
+  the committed boards and runs kicad-cli DRC/ERC/gerbers; the W1 set
+  is untouched — no footprint changed).

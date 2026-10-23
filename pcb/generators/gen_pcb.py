@@ -141,8 +141,9 @@ def load_nets(tag, refresh=False):
     """Schematic netlist -> (nets, pin_net).
 
     Exported by kicad-cli straight into pcb/kicad/<project>-<tag>.net,
-    a TRACKED artifact: the export is deterministic (byte-stable like
-    the boards), and CI's check_board has no KiCad — it parses the
+    a TRACKED artifact: the export is deterministic and byte-stable
+    (unlike the boards, which are only geometry-stable — uuid/date
+    churn), and CI's check_board has no KiCad — it parses the
     committed bytes and is the only net source when kicad-cli is
     absent.
 
@@ -165,12 +166,18 @@ def load_nets(tag, refresh=False):
             capture_output=True, text=True)
         if r.returncode != 0:
             raise RuntimeError(f"netlist export failed for {tag}:\n{r.stderr}")
-        # KiCad stamps the header (date "…") — the only non-deterministic
-        # bytes in the export. Neutralize it so consecutive builds commit
-        # identical files (same hygiene as the board uuid/date churn).
+        # KiCad stamps the header (date "…") and the ABSOLUTE source
+        # path of the exporting machine — both non-deterministic /
+        # machine-specific bytes in the export (audit-3 R3-03). Neutralize
+        # both so consecutive builds on any machine commit identical,
+        # machine-neutral files (same hygiene as the board uuid/date
+        # churn); the committed artifact names its source repo-relatively.
         body = open(netpath).read()
-        open(netpath, "w").write(
-            re.sub(r'\(date\s*"[^"]*"\)', '(date "")', body))
+        body = re.sub(r'\(date\s*"[^"]*"\)', '(date "")', body)
+        body = re.sub(r'\(source\s*"[^"]*"\)',
+                      f'(source "pcb/kicad/{PROJECT[tag]}.kicad_sch")',
+                      body)
+        open(netpath, "w").write(body)
     elif not os.path.exists(netpath):
         raise RuntimeError(f"{tag}: kicad-cli absent and {netpath} missing "
                            "(the committed netlist is CI's only source)")

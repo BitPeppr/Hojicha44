@@ -60,18 +60,17 @@ re-check at cart time. PCB fab choices are NOT here: see
 
 ## PCB order note (must be pasted into the fab order)
 
-The outline is CONCAVE and the measured minimum copper-to-edge is
-**0.292mm** — below the 0.3mm a V-cut wants, so the board MUST be
-tab-routed. Tab-routing's own copper-to-edge rule is **0.2mm**
-(JLCPCB 2026 layout guide: "0.3mm for V-cut panelization and 0.2mm
-for tab-routing"; outline blog: "at least 0.2mm clearance from routed
-edges to copper features"), so 0.292mm passes the applicable published
-rule with 0.092mm margin — no written fab confirmation needed
-(re-verified against JLCPCB's pages 2026-10-23). CNC routing
-tolerance is ±0.1mm (precision) / ±0.2mm (regular) per JLCPCB's
-capabilities page — if the quote offers the precision tier for a
-small fee, prefer it to protect the notch corridor. Put this in the
-order verbatim:
+The outline is CONCAVE, so the board MUST be tab-routed (a V-cut
+wants a straight edge anyway). The measured minimum copper-to-edge is
+**0.406mm Left / 0.575mm Right** (M3.6 nudge, 2026-10-23 — was
+0.292/0.330), which passes BOTH published rules with margin:
+JLCPCB's 0.2mm tab-route rule ("0.3mm for V-cut panelization and
+0.2mm for tab-routing") AND PCBWay's 0.3mm profile-to-copper figure —
+the board is fab-agnostic, no written confirmation needed. CNC
+routing tolerance is ±0.1mm (precision) / ±0.2mm (regular) per
+JLCPCB's capabilities page — if the quote offers the precision tier
+for a small fee, prefer it to protect the notch corridor. Put this in
+the order verbatim:
 
 ```
 CONCAVE OUTLINE — TAB-ROUTE ONLY, NO V-CUT / V-SCORE

@@ -1,7 +1,7 @@
 (export
 	(version "E")
 	(design
-		(source "/Users/martinchen/Desktop/Project/kbd/pcb/kicad/Hojicha44-Right.kicad_sch")
+		(source "pcb/kicad/Hojicha44-Right.kicad_sch")
 		(date "")
 		(tool "Eeschema 10.0.6")
 		(sheet
