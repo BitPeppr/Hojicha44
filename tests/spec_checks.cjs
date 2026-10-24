@@ -238,12 +238,8 @@ try {
     // structural features must be printable and safe in plain PETG at
     // 100% infill, not only in MJF PA12 (spec/case.md strength section).
     const floorT = rd("case/params.py", /^FLOOR_T\s*=\s*([\d.]+)/m);
-    const ledgeD = rd("case/params.py", /^KEY_LEDGE_D = ([\d.]+)/m);
     if (parseFloat(floorT) < 1.5)
       problems.push(`FLOOR_T ${floorT} < 1.5 (PETG floor-slab floor)`);
-    if (ct - parseFloat(ledgeD) < 1.0)
-      problems.push(`ledge web COVER_T-KEY_LEDGE_D = ` +
-        `${(ct - parseFloat(ledgeD)).toFixed(2)} < 1.0 (PETG ledge web)`);
     // Post-audit round: more cross-generator ties that could drift.
     const tabwP = rd("plate/gen_plate.py", /^TAB_W = ([\d.]+)/m);
     const tabwC = rd("case/params.py", /^TAB_W = ([\d.]+)/m);

@@ -21,7 +21,7 @@ re-check at cart time. PCB fab choices are NOT here: see
 
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
-| ☐ | 2 | Alps **EC11E15244G1** (TME) | $2.58 | ⚠ must be the **G1** (with push switch — mute sideband); LCSC's cheaper EC11E15244**B2** has NO switch: wrong part. **Height note (user review 2026-10-24): the EC11 stands 24.5mm above the board** (20mm-class actuator on the bush) — the knob was removed, so that is a bare shaft. The ALPS EC11E catalog lists shorter **15mm-actuator** variants of the same 30-detent/15-pulse + push spec (e.g. the EC11E1530401 class — confirm L1=15 on the ALPS product page before ordering): pin-compatible, same body envelope, **no case/plate change** (only the shaft ends ~5–9mm lower); if a different vendor (Bourns PEC11R-4015 = 15mm) is chosen instead, re-check the terminal-block envelope against the plate window's 0.35mm/side Y margin first |
+| ☐ | 2 | Alps **EC11E 15mm-actuator** (order the 30-detent/15-pulse + push variant, L1=15 — e.g. the EC11E1530401 class; **confirm L1=15 AND "with switch" on the ALPS product page before ordering**; TME/LCSC stock varies) | ~$2.50 | ⚠ the classic **EC11E15244G1** (TME, $2.58) is the FALLBACK: 20mm-class actuator → a 24.5mm-tall bare shaft (user review 2026-10-24: too tall with no knob). Same footprint/body either way — **no case/plate change**; the first-article encoder caliper covers the body envelope either way |
 | ☐ | 2 | Würth **450301014042** (DigiKey) | $2.15 | WS-SLTV slide SPDT; no drop-in alternate (clones need footprint check) |
 | ☐ | 2 | JST **S2B-PH-K-S** (DigiKey) | $0.12 | side-entry battery header |
 | ☐ | 2 | JST **PHR-2** housing | $0.10 | |

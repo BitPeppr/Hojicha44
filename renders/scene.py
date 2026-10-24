@@ -24,9 +24,9 @@ STACK (z=0 is the PCB top; thin-top round):
   switch body              0.30..3.30, cap stem tip 1.50
   top gaskets              2.20..3.20     (1.5 poron compressed to 1.00)
   KLP Normal_Tilted top    11.14          (~5.9 mm proud of the band)
-  top cover plate          3.20..5.20     (key field + component windows;
-                                           key field ledge relieved 4.40)
-  encoder left bare (no knob in the product views)
+  top cover plate          3.20..5.20     (flat, no-indent; 0.4 chamfer
+                                           on the outer-rim top edges)
+  encoder = 15mm-actuator variant (shaft truncated at 15.0, two-tone)
 
 The assembled halves are used at their committed positions — the case
 files already place them in one shared layout; no artificial split gap.
@@ -393,28 +393,35 @@ def main():
         REPO, "plate", f"Hojicha44-{h}-lands.json")))
         for h in ("Left", "Right")}
 
-    m_cap = pbr("cap_pbt", (0.032, 0.031, 0.034), rough=0.44)
+    m_cap = pbr("cap_pbt", (0.030, 0.030, 0.035), rough=0.38)
     m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
     m_nano = pbr("nano_pcb", (0.010, 0.010, 0.012), rough=0.42)   # black mask
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
     m_usb = pbr("usb_shell", (0.62, 0.63, 0.65), rough=0.28, metal=1.0)
     m_sock = pbr("nano_socket", (0.028, 0.028, 0.030), rough=0.45)
     m_gold = pbr("nano_castel", (0.83, 0.68, 0.28), rough=0.30, metal=1.0)
+    m_silk = pbr("nano_silk", (0.80, 0.80, 0.77), rough=0.55)
     m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
     micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
-    m_case = pbr("case_pa12", (0.042, 0.044, 0.048), rough=0.60)
-    m_plate = pbr("plate_pc", (0.050, 0.050, 0.055), rough=0.36)
-    # PBT caps ~0.7 mm orange-peel; PA12 case a coarser sintered grain;
-    # both get a roughness range so highlights break up instead of
-    # reading as flat plastic
-    micro_texture(m_cap, 24, 0.45, 0.00055, 0.38, 0.56, detail=4.0)
+    m_case = pbr("case_pa12", (0.046, 0.048, 0.052), rough=0.62)
+    m_plate = pbr("plate_pc", (0.028, 0.029, 0.034), rough=0.20)  # smoke PC
+    m_enc_body = pbr("enc_gunmetal", (0.085, 0.086, 0.095),
+                     rough=0.42, metal=0.85)
+    m_enc_shaft = pbr("enc_steel", (0.55, 0.56, 0.60), rough=0.30, metal=1.0)
+    # multi-material pass (user review: "looks like a sculpture, not a
+    # functioning piece of equipment"): PBT caps get a FINE satin grain,
+    # the PA12 case a clearly coarser sintered grain, the PC plate a
+    # darker glossier smoke with almost none, the encoder reads as metal.
+    micro_texture(m_cap, 42, 0.28, 0.00022, 0.33, 0.45, detail=5.0)
     micro_texture(m_sw, 40, 0.20, 0.00004, 0.34, 0.42)
     micro_texture(m_nano, 60, 0.15, 0.00003, 0.38, 0.48)
     micro_texture(m_chip, 120, 0.10, 0.00002, 0.28, 0.34)
     micro_texture(m_usb, 200, 0.10, 0.00002, 0.24, 0.32)
     micro_texture(m_sock, 50, 0.15, 0.00003, 0.42, 0.50)
-    micro_texture(m_case, 100, 0.35, 0.0005, 0.48, 0.64, detail=4.5)
-    micro_texture(m_plate, 160, 0.20, 0.00006, 0.32, 0.42)
+    micro_texture(m_case, 85, 0.40, 0.00055, 0.52, 0.68, detail=5.0)
+    micro_texture(m_plate, 240, 0.10, 0.00002, 0.17, 0.24)
+    micro_texture(m_enc_body, 140, 0.18, 0.00004, 0.36, 0.48)
+    micro_texture(m_enc_shaft, 260, 0.08, 0.00002, 0.26, 0.34)
 
     parts = {}
     for half in ("Left", "Right"):
@@ -580,15 +587,62 @@ def main():
                               (ncx * SCALE, ncy * SCALE,
                                ((z_pcb0 + z_pcb1) / 2) * SCALE),
                               (body_x, body_y, 1.6), m_nano))
-            # gold castellated pads along BOTH long edges (the nice!nano's
-            # half-plated edge fingers — what made the envelope stand-in
-            # read as a bare green slab in review)
+            # gold castellated pads: 12 per long edge at 2.54mm pitch
+            # (the 2x12 socket pin field), not one continuous strip
             for sgn in (-1, 1):
-                g.append(add_cube(f"nano_castel_{h}_{sgn}",
-                                  ((ncx + sgn * (body_x / 2 - 0.35)) * SCALE,
-                                   ncy * SCALE,
-                                   ((z_pcb0 + z_pcb1) / 2) * SCALE),
-                                  (0.7, body_y - 1.0, 1.7), m_gold))
+                for i in range(12):
+                    g.append(add_cube(
+                        f"nano_pad_{h}_{sgn}_{i}",
+                        ((ncx + sgn * (body_x / 2 - 0.45)) * SCALE,
+                         (ncy + (i - 5.5) * 2.54) * SCALE,
+                         ((z_pcb0 + z_pcb1) / 2) * SCALE),
+                        (0.9, 1.7, 1.75), m_gold))
+            # copper runs: from each pad inward with a deterministic
+            # length + jog, plus scattered vias — the board reads as
+            # wired, not printed
+            tr = 0.25
+            for sgn in (-1, 1):
+                for i in range(12):
+                    y_off = (i - 5.5) * 2.54
+                    L = 2.0 + ((i * 37 + (sgn > 0) * 13) % 53) / 10.0
+                    g.append(add_cube(
+                        f"nano_tr_{h}_{sgn}_{i}",
+                        ((ncx + sgn * (body_x / 2 - 0.9 - L / 2)) * SCALE,
+                         (ncy + y_off) * SCALE, (z_pcb1 + 0.02) * SCALE),
+                        (L, tr, 0.04), m_gold))
+                    if i % 3 == 1:
+                        jl = 1.5 + (i % 4) * 0.9
+                        g.append(add_cube(
+                            f"nano_tj_{h}_{sgn}_{i}",
+                            ((ncx + sgn * (body_x / 2 - 0.9 - L)) * SCALE,
+                             (ncy + y_off + sgn * jl / 2) * SCALE,
+                             (z_pcb1 + 0.02) * SCALE),
+                            (tr, jl, 0.04), m_gold))
+            for k in range(10):
+                vx = ((k * 71) % 130) / 10.0 - 6.5
+                vy = ((k * 53) % 240) / 10.0 - 12.0
+                g.append(add_cube(
+                    f"nano_via_{h}_{k}",
+                    ((ncx + vx) * SCALE, (ncy + vy) * SCALE,
+                     (z_pcb1 + 0.015) * SCALE),
+                    (0.4, 0.4, 0.03), m_gold))
+            # silkscreen text (Blender font, lies flat on the mask)
+            for tname, tbody, ty, tsize in (
+                    ("nice!nano v2", "nice!nano v2", -10.6, 2.2),
+                    ("hojicha44", "hojicha44", -5.4, 1.5)):
+                crv = bpy.data.curves.new(f"nano_txt_{h}_{tname}",
+                                          type="FONT")
+                crv.body = tbody
+                crv.size = tsize * SCALE
+                crv.extrude = 0.02 * SCALE
+                crv.align_x = "CENTER"
+                tob = bpy.data.objects.new(f"nano_txt_{h}_{ty}", crv)
+                tob.location = (ncx * SCALE, (ncy + ty) * SCALE,
+                                (z_pcb1 + 0.05) * SCALE)
+                tob.rotation_euler = (0, 0, 0)
+                bpy.context.collection.objects.link(tob)
+                assign([tob], m_silk)
+                g.append(tob)
             # USB-C receptacle at the north (+y) end, on the module top
             g.append(add_cube(f"nano_usb_{h}",
                               (ncx * SCALE, (ncy + body_y / 2 - 3.7) * SCALE,
@@ -603,6 +657,19 @@ def main():
                               (ncx * SCALE, (ncy - 14.0) * SCALE,
                                (z_pcb1 + 0.25) * SCALE),
                               (3.0, 2.0, 0.5), m_chip))
+            # crystal (silver) + a passives field around the QFN
+            g.append(add_cube(f"nano_xtal_{h}",
+                              ((ncx - 4.8) * SCALE, (ncy + 7.5) * SCALE,
+                               (z_pcb1 + 0.45) * SCALE),
+                              (3.2, 2.5, 0.9), m_usb))
+            for k in range(8):
+                px = ((k * 47) % 90) / 10.0 - 4.5
+                py = 2.0 + ((k * 31) % 60) / 10.0 - 1.5
+                g.append(add_cube(
+                    f"nano_pas_{h}_{k}",
+                    ((ncx + px) * SCALE, (ncy + py) * SCALE,
+                     (z_pcb1 + 0.11) * SCALE),
+                    (0.6, 0.3, 0.22), m_chip))
             # reset pushbutton (top-east corner) + status LED (top-west)
             g.append(add_cube(f"nano_rst_{h}",
                               ((ncx + 6.5) * SCALE, (ncy + 13.4) * SCALE,
@@ -620,8 +687,64 @@ def main():
                                    1.3 * SCALE),
                                   (2.6, 29.0, 2.6), m_sock))
 
-        # the EC11 is left bare: the product views show the encoder, not a
-        # knob (the sourced knob is a stand-in and was visually too tall)
+        # ---- EC11: user-approved 15mm-actuator variant (BOM primary).
+        # The board GLB carries the vendored 20mm-class STEP as one mesh:
+        # (a) truncate the shaft at 15.0mm above the board (the ALPS
+        # L1=15 reading, datum = mounting surface), capping the cut ring,
+        # (b) split body/bush from shaft at the 11.3 step plane for a
+        # two-tone finish (gunmetal body, steel shaft).
+        enc_objs = [o for o in parts[h]["board"]
+                    if o.type == "MESH" and o.name.startswith("ENC_")]
+        if enc_objs:
+            import bmesh
+            ENC_SPLIT_Z, ENC_SHAFT_TOP_Z = 11.3, 15.0
+            for o in enc_objs:
+                me_body = o.data.copy()
+                bm = bmesh.new()
+                bm.from_mesh(me_body)
+                drop = [v for v in bm.verts if v.co.z > ENC_SHAFT_TOP_Z]
+                if drop:
+                    bmesh.ops.delete(bm, geom=drop, context="VERTS")
+                    bmesh.ops.holes_fill(
+                        bm, edges=[e for e in bm.edges
+                                   if len(e.link_faces) == 1], sides=0)
+                bm_body, bm_shaft = bmesh.new(), bmesh.new()
+                vmap_body, vmap_shaft = {}, {}
+                for f in bm.faces:
+                    fz = [v.co.z for v in f.verts]
+                    if min(fz) >= ENC_SPLIT_Z - 1e-6:
+                        tgt, vmap = bm_shaft, vmap_shaft
+                    else:
+                        tgt, vmap = bm_body, vmap_body
+                    vs = []
+                    for v in f.verts:
+                        nv = vmap.get(v)
+                        if nv is None:
+                            nv = vmap[v] = tgt.verts.new(v.co)
+                        vs.append(nv)
+                    try:
+                        tgt.faces.new(vs)
+                    except ValueError:
+                        pass
+                bm.free()
+                bm_body.to_mesh(me_body)
+                bm_body.free()
+                me_body.update()
+                o.data = me_body
+                assign([o], m_enc_body)
+                if len(vmap_shaft):
+                    me_shaft = bpy.data.meshes.new(o.name + "_shaft")
+                    bm_shaft.to_mesh(me_shaft)
+                    bm_shaft.free()
+                    so = bpy.data.objects.new(o.name + "_shaft", me_shaft)
+                    so.location = o.location
+                    so.rotation_euler = o.rotation_euler
+                    bpy.context.collection.objects.link(so)
+                    assign([so], m_enc_shaft)
+                    parts[h]["board"].append(so)
+            print(f"[scene] {half}: encoder truncated to {ENC_SHAFT_TOP_Z}mm "
+                  f"+ two-tone metal split (15mm-actuator BOM variant)",
+                  flush=True)
 
     # ---- smooth curved parts (welded glbs make this effective)
     for h in parts:

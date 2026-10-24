@@ -121,43 +121,6 @@ def build_cover(tag):
     for (cx, cy, ang) in holes:
         s = rrect(kw, kh, P.CAP_ROUND, cx, cy, ang, z0 - 1.0, z1 + 1.0)
         cutter = s if cutter is None else cutter.fuse(s)
-    # ---- shallow ledge around the key field: the cover top drops
-    # KEY_LEDGE_D over a KEY_LEDGE_W border, so the caps stand proud of
-    # the surface they sit in while the outer band/magnets keep the full
-    # plate height (review: 2.4mm still read as flush). The component
-    # windows (dilated) are PART of the ledge so no full-height strip is
-    # left between the field and the windows (user review: "near the
-    # rotary encoder something juts out"); the rim ports (TRRS hole,
-    # USB slot) get keepouts — the ledge must never thin their roofs.
-    lw = P.CAP_FOOT_W + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
-    lh = P.CAP_FOOT_H + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
-    ledge = None
-    for (cx, cy, ang) in holes:
-        s = rrect(lw, lh, P.CAP_ROUND + P.KEY_LEDGE_W, cx, cy, ang,
-                  z1 - P.KEY_LEDGE_D, z1 + 1.0)
-        ledge = s if ledge is None else ledge.fuse(s)
-    for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),
-                             win2(tag, P.PWRSW_WIN)):
-        s = rrect(x1 - x0 + 2 * P.KEY_LEDGE_W,
-                  y1 - y0 + 2 * P.KEY_LEDGE_W, 2.0 + P.KEY_LEDGE_W,
-                  (x0 + x1) / 2, (y0 + y1) / 2,
-                  0.0, z1 - P.KEY_LEDGE_D, z1 + 1.0)
-        ledge = ledge.fuse(s)
-    for name in ("usb", "trrs"):
-        pr = ports[name]
-        ox, oy = pr["o"]
-        ux, uy = pr["u"]
-        hw = pr["w"] / 2 + 1.5
-        # the bore spans o-u*(SLOT_IN+1) .. o+u*(out+1); a symmetric
-        # keepout about o would miss the breached outward leg
-        ln = P.SLOT_IN + pr["out"] + 4.0
-        cen = (ox + ux * (pr["out"] - P.SLOT_IN) / 2.0,
-               oy + uy * (pr["out"] - P.SLOT_IN) / 2.0)
-        keep = rrect(ln, 2 * hw, 1.5, cen[0], cen[1],
-                     math.degrees(math.atan2(uy, ux)),
-                     z1 - P.KEY_LEDGE_D, z1 + 1.0)
-        ledge = ledge.cut(keep)
-    solid = solid.cut(ledge)
     # ---- component windows (MCU / encoder / pwrsw body; mirrored) ------
     for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),
                              win2(tag, P.PWRSW_WIN)):
@@ -191,6 +154,24 @@ def build_cover(tag):
         solid = solid.cut(cq.Solid.makeCylinder(
             P.MAG_DIA / 2, P.COVER_MAG_DEPTH,
             gp_Pnt(cx, cy, z0), gp_Dir(0, 0, 1)))
+
+    # ---- edge embellishment (no-indent design): a 0.4mm chamfer on the
+    # outer-rim top edges only — the kernel rejects chamfering ALL top
+    # edges (window/slot tangencies); the rim loop alone builds fine.
+    skin_pts = skin
+    near = []
+    for e in solid.Edges():
+        c = e.Center()
+        if abs(c.z - z1) > 0.05:
+            continue
+        d = 1e9
+        for a, b in zip(skin_pts, skin_pts[1:] + skin_pts[:1]):
+            d = min(d, G.segd((c.x, c.y), a, b))
+        if d < 0.8:
+            near.append(e)
+    if near:
+        solid = (cq.Workplane("XY").newObject([solid])
+                 .newObject(near).chamfer(0.4).val())
 
     solid, scrap = drop_scrap(solid)
 

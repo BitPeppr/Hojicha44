@@ -302,20 +302,16 @@ COVER_T = 2.0          # 3.20..5.20 (TOP_LIP_Z + 2.0): a thin top
 #   pwrsw     = body window + nail slot to the north skin
 CAP_FOOT_W = 17.48     # KLP Saddle / Thumb plan footprint (measured)
 CAP_FOOT_H = 16.48
-KEY_LEDGE_W = 3.0      # shallow ledge around the key-field opening:
-KEY_LEDGE_D = 0.8      # the cover top drops 0.8mm over a 3mm border so
-                       # the caps stand ~3.2mm proud of the surface they
-                       # sit in (review: 2.4mm still read as flush). The
-                       # outer band, magnets and gasket press stay at the
-                       # full 2.0mm plate height.
 CAP_CLEAR = 1.5        # key-field opening clearance per side. gen_cover
                        # fills the union's enclosed holes, so the
                        # staggered caps become ONE opening. 1.0 merged
                        # COLUMNS only (17.48+2 = 19.48 > 19) and left
-                       # 0.52mm ROW webs that stood proud in the ledged
-                       # field as "ridges and dots" (user review); 1.5
-                       # merges rows too (16.48+3 = 19.48 > 19) so the
-                       # opening is one clean field with no islands.
+                       # 0.52mm ROW webs ("ridges and dots", user
+                       # review); 1.5 merges rows too (16.48+3 = 19.48
+                       # > 19) so the opening is one clean field. The
+                       # cover is FLAT (no-indent, user review round 2):
+                       # a 0.4mm top-edge chamfer is the only
+                       # embellishment; caps stand full-height proud.
 CAP_ROUND = 2.0        # cutter corner radius (molded look)
 MCU_WIN = (106.5, 12.0, 129.0, 48.6)      # x0, y0, x1, y1
 ENC_WIN = (111.5, -14.35, 124.5, -1.65)   # x0, y0, x1, y1: EC11
