@@ -39,7 +39,10 @@ entry below is the current truth for every number it quotes.)
   caps barely poked out. The plate CANNOT move up (Choc v1 clip band
   1.00..2.20, spec/case.md), so the top came down instead: TOP_LIP_Z
   4.70 -> 3.20 (the 1.5mm TOP_FOAM_T at 33% compression; new
-  TOP_PRELOAD) and COVER_T 3.0 -> 2.0. Caps now stand 2.4mm proud.
+  TOP_PRELOAD) and COVER_T 3.0 -> 2.0. A 0.8mm-deep, 3mm-wide
+  LEDGE (KEY_LEDGE_W/D) is relieved around the key field, so the
+  caps stand ~3.2mm proud of the surface they sit in while the
+  outer band/magnets keep the full 2.0mm plate height.
   The cover spans the key field with ONE merged opening around the 22
   KLP cap footprints (17.48x16.48 + CAP_CLEAR 1.0; enclosed material
   islands are dropped as void and gated by a scrap-volume limit) and
@@ -47,8 +50,8 @@ entry below is the current truth for every number it quotes.)
   from 17.2x13.2 to 13.0x12.7 = the measured 12.0x11.7 EC11 body at
   the cover band +0.5/side, so the rectangular terminal base is now
   hidden), PWRSW_WIN + nail notch, the shared USB slot, and the TRRS as
-  a **Ø5.2 round SIDE hole** (zc 1.9, 0.7mm closed roof under the 5.2
-  top) instead of the Ø9.5 top-open notch. Cover magnets Ø4x0.5 (pocket
+  a **Ø6.0 round SIDE hole** (zc 1.5, 0.7mm closed roof under the 5.2
+  top; clears a 3.5mm barrel 1.25/side) instead of the Ø9.5 top-open notch. Cover magnets Ø4x0.5 (pocket
   0.7, floor 1.3). New CASE_OUT env var builds to case/out-dev so the
   placed v0.5.0 order record in case/out stays hash-valid. Gates: both
   tubs and both covers exit 0; cover 16.7 cm3, 8 enclosed scraps

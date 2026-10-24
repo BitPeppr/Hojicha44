@@ -140,17 +140,19 @@ POCKET_TOP = TOP_LIP_Z     # open to the top (cover presses upper foam)
 USB_MOUTH_W = 14.0     # notch is 11; +3 for housing shoulders
 USB_MOUTH_Z0 = 2.0     # overmold bottom ~2.8 (axis ~6.1, h ~6.5) + margin
 USB_MOUTH_R = 1.2      # bottom-corner fillet (flat top, see above)
-TRRS_MOUTH_R = 2.6     # Ø5.2 SIDE HOLE, not the old Ø9.5 boot bore.
+TRRS_MOUTH_R = 3.0     # Ø6.0 SIDE HOLE, not the old Ø9.5 boot bore.
 #   Review: the Ø9.5 bore + thin cover cut a rectangular window open to
 #   the top ("gaping"); a 3.5mm plug's METAL barrel is ~Ø3.5-4.0 and the
 #   grip stays outside the 7.6mm wall, so a round Ø5.0 hole passes it.
 #   Its top (zc+r = 4.5) stays 0.7mm under the 5.2 cover top, so the
-#   cover keeps a closed roof over the port. Right-angle plug boots no
-#   longer swing inside; the first article measures the real plug.
-TRRS_MOUTH_ZC = 1.9    # hole centre: jack axis 2.5 dropped to 1.9 so the
-#   Ø5.2 top (4.5) clears under the 5.2 cover top with a 0.7mm roof. The
-#   hole still passes a straight Ø3.5-4.0 barrel (spans 0.75..4.25 at
-#   the jack axis) with margin.
+#   cover keeps a closed roof over the port. Ø6.0 clears a 3.5mm barrel
+#   with 1.25/side and still passes the first few mm of most slim grips;
+#   right-angle boot swing inside is no longer provided (first article
+#   measures the real plug).
+TRRS_MOUTH_ZC = 1.5    # hole centre: jack axis 2.5 dropped to 1.5 so the
+#   Ø6.0 top (4.5) clears under the 5.2 cover top with a 0.7mm roof. A
+#   straight Ø3.5-4.0 barrel (spans 0.75..4.25 at the jack axis) keeps
+#   0.25-0.5mm top margin.
 
 # ---- power-switch actuator window (v3.5, north rim) ----
 # WS-SLTV (450301014042, Wuerth datasheet + KiCad footprint name
@@ -294,6 +296,12 @@ COVER_T = 2.0          # 3.20..5.20 (TOP_LIP_Z + 2.0): a thin top
 #   pwrsw     = body window + nail slot to the north skin
 CAP_FOOT_W = 17.48     # KLP Saddle / Thumb plan footprint (measured)
 CAP_FOOT_H = 16.48
+KEY_LEDGE_W = 3.0      # shallow ledge around the key-field opening:
+KEY_LEDGE_D = 0.8      # the cover top drops 0.8mm over a 3mm border so
+                       # the caps stand ~3.2mm proud of the surface they
+                       # sit in (review: 2.4mm still read as flush). The
+                       # outer band, magnets and gasket press stay at the
+                       # full 2.0mm plate height.
 CAP_CLEAR = 1.0        # key-field opening clearance per side. gen_cover
                        # fills the union's enclosed holes, so the
                        # staggered caps become ONE opening with no cover

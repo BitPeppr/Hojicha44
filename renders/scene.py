@@ -23,8 +23,9 @@ STACK (z=0 is the PCB top; thin-top round):
   plate                    1.00..2.20
   switch body              0.30..3.30, cap stem tip 1.50
   top gaskets              2.20..3.20     (1.5 poron compressed to 1.00)
-  flat KLP Saddle top      7.58           (2.4 mm proud of the top case)
-  top cover plate          3.20..5.20     (key field + component windows)
+  flat KLP Saddle top      7.58           (~3.2 mm proud of the ledge)
+  top cover plate          3.20..5.20     (key field + component windows;
+                                           key field ledge relieved 4.40)
   encoder left bare (no knob in the product views)
 
 The assembled halves are used at their committed positions — the case

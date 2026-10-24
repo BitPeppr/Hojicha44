@@ -121,6 +121,18 @@ def build_cover(tag):
     for (cx, cy, ang) in holes:
         s = rrect(kw, kh, P.CAP_ROUND, cx, cy, ang, z0 - 1.0, z1 + 1.0)
         cutter = s if cutter is None else cutter.fuse(s)
+    # ---- shallow ledge around the key field: the cover top drops
+    # KEY_LEDGE_D over a KEY_LEDGE_W border, so the caps stand proud of
+    # the surface they sit in while the outer band/magnets keep the full
+    # plate height (review: 2.4mm still read as flush).
+    lw = P.CAP_FOOT_W + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
+    lh = P.CAP_FOOT_H + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
+    ledge = None
+    for (cx, cy, ang) in holes:
+        s = rrect(lw, lh, P.CAP_ROUND + P.KEY_LEDGE_W, cx, cy, ang,
+                  z1 - P.KEY_LEDGE_D, z1 + 1.0)
+        ledge = s if ledge is None else ledge.fuse(s)
+    solid = solid.cut(ledge)
     # ---- component windows (MCU / encoder / pwrsw body; mirrored) ------
     for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),
                              win2(tag, P.PWRSW_WIN)):
@@ -210,7 +222,10 @@ def check_cover(tag, solid, info):
     #    samples clear of every port rect
     for (px, py) in info["pad_centers"]:
         expect("cover presses tab pad", px, py, z0 + 0.2, True)
-        expect("cover presses tab pad", px, py, z0 + 1.5, True)
+        # second probe stays under any key-field ledge (the ledge only
+        # trims the top KEY_LEDGE_D over a border; the press face and
+        # >=1.0mm of material over the pad must remain)
+        expect("cover presses tab pad", px, py, z0 + 1.0, True)
     skin, cav = info["skin"], info["cav_poly"]
     snorm = G.outward_field(skin)
     hits = 0
@@ -252,7 +267,7 @@ def check_cover(tag, solid, info):
         o, u = pr["o"], pr["u"]
         dt = P.CASE_OUTSET / 2.0
         zbs = (z0 + 0.4, z1 - 0.4) if name == "usb" else \
-            (z0 + 0.3, P.TRRS_MOUTH_ZC + 2.0)
+            (z0 + 0.3, z0 + 1.0)
         for zb in zbs:
             expect(f"{name} passage void", o[0] + u[0] * dt,
                    o[1] + u[1] * dt, zb, False)
