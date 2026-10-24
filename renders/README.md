@@ -32,14 +32,46 @@ blender --background --python renders/scene.py -- \
     --samples 96 --res 1600x1000 --setups bright --shots hero,exploded
 ```
 
-The same script accepts `--setups dark,bright` and
-`--shots hero,exploded,top,macro,orbit` for extra diagnostic views; only
-the two bright images are kept in the release.
+The same script accepts `--setups dark,bright` and the full shot set
+`--shots hero,exploded,top,macro,orbit` (plus `macro_encoder` /
+`macro_keys` under `macro`): hero + exploded are the product views, top
+is the orthographic layout proof, the macros frame the posed knob and
+the cap cluster beside the seam, and orbit is a 12-frame turntable at
+0.55 m (the single-half 0.20 m radius was a pre-pose holdover — the
+split assembly needs the distance).
+
+**Pre-flight framing check** (`--framecheck`, round-5): before any long
+render run, project every object's world bbox through each camera into
+NDC and report the covered extent — a board that would run out of
+frame fails as a NUMBER before hours of sampling:
+
+    blender --background --python renders/scene.py -- \
+        --framecheck --res 2400x1500 --setups bright \
+        --shots hero,exploded,macro,orbit,top
+
+Blender 5.x dropped `scene.world_to_camera_info`, so the check does the
+lens/sensor maths by hand (`frame_report` in scene.py). Two catches it
+already made: the encoder macro targeted the PRE-pose placements.json
+coordinate (the tented halves moved it — the camera stared at an empty
+spot), and the 0.10 m macro distance clipped the knob's far corner in
+the 27×40 mm frame.
+
+**Exploded diagram palette** (`--stack-colors`, round-6): the exploded
+shot is rendered as its OWN invocation with one matte colour per layer
+(slate tub / emerald board / amber gaskets / teal plate / graphite
+switches / violet cover / cream caps / charcoal nano / brass knob) so
+the stack reads like a technical diagram — and because it is a separate
+process the product shots keep their real materials:
+
+    blender --background --python renders/scene.py -- \
+        --samples 96 --res 2400x1500 --setups bright \
+        --shots exploded --stack-colors
 
 Outputs land in `generated/renders/v0.5.0/<setup>/<shot>.png`, with
 `MANIFEST.json` hashing each final PNG plus the tool versions. The
 intermediate mesh tree (`generated/renders/assets/`) is regenerable and
 gitignored; the scripts, this README, and the final PNGs are committed.
+The delivery set is 2400×1500 ("1.5k").
 
 ## Keycaps
 

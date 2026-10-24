@@ -56,8 +56,14 @@ SCALE = 0.001            # design-frame mm -> Blender meters
 PCB_TOP_IN_STEP = 1.60   # substrate top inside the kicad-cli STEP
 PLATE_Z = 1.00           # plate underside above the PCB top (GAP)
 CAP_STEM_Z = 1.5         # cap stem tip above the PCB top (inside switch)
-# exploded view: keep the tub/PCB/switch stack, lift the top layers apart
-EXPLODE = {"cover": 40.0, "caps": 26.0, "plate": 14.0, "gaskets": 14.0}
+# exploded view: lift the layers apart in assembly order. The switches
+# clip INTO the plate (they ride with it, +14); the caps lift off the
+# switches (+26); the cover clears the caps (+40); the knob pulls off
+# the encoder shaft last (+52). Round-6 audit catch: the knob and the
+# switch bodies were missing, leaving them floating at their assembled
+# heights while the layers around them moved.
+EXPLODE = {"knob": 52.0, "cover": 40.0, "caps": 26.0,
+           "swbodies": 14.0, "plate": 14.0, "gaskets": 14.0}
 # nice!nano courtyard in the FOOTPRINT's local (file) frame, from the
 # embedded Socket_Strips_2x12_P2.54mm_NiceNano footprint (KiCad 10)
 NANO_COURT = (-17.07, -29.94, 2.85, 2.60)   # x0, y0, x1, y1
@@ -72,6 +78,12 @@ def parse_args():
     p.add_argument("--shots", default="hero,exploded,macro,orbit")
     p.add_argument("--out", default=OUTROOT)
     p.add_argument("--device", default="metal", choices=["metal", "cpu"])
+    p.add_argument("--framecheck", action="store_true",
+                   help="report NDC extents per camera, render nothing")
+    p.add_argument("--stack-colors", action="store_true",
+                   help="diagram palette per layer (for the exploded shot; "
+                        "run it as its own invocation so the colours "
+                        "cannot leak into the product shots)")
     p.add_argument("--palette", action="store_true",
                    help="garish debug colors to verify assignments")
     p.add_argument("--hide-cover", action="store_true")
@@ -271,9 +283,15 @@ def smooth(objs, angle_deg=35.0):
 
 
 def move_z(objs, dz):
-    """Lift a group once (roots only, in case the importer nested nodes)."""
+    """Lift a group once: top-level objects only. "Top-level" = no
+    parent, or parented to a pose_ empty (round-6 audit catch: after
+    the presentation pose parented every half object to pose_L/pose_R,
+    the old parentless-only test matched nothing and the explode
+    silently rendered an assembled board). GlTF-nested nodes keep
+    moving exactly once, with their root."""
     for o in objs:
-        if o.parent is None:
+        if o.parent is None or (o.parent is not None and
+                                o.parent.name.startswith("pose_")):
             o.location.z += dz
 
 
@@ -341,6 +359,57 @@ def setup_world_and_lights(setup, cx, cy):
         area("fill", 15, 0.6, (cx + 0.30, cy - 0.10, 0.12),
              (cx, cy, 0.0), (0.70, 0.80, 1.0))
         area("rim", 26, 0.25, (cx + 0.05, cy + 0.30, 0.22), (cx, cy, 0.0))
+
+
+def frame_report(cam, objs, label, res, tol=1.0):
+    """Pre-flight framing check: project every object's world-bbox
+    corner through the camera into normalised device coords (Blender
+    5.x dropped scene.world_to_camera_info, so this is the lens/sensor
+    maths done by hand). |ndc| > 1 == outside the frame at the render
+    aspect; report the covered extent so a clip is visible as a number
+    before hours of sampling are spent. Returns True when everything
+    fits."""
+    import mathutils
+    bpy.context.view_layer.update()   # add_cam never evaluated matrix_world
+    mw = cam.matrix_world
+    right = mathutils.Vector((mw[0][0], mw[1][0], mw[2][0]))
+    up = mathutils.Vector((mw[0][1], mw[1][1], mw[2][1]))
+    back = mathutils.Vector((mw[0][2], mw[1][2], mw[2][2]))
+    loc = cam.location
+    w, h = res
+    aspect = w / h
+    persp = cam.data.type == "PERSP"
+    sw = cam.data.sensor_width      # sensor fit AUTO, aspect > 1: horizontal
+    pts = []
+    for o in objs:
+        if o.type != "MESH":
+            continue
+        for c in o.bound_box:
+            v = (o.matrix_world @ mathutils.Vector(c)) - loc
+            px, py, pz = v.dot(right), v.dot(up), v.dot(back)
+            if persp:
+                depth = -pz
+                if depth <= 1e-6:
+                    print(f"[frame] {label}: point BEHIND camera - FAIL",
+                          flush=True)
+                    return False
+                nx = px * cam.data.lens / (depth * sw / 2)
+                ny = py * cam.data.lens * 2 * aspect / (depth * sw)
+            else:
+                nx = px / (cam.data.ortho_scale / 2)
+                ny = py * aspect / (cam.data.ortho_scale / 2)
+            pts.append((nx, ny))
+    if not pts:
+        print(f"[frame] {label}: no subject points", flush=True)
+        return False
+    xs = [q[0] for q in pts]
+    ys = [q[1] for q in pts]
+    ok = (min(xs) >= -tol and max(xs) <= tol
+          and min(ys) >= -tol and max(ys) <= tol)
+    print(f"[frame] {label}: x [{min(xs):+.3f},{max(xs):+.3f}] "
+          f"y [{min(ys):+.3f},{max(ys):+.3f}] "
+          f"{'PASS' if ok else 'CLIPPED'}", flush=True)
+    return ok
 
 
 def add_cam(name, loc, look_at, lens=50):
@@ -889,6 +958,29 @@ def main():
               f"{TENT_DEG} deg on the outer edge, split +{SPLIT_MM} mm",
               flush=True)
 
+    # ---- diagram palette for the exploded shot (user: "colour
+    # different layers more contrasting shades"). Run the exploded
+    # render as its own invocation with --stack-colors so the product
+    # shots keep their real materials.
+    if args.stack_colors:
+        stack_pal = {
+            "tub":      ((0.13, 0.16, 0.30), 0.45, 0.0),   # slate indigo
+            "board":    ((0.04, 0.38, 0.20), 0.45, 0.0),   # emerald
+            "gaskets":  ((0.85, 0.48, 0.10), 0.55, 0.0),   # amber
+            "plate":    ((0.08, 0.52, 0.55), 0.45, 0.0),   # teal
+            "swbodies": ((0.10, 0.10, 0.11), 0.45, 0.0),   # graphite
+            "cover":    ((0.42, 0.28, 0.60), 0.45, 0.0),   # violet
+            "caps":     ((0.80, 0.75, 0.66), 0.45, 0.0),   # cream
+            "nano":     ((0.13, 0.13, 0.15), 0.45, 0.0),   # charcoal
+            "knob":     ((0.80, 0.62, 0.25), 0.30, 1.0),   # brass
+        }
+        for h in parts:
+            for grp, (col, rough, metal) in stack_pal.items():
+                assign(parts[h].get(grp, []),
+                       pbr(f"stack_{grp}", col, rough=rough, metal=metal))
+        print(f"[scene] stack-colours on ({len(stack_pal)} layers)",
+              flush=True)
+
     # ---- render queue
     (bx0, by0, bz0), (bx1, by1, bz1) = bbox_mm(all_objs)
     cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
@@ -915,11 +1007,13 @@ def main():
         sdir = os.path.join(args.out, setup)
         os.makedirs(sdir, exist_ok=True)
         if "hero" in shots:
-            # review: slightly higher, looking down more (30.6 -> 34.5 deg)
             cam = add_cam("hero", (cx - 0.30, cy - 0.52, 0.40),
                           (cx, cy, 0.010), lens=50)
-            render_to(cam, os.path.join(sdir, "hero.png"), res,
-                      args.samples, args.device)
+            if args.framecheck:
+                frame_report(cam, all_objs, "hero", res)
+            else:
+                render_to(cam, os.path.join(sdir, "hero.png"), res,
+                          args.samples, args.device)
         if "exploded" in shots:
             for grp, dz in EXPLODE.items():
                 for h in parts:
@@ -927,38 +1021,78 @@ def main():
             # review: slightly lower + flatter (38 -> 32 deg, 60mm lens)
             cam = add_cam("exploded", (cx - 0.12, cy - 0.624, 0.45),
                           (cx, cy, 0.055), lens=60)
-            render_to(cam, os.path.join(sdir, "exploded.png"), res,
-                      args.samples, args.device)
+            if args.framecheck:
+                frame_report(cam, all_objs, "exploded", res)
+            else:
+                render_to(cam, os.path.join(sdir, "exploded.png"), res,
+                          args.samples, args.device)
             for grp, dz in EXPLODE.items():
                 for h in parts:
                     move_z(parts[h].get(grp, []), -dz * SCALE)
         if "macro" in shots:
-            enc = [p for p in placements["Left"] if p["ref"].startswith("ENC")]
-            if enc:
-                ex, ey = enc[0]["x"] * SCALE, enc[0]["y"] * SCALE
-                cam = add_cam("macro_enc", (ex - 0.05, ey - 0.06, 0.12),
-                              (ex, ey, 0.02), lens=85)
+            # the encoder moved with the pose (splay/tent/split), so the
+            # macro must target the POSED knob, not the placements.json
+            # coordinate (round-5 pre-flight catch: the old camera stared
+            # at an empty spot once the halves were tented). Frame the
+            # knob dead-centre from ~0.14m: at 0.10m the 27x40mm frame
+            # clipped the knob's far corner (framecheck catch).
+            knobs = parts["L"].get("knob") or parts["R"].get("knob")
+            (kx0, ky0, kz0), (kx1, ky1, kz1) = bbox_mm(knobs)
+            ex, ey, ez = ((kx0 + kx1) / 2, (ky0 + ky1) / 2, (kz0 + kz1) / 2)
+            cam = add_cam("macro_enc", (ex - 0.075, ey - 0.09, ez + 0.07),
+                          (ex, ey, ez), lens=85)
+            # a macro intentionally lets the surroundings run past the
+            # frame edge -- the check verifies the SUBJECT (the knob)
+            # is inside and centred, not the whole neighbourhood
+            if args.framecheck:
+                frame_report(cam, knobs, "macro_enc", res)
+            else:
                 render_to(cam, os.path.join(sdir, "macro_encoder.png"), res,
                           args.samples, args.device)
-            cam = add_cam("macro_keys", (cx - 0.05, cy - 0.09, 0.055),
-                          (cx - 0.01, cy - 0.02, 0.004), lens=85)
-            render_to(cam, os.path.join(sdir, "macro_keys.png"), res,
-                      args.samples, args.device)
+            # keys macro: anchor on the cap nearest the assembly centre
+            # (the inner column beside the seam) -- the assembly centre
+            # itself is the gap between the halves, where no cap lives
+            # (framecheck caught "no subject points" there)
+            anchor = min(
+                (o for h in parts for o in parts[h]["caps"]),
+                key=lambda o: (o.matrix_world[0][3] - cx) ** 2
+                              + (o.matrix_world[1][3] - cy) ** 2)
+            ax, ay = anchor.matrix_world[0][3], anchor.matrix_world[1][3]
+            az = anchor.matrix_world[2][3] + 0.006
+            cam = add_cam("macro_keys", (ax - 0.05, ay - 0.09, az + 0.055),
+                          (ax, ay, az), lens=85)
+            near_keys = [o for h in parts for o in parts[h]["caps"]
+                         if (o.matrix_world[0][3] - ax) ** 2
+                         + (o.matrix_world[1][3] - ay) ** 2 < 0.020 ** 2]
+            if args.framecheck:
+                frame_report(cam, near_keys, "macro_keys", res)
+            else:
+                render_to(cam, os.path.join(sdir, "macro_keys.png"), res,
+                          args.samples, args.device)
         if "orbit" in shots:
+            # radius 0.20 was a single-half holdover: the split assembly
+            # is ~350mm wide and needs ~0.55m at 50mm to stay in frame
+            # (verified per-angle by --framecheck)
             for i in range(12):
                 a = 2 * math.pi * i / 12
-                cam = add_cam(f"orbit{i}", (cx + 0.20 * math.cos(a),
-                                            cy - 0.20 * math.sin(a), 0.16),
-                              (cx, cy, 0.0), lens=50)
-                render_to(cam, os.path.join(sdir, f"orbit_{i:02d}.png"), res,
-                          args.samples, args.device)
+                cam = add_cam(f"orbit{i}", (cx + 0.55 * math.cos(a),
+                                            cy - 0.55 * math.sin(a), 0.30),
+                              (cx, cy, 0.006), lens=50)
+                if args.framecheck:
+                    frame_report(cam, all_objs, f"orbit_{i:02d}", res)
+                else:
+                    render_to(cam, os.path.join(sdir, f"orbit_{i:02d}.png"),
+                              res, args.samples, args.device)
         if "top" in shots:
             cam = add_cam("top", (cx, cy - 0.0001, 0.50), (cx, cy, 0.0),
                           lens=60)
             cam.data.type = "ORTHO"
             cam.data.ortho_scale = 0.40
-            render_to(cam, os.path.join(sdir, "top.png"), res, args.samples,
-                      args.device)
+            if args.framecheck:
+                frame_report(cam, all_objs, "top", res)
+            else:
+                render_to(cam, os.path.join(sdir, "top.png"), res,
+                          args.samples, args.device)
     print("SCENE-DONE")
 
 

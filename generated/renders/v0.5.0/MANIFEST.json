@@ -22,8 +22,23 @@
   "python": "3.12.13"
  },
  "renders": {
-  "bright/exploded.png": "43121441be814e3035bd15c81b3db4f466bfc75f50866c4bb52c02692385fc77",
-  "bright/hero.png": "2f6060257a550ffaeed5d8c45f79e654fcc46e0be7609e76077d92039bfacf5e"
+  "bright/exploded.png": "50c2c2f2b27cd5b432cc7ba2ed5040598970c73fa42711818954d9f0468d1e8d",
+  "bright/hero.png": "cc41678028fa141c3cb30c801d94b19be91c8e1b4ed4c9194ee62ad819170263",
+  "bright/macro_encoder.png": "066be282146915733e0c4bbc432f1a84bbf1b36945602edd40c62dfc131c0e3b",
+  "bright/macro_keys.png": "de48f767b5bc7abd13bfb59b5526a58a8bd4f5114b13b5953f3101105aad1827",
+  "bright/orbit_00.png": "b8a27273d6e12ea919d0be4ea0561db0bcc5767e343583ed1d2b538ba8e4dc2f",
+  "bright/orbit_01.png": "ea030a7be513ba10ef26efa7bca910954c339a82135d885f67cbfc0681dfa9cb",
+  "bright/orbit_02.png": "24f8e33921d61dc522ec38c84489923dadc3795b9182bf6f6043bc05d0e26a32",
+  "bright/orbit_03.png": "4a342cad13ab234b033ed636376c983663987e3db65065895d7bd6db45f16c76",
+  "bright/orbit_04.png": "eb0fd0cb3324b1f5efeec5749f2b0dd2f15ee1a245383741825dfb9131fe2e60",
+  "bright/orbit_05.png": "751e12ed5a5be5be9dca614a5727a59314951c0f97f351a0b1767d9b4bbc1b57",
+  "bright/orbit_06.png": "123d10912d64162cf80f155ff42203811108768f4acf8d354ec23066a0d62710",
+  "bright/orbit_07.png": "d685addfab247f85560e71ce6135e438c185b7589d9d6c48fde4fa682f04137c",
+  "bright/orbit_08.png": "485cbc5134eb8f8e2a0d6875ffb4262c3f94402945178200c4f247dbaa147556",
+  "bright/orbit_09.png": "4be128dc3e154886bc229c535037bd5dcaa2722bf6e7cf27bf97cc99c65724d7",
+  "bright/orbit_10.png": "578a462f6f8ee2840352d65ec8f9e4a44dc3ce43142bc26b04aab1f39436d8c5",
+  "bright/orbit_11.png": "c8cdcc2db3188e0a4ca6b9fb41e1ba6aa6c16fc36fbb5aff2cca703e82418cdd",
+  "bright/top.png": "b8116b5bc3ccae1b6a1eb2d91a7ff8e28748da185955a6166e97862fc283e489"
  },
  "note": "regenerate: renders/README.md; assets tree is derived (gitignored), final PNGs are committed"
 }
