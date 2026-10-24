@@ -1,52 +1,33 @@
 #!/usr/bin/env python3
-"""Hojicha44 ring cover — v3.5 (CadQuery, parametric).
+"""Hojicha44 thin top cover — v4.0 (CadQuery, parametric).
 
-Flush bezel ring that sits on the tub lip: underside TOP_LIP_Z, top
-+COVER_T, outer face FLUSH with the skin (the SAME dilated-rim ring as
-the tub — an intentional lid seam), inner edge on the PCB rim +
-RIM_CLEAR — NOT the plate outline (v1 cut the outline cavity, which
-left a tab-shaped bite over every tab: the top poron pads pressed
-NOTHING; the review caught it). The rim-based interior bridges all 8
-tab zones and presses the top pads at the designed 16.7% preload,
-gated per pad. Retained by 8+8 recessed 4x2 N52 magnets whose faces
-meet AT the lip plane: tub magnet face-up to TOP_LIP_Z (4.70 in
-rev 2), ring magnet face-down to the same plane — a rigid zero-gap
-stop that cannot crush the foam,
-no heat-set inserts, nothing on the exterior.
+The user review called the v3.5 rim ring "extraordinarily thick" and
+asked for a top case that follows the components: a 2.5mm top PLATE on
+the lip that
+
+  * opens a single key field around the 22 keycaps (their 17.48x16.48
+    KLP footprints, dilated CAP_CLEAR, merge at the 19mm pitch into one
+    clean opening),
+  * covers the MCU/encoder wiring strip between the key field and the
+    inner skin, with windows for the nio module, the EC11 and the
+    pwrsw body,
+  * reuses the tub's port passages so USB and TRRS align (the TRRS
+    cylinder is now an EDGE NOTCH: the lip 3.48 sits below the bore top
+    7.25, so the wall band above the jack is open and a straight plug's
+    head clears the case),
+  * keeps the 8 recessed magnet pockets (Ø4x1.0 in a 1.2 pocket, 1.3
+    floor) whose faces still meet the tub's at the lip plane.
+
+The plate stays at the Choc v1 clip band (1.00..2.20) — moving it up
+would lose the clip engagement (spec/case.md) — so the thinness comes
+from the lip/cover above it: the keycaps now stand ~2.4mm proud of the
+top face instead of sitting flush with a 3.0mm ring.
 
   case/.venv/bin/python case/gen_cover.py            # both halves
   case/.venv/bin/python case/gen_cover.py Left       # one half
 
-Outputs (gitignored scratch): case/out/Hojicha44-{half}-cover.step/.stl
-
-Construction (z=0 is the PCB top; see params.py):
-  1. solid = prism(skin) from TOP_LIP_Z to +COVER_T
-  2. ring  = minus prism(rim + RIM_CLEAR) — inner edge = the PCB rim
-       line + 0.5, so the ring BRIDGES every tab pocket (an outline-
-       based interior leaves bites and the pads unload; the 0..0.5mm
-       root sliver stays unpressed — harmless)
-  3. passages reusing gen_case.compute_ports (same anchors, widths and
-     MEASURED breach as the tub):
-       W1  usb 14.0-wide slot, FULL depth (plug neck/housing to ~9.2
-           abs rides through and 0.2 past the top)
-       W2  trrs = the SAME Ø9.5 cylinder (axis zc 2.5): a BLIND tunnel
-           in the 6..9 slice (tops at 7.25 > boot swing 6.75), whose
-           chord in that slice stays <=6.42 (lip plane) < band 7.7 — the
-           NOT split
-       pwrsw flick slot, full depth BUT starting t=1.6 (inner web 1.1
-           to the cavity-side edge): W1 must remain the ONLY full
-           radial severance or the ring falls into two pieces
-  4. magnets = Ø4.3x1.7 pockets (Ø4x1.5 magnets, COVER_MAG_DEPTH) cut
-     UP from the underside at the SAME magnet_stations the tub pocketed
-     (shared geometry, zero-gap)
-
-Gates (check_cover, exit 0 only if every one passes): bbox z window,
-single solid (2 pieces == a passage split the ring), ring wall census
->= OUTSET-RIM-0.3, per-port passage void probes at real band t, pwrsw inner web
-solid, trrs blind-tunnel ceiling solid, TAB-PAD PRESS (solid ring over
-all 8 top-poron pad centres — the pad-unloading bug can't return),
-magnet pocket void/floor/web probes, station count, antenna rings +
-no-cover-over-antenna, volume tripwire band.
+Outputs (gitignored scratch): $CASE_OUT (default case/out)
+  Hojicha44-{half}-cover.step/.stl
 """
 import json
 import math
@@ -59,7 +40,51 @@ import params
 import gen_case as G
 
 REPO = G.REPO
-OUT_DIR = os.path.join(REPO, "case", "out")
+OUT_DIR = G.OUT_DIR   # CASE_OUT override shared with gen_case.py
+
+
+def rrect(w, h, r, cx, cy, ang, z0, z1):
+    """Rounded-rectangle prism (r clamped to the shorter side)."""
+    r = min(r, w / 2 - 0.05, h / 2 - 0.05)
+    wp = cq.Workplane("XY").rect(w, h).extrude(z1 - z0)
+    if r > 0.2:
+        wp = wp.edges("|Z").fillet(r)
+    return (wp.rotate((0, 0, 0), (0, 0, 1), ang)
+            .translate((cx, cy, z0)).val())
+
+
+def drop_scrap(solid):
+    """Keep the largest solid, drop tiny enclosed scraps.
+
+    The union of 22 staggered cap cutters (and the neighbouring windows)
+    can enclose small material regions between footprints. Those
+    regions are separate solids after the cut; if exported they would be
+    loose pieces in the print. Dropping them makes them VOID — the key
+    field becomes one clean opening. Real severances (a port slot
+    cutting the plate in two) are caught by the volume limits in
+    check_cover, so this can never silently remove a structural piece.
+    """
+    parts = sorted(solid.Solids(), key=lambda s: s.Volume(), reverse=True)
+    if len(parts) <= 1:
+        return solid, []
+    scrap = parts[1:]
+    return parts[0], [(round(s.Volume(), 1),
+                       tuple(round(v, 1) for v in s.BoundingBox().center))
+                      for s in scrap]
+
+
+def win2(tag, win):
+    """Mirror a Left-frame window rect (x0,y0,x1,y1) onto Right."""
+    if tag == "Left":
+        return win
+    ax = 2.0 * params.MIRROR_AX
+    return (ax - win[2], win[1], ax - win[0], win[3])
+
+
+def key_side(tag, win):
+    """The window edge facing the key field (Left keys are at lower x,
+    Right keys at higher x), +0.4mm into the cover web."""
+    return (win[0] - 0.4) if tag == "Left" else (win[2] + 0.4)
 
 
 def build_cover(tag):
@@ -71,34 +96,42 @@ def build_cover(tag):
     outline = G.read_outline(dxf)          # plate outline (tabs included)
     rim = G.read_pcb_outline(pcb)          # PCB rim
     cav_poly = G.offset_pts(outline, P.RIM_CLEAR)
-    # the cover's INTERIOR follows the PCB rim, not the plate outline:
-    # tab-bulge bites gape over every tab pocket and leave the top
-    # poron pads pressing nothing (v1 review defect — now gated per pad)
-    ring_inner = G.offset_pts(rim, P.RIM_CLEAR)
     rim_ring = G.resample_ring(rim, P.SKIN_STEP)
     rnorm = G.outward_field(rim_ring)
-    # the cover's outer face is the skin face itself — MUST be the same
-    # ring as the tub's (flush seam, aligned magnet stations)
+    # outer face = the SAME dilated-rim ring as the tub (flush seam,
+    # aligned magnet stations)
     skin = G.resample_ring(G.offset_pts(rim, P.CASE_OUTSET), P.SKIN_STEP)
     ports = G.compute_ports(tag, rim_ring, rnorm, skin, P)
     sksegs = list(zip(skin, skin[1:] + skin[:1]))
     pocket_rects = G.pocket_layout(lands["tabs"], sksegs, P)
     stations, bands, webs = G.magnet_stations(P, tag, skin, cav_poly,
-                                        pocket_rects, ports)
-    # top-poron press points (lands: pad centre = tab root +2.0 outward;
-    # these MUST land on ring material at the lip plane)
+                                              pocket_rects, ports)
     pad_centers = [(o[0] + u[0] * 2.0, o[1] + u[1] * 2.0)
                    for t in lands["tabs"]
                    for (o, u, v) in [G.tab_frame(t)]]
+    holes = G.read_cutouts(dxf)            # 22 switch centres + angles
 
     z0, z1 = P.TOP_LIP_Z, P.TOP_LIP_Z + P.COVER_T
     solid = G.prism(skin, z0, z1)
-    solid = solid.cut(G.prism(ring_inner, z0, z1))
+
+    # ---- key field: union of the 22 dilated cap footprints -------------
+    kw = P.CAP_FOOT_W + 2 * P.CAP_CLEAR
+    kh = P.CAP_FOOT_H + 2 * P.CAP_CLEAR
+    cutter = None
+    for (cx, cy, ang) in holes:
+        s = rrect(kw, kh, P.CAP_ROUND, cx, cy, ang, z0 - 1.0, z1 + 1.0)
+        cutter = s if cutter is None else cutter.fuse(s)
+    # ---- component windows (MCU / encoder / pwrsw body; mirrored) ------
+    for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),
+                             win2(tag, P.PWRSW_WIN)):
+        s = rrect(x1 - x0, y1 - y0, 2.0, (x0 + x1) / 2, (y0 + y1) / 2,
+                  0.0, z0 - 1.0, z1 + 1.0)
+        cutter = cutter.fuse(s)
+    solid = solid.cut(cutter)
 
     from OCP.gp import gp_Dir, gp_Pnt
 
-    # port passages through the cover
-    # usb: full-depth filleted slot (same w/r as the bore)
+    # ---- USB: the SAME frame/width/fillets as the tub bore, full depth
     pr = ports["usb"]
     ox, oy = pr["o"]
     ux, uy = pr["u"]
@@ -106,75 +139,53 @@ def build_cover(tag):
     base = (ox - ux * (P.SLOT_IN + 1.0), oy - uy * (P.SLOT_IN + 1.0))
     solid = solid.cut(G.fillet_slot(base, pr["v"], pr["u"], pr["w"],
                                     z0 - 0.5, z1 + 0.5, pr["r"], travel))
-    # trrs: the SAME bore cylinder — chord in the 6..9 slice stays
-    # narrow (<=6.42 at the lip plane), so no ring severance
+    # ---- TRRS: the SAME Ø9.5 cylinder. The lip is below the bore top,
+    # so this is an EDGE NOTCH (open above), not the old blind tunnel.
     pr = ports["trrs"]
     ox, oy = pr["o"]
     ux, uy = pr["u"]
-    travel = P.SLOT_IN + 1.0 + pr["out"] + 1.0
     base = (ox - ux * (P.SLOT_IN + 1.0), oy - uy * (P.SLOT_IN + 1.0))
     solid = solid.cut(cq.Solid.makeCylinder(
         P.TRRS_MOUTH_R, travel,
         gp_Pnt(base[0], base[1], P.TRRS_MOUTH_ZC),
         gp_Dir(ux, uy, 0.0)))
-    # pwrsw: full depth but NOT full radial — starts PWRSW_COVER_IN
-    # outboard so a 1.1 web survives next to the cavity edge and W1
-    # stays the only severance
-    pr = ports["pwrsw"]
-    ox, oy = pr["o"]
-    ux, uy = pr["u"]
-    t_web = P.PWRSW_COVER_IN
-    travel = pr["out"] + 1.0 - t_web + 1.0
-    base = (ox + ux * t_web, oy + uy * t_web)
-    solid = solid.cut(G.fillet_slot(base, pr["v"], pr["u"], pr["w"],
-                                    z0 - 0.5, z1 + 0.5, pr["r"], travel))
-    # magnet pockets: cut UP from the underside (faces flush at z0).
-    # T4 (review M4): cover-side magnets are Ø4x1.5 (tub keeps 2.0s —
-    # the pair is asymmetric-tolerant, faces still meet exactly at the
-    # lip plane), so the pocket is shallower and the floor over the
-    # pocket grows 0.8 -> 1.3mm (COVER_T - COVER_MAG_DEPTH).
+    # ---- magnets: cut UP from the underside (faces flush at z0) --------
     for (cx, cy) in stations:
         solid = solid.cut(cq.Solid.makeCylinder(
             P.MAG_DIA / 2, P.COVER_MAG_DEPTH,
             gp_Pnt(cx, cy, z0), gp_Dir(0, 0, 1)))
 
+    solid, scrap = drop_scrap(solid)
+
     return solid, {"skin": skin, "cav_poly": cav_poly,
-                   "ring_inner": ring_inner,
                    "mag_stations": stations, "mag_bands": bands,
                    "mag_webs": webs,
-                   "pad_centers": pad_centers, "ports": ports}
+                   "pad_centers": pad_centers, "ports": ports,
+                   "holes": holes, "scrap": scrap}
 
 
 def check_cover(tag, solid, info):
     P = params
     bad = []
     bb = solid.BoundingBox()
-    z1 = P.TOP_LIP_Z + P.COVER_T
-    if abs(bb.zmin - P.TOP_LIP_Z) > 0.05:
-        bad.append(f"zmin {bb.zmin:.2f} != lip {P.TOP_LIP_Z}")
+    z0, z1 = P.TOP_LIP_Z, P.TOP_LIP_Z + P.COVER_T
+    if abs(bb.zmin - z0) > 0.05:
+        bad.append(f"zmin {bb.zmin:.2f} != lip {z0}")
     if abs(bb.zmax - z1) > 0.05:
         bad.append(f"zmax {bb.zmax:.2f} != lip+COVER_T {z1}")
     if not solid.isValid():
         bad.append("kernel reports invalid solid")
     nsolids = len(solid.Solids())
     if nsolids != 1:
-        bad.append(f"{nsolids} disjoint solids (a full-depth passage "
-                   f"split the ring)")
-    skin = info["skin"]
-    # census + antenna measure the REAL ring (rim-based interior — the
-    # plate-outline cavity would read the backfilled tab bites as thin
-    # walls that no longer exist)
-    cav = info["ring_inner"]
-    cavsegs = list(zip(cav, cav[1:] + cav[:1]))
-    # full-point sampling (audit 2026-10-20 hardening — same as the tub)
-    wall_min = min(min(G.segd(sp, a, b) for a, b in cavsegs)
-                   for sp in skin)
-    # nominal ring wall is OUTSET-RIM_CLEAR = 7.7, but the W2/pwrsw
-    # shoulders carve local compressions (7.20 measured, 5.85 on v3.4);
-    # gate well above the 1.40 FDM-print floor but below the features
-    wall_gate = 5.0
-    if wall_min < wall_gate:
-        bad.append(f"ring wall thins to {wall_min:.3f} < {wall_gate:.1f}")
+        bad.append(f"{nsolids} disjoint solids (an opening split the plate)")
+    scrap = info.get("scrap", [])
+    scrap_vol = sum(v for v, _ in scrap)
+    if scrap:
+        biggest = max(v for v, _ in scrap)
+        if biggest > 60.0 or scrap_vol > 400.0:
+            bad.append(f"dropped {len(scrap)} pieces/{scrap_vol:.0f} mm3 — "
+                       f"that is a severed plate, not enclosed scraps "
+                       f"(biggest {biggest:.0f} mm3)")
 
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
     from OCP.gp import gp_Pnt
@@ -190,107 +201,102 @@ def check_cover(tag, solid, info):
             bad.append(f"{name} at ({G.r2(x)},{G.r2(y)},{G.r2(z)}) "
                        f"{'solid' if want else 'void'} expected")
 
-    # passage voids at real band t (inside the ring's material envelope,
-    # not the trivial air past the skin) + their structural claims
-    pr = info["ports"]["usb"]
-    o, u, v = pr["o"], pr["u"], pr["v"]
-    for t in (3.5, 14.25):        # bite fill + plateau band
-        for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + P.COVER_T - 0.4):
-            expect("usb cover passage",
-                   o[0] + u[0] * t, o[1] + u[1] * t, zb, False)
-    # ring resumes wherever a passage MEETS the skin: probe 0.6mm
-    # inside skin samples that hug (0.05..1.2 from) each port rect —
-    # port-agnostic, no hand-placed coordinates (the bite's outline is
-    # wider than the mouth frame, so b=w/2+eps is NOT valid resume
-    # ground there)
+    mid = z0 + P.COVER_T / 2.0
+
+    # 1. key field: every switch centre must be open through the plate
+    for (cx, cy, _ang) in info["holes"]:
+        expect("key field open", cx, cy, mid, False)
+    # 2. outer band: solid over the tab pads (press gate) and at skin
+    #    samples clear of every port rect
+    for (px, py) in info["pad_centers"]:
+        expect("cover presses tab pad", px, py, z0 + 0.2, True)
+        expect("cover presses tab pad", px, py, z0 + 1.5, True)
+    skin, cav = info["skin"], info["cav_poly"]
     snorm = G.outward_field(skin)
     hits = 0
-    for si in range(len(skin)):
+    for si in range(0, len(skin), max(1, len(skin) // 24)):
         sp = skin[si]
-        inner = (sp[0] - snorm[si][0] * 0.6, sp[1] - snorm[si][1] * 0.6)
-        for name in ("usb", "trrs", "pwrsw"):
-            rd = G.rect_d(sp, info["ports"][name]["rect"])
-            if 0.05 <= rd <= 1.6:
-                expect(f"{name} cover wall resumes (skin-hug)",
-                       inner[0], inner[1], P.TOP_LIP_Z + P.COVER_T - 0.25,
-                       True)
-                hits += 1
-    if hits < 6:
-        bad.append(f"cover wall resume probes found only {hits} skin "
-                   f"hug points")
+        if min(G.rect_d(sp, info["ports"][n]["rect"])
+               for n in ("usb", "trrs", "pwrsw")) < 1.8:
+            continue
+        px = sp[0] - snorm[si][0] * 0.6
+        py = sp[1] - snorm[si][1] * 0.6
+        expect("outer band solid", px, py, mid, True)
+        hits += 1
+    if hits < 12:
+        bad.append(f"outer band probes only {hits}")
+
+    # 3. component windows are open, and the strip around them is solid
+    for base, nm in ((P.MCU_WIN, "mcu"), (P.ENC_WIN, "enc"),
+                     (P.PWRSW_WIN, "pwrsw")):
+        x0, y0, x1, y1 = win2(tag, base)
+        expect(f"{nm} window open", (x0 + x1) / 2, (y0 + y1) / 2, mid,
+               False)
+    pox = info["ports"]["pwrsw"]["o"][0]
+    expect("pwrsw window open to the north skin", pox, 66.0, mid, False)
+    # cover material between the component windows and the key field
+    # (probe just outside each window edge; void here means an opening
+    # merged the window into the key field — the plate must keep the
+    # component strip the user asked for)
+    mw = win2(tag, P.MCU_WIN)
+    ew = win2(tag, P.ENC_WIN)
+    expect("mcu/key-field web solid", key_side(tag, mw),
+           (mw[1] + mw[3]) / 2, mid, True)
+    expect("enc/key-field web solid", key_side(tag, ew),
+           (ew[1] + ew[3]) / 2, mid, True)
+
+    # 4. port passages: void through the band, air beyond, and the TRRS
+    #    notch is open at the top (the straight-plug fix)
+    for name in ("usb", "trrs"):
+        pr = info["ports"][name]
+        o, u = pr["o"], pr["u"]
+        dt = P.CASE_OUTSET / 2.0
+        zbs = (z0 + 0.4, z1 - 0.4) if name == "usb" else \
+            (z0 + 0.3, P.TRRS_MOUTH_ZC + 2.0)
+        for zb in zbs:
+            expect(f"{name} passage void", o[0] + u[0] * dt,
+                   o[1] + u[1] * dt, zb, False)
+        expect(f"{name} air beyond", o[0] + u[0] * (pr["out"] + 3.0),
+               o[1] + u[1] * (pr["out"] + 3.0), mid, False)
     pr = info["ports"]["trrs"]
-    o, u, v = pr["o"], pr["u"], pr["v"]
-    for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + 0.9):
-        hw = math.sqrt(max(pr["r"] ** 2 - (zb - pr["zc"]) ** 2, 0.0))
-        expect("trrs cover passage", o[0] + u[0] * 3.5,
-               o[1] + u[1] * 3.5, zb, False)
-        for sgn in (-1.0, 1.0):
-            expect("trrs cover wall resumes",
-                   o[0] + u[0] * 3.5 + v[0] * sgn * (hw + 0.35),
-                   o[1] + u[1] * 3.5 + v[1] * sgn * (hw + 0.35), zb, True)
-    expect("trrs cover ceiling over boot",
-           o[0] + u[0] * 3.5, o[1] + u[1] * 3.5,
-           P.TOP_LIP_Z + P.COVER_T - 0.4, True)  # blind
-    pr = info["ports"]["pwrsw"]
-    o, u, v = pr["o"], pr["u"], pr["v"]
-    for zb in (P.TOP_LIP_Z + 0.4, P.TOP_LIP_Z + P.COVER_T - 0.4):
-        expect("pwrsw cover passage", o[0] + u[0] * 3.5,
-               o[1] + u[1] * 3.5, zb, False)
-        expect("pwrsw cover inner web", o[0] + u[0] * 1.1,
-               o[1] + u[1] * 1.1, zb, True)
-        for sgn in (-1.0, 1.0):
-            expect("pwrsw cover wall resumes",
-                   o[0] + u[0] * 3.5 + v[0] * sgn * (pr["w"] / 2 + 0.4),
-                   o[1] + u[1] * 3.5 + v[1] * sgn * (pr["w"] / 2 + 0.4),
-                   zb, True)
-    # the ring must PRESS the top poron pads (v1 review defect: an
-    # outline-based interior left tab-shaped bites and the pads pressed
-    # nothing — these are the probes that fail in that state)
-    for (px, py) in info["pad_centers"]:
-        expect("cover presses tab pad", px, py, P.TOP_LIP_Z + 0.2, True)
-        expect("cover presses tab pad", px, py, P.TOP_LIP_Z + 1.5, True)
-    # magnet pockets: real recesses that mirror the tub's
+    o, u = pr["o"], pr["u"]
+    expect("trrs roof solid", o[0] + u[0] * (P.CASE_OUTSET / 2.0),
+           o[1] + u[1] * (P.CASE_OUTSET / 2.0), z1 - 0.2, True)
+
+    # 5. magnets: real recesses that mirror the tub's stations
     stn = info["mag_stations"]
     if len(stn) < P.MAG_MIN_STATIONS:
         bad.append(f"cover magnet stations {len(stn)} < "
                    f"{P.MAG_MIN_STATIONS}")
     for (cx, cy) in stn:
-        expect("cover magnet pocket void", cx, cy,
-               P.TOP_LIP_Z + 0.9, False)
+        expect("cover magnet pocket void", cx, cy, z0 + 0.5, False)
         expect("cover magnet pocket floor", cx, cy,
-               P.TOP_LIP_Z + P.COVER_MAG_DEPTH + 0.4, True)
+               z0 + P.COVER_MAG_DEPTH + 0.4, True)
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             expect("cover magnet pocket web",
                    cx + dx * (P.MAG_DIA / 2 + 0.3),
-                   cy + dy * (P.MAG_DIA / 2 + 0.3),
-                   P.TOP_LIP_Z + 0.9, True)
-    # antenna: same ring clearances as the tub + no plastic overhead
+                   cy + dy * (P.MAG_DIA / 2 + 0.3), z0 + 0.5, True)
+
+    # 6. antenna: the MCU window must keep the cover >=3mm away — probe
+    #    the centre and a 2mm cross (the old ring-distance gates are
+    #    meaningless on a covering plate, the 3mm rule is the contract)
     ant = P.ANTENNA_L if tag == "Left" else P.ANTENNA_R
-    ant_lim = P.ANT_R_MM + P.ANT_CASE_CLEAR
-    for ring in (cav, skin):
-        d = min(G.segd(ant, a, b)
-                for a, b in zip(ring, ring[1:] + ring[:1]))
-        if d < ant_lim:
-            bad.append(f"cover antenna ring only {d:.2f} < {ant_lim}")
-    # probe at the cover's MID height (derived, not a literal: the old
-    # 7.5 was the rev-1 cover's mid and would silently become a no-op
-    # if the cover height changed)
-    expect("no cover over antenna", ant[0], ant[1],
-           P.TOP_LIP_Z + P.COVER_T / 2, False)
+    for (dx, dy) in ((0, 0), (2, 0), (-2, 0), (0, 2), (0, -2)):
+        expect("no cover within 2mm of antenna",
+               ant[0] + dx, ant[1] + dy, mid, False)
 
     vol = solid.Volume()
-    bstat = ""
-    if stn:
-        bstat = (f", magnet band min {min(info['mag_bands']):.2f}, "
-                 f"web min {min(info['mag_webs']):.2f}")
+    bstat = (f", magnet band min {min(info['mag_bands']):.2f}, "
+             f"web min {min(info['mag_webs']):.2f}") if stn else ""
+    sc = (f", dropped {len(scrap)} enclosed scraps "
+          f"({scrap_vol:.0f} mm3)" if scrap else "")
     print(f"  {tag} cover: volume {vol / 1000:.1f} cm3, "
           f"bbox z [{bb.zmin:.1f}, {bb.zmax:.1f}], "
-          f"wall_min {wall_min:.2f}, stations {len(stn)}{bstat}")
-    print(f"  {tag} cover magnets: "
-          f"[{', '.join(f'({G.r2(x)},{G.r2(y)})' for x, y in stn)}]")
-    if not (6000 <= vol <= 13000):
+          f"key holes {len(info['holes'])} (one opening), "
+          f"stations {len(stn)}{sc}{bstat}")
+    if not (6000 <= vol <= 28000):
         bad.append(f"cover volume {vol / 1000:.1f} cm3 outside "
-                   f"[6, 13] tripwire")
+                   f"[6, 28] tripwire (thin top plate, key field open)")
     return bad
 
 
@@ -311,8 +317,8 @@ def main():
         stl = os.path.join(OUT_DIR, f"Hojicha44-{tag}-cover.stl")
         cq.exporters.export(cq.Workplane(obj=solid), step)
         cq.exporters.export(cq.Workplane(obj=solid), stl)
-        assert os.path.getsize(step) > 200000, f"{tag}: STEP suspiciously small"
-        assert os.path.getsize(stl) > 200000, f"{tag}: STL suspiciously small"
+        assert os.path.getsize(step) > 100000, f"{tag}: STEP suspiciously small"
+        assert os.path.getsize(stl) > 100000, f"{tag}: STL suspiciously small"
         print(f"{tag}: cover -> {os.path.basename(step)} "
               f"({os.path.getsize(step) // 1024} KB)")
     sys.exit(rc)

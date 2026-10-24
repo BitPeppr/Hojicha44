@@ -17,8 +17,18 @@ PLATE_UNDER = 1.00  # PCB top -> plate underside (Choc v1 clip band:
                     # the plate must sit between the clip lip <=1.3 and the
                     # 14.8 ears at 2.2 -> 1.0 gap + 1.2 plate = 1.0..2.2)
 PLATE_T = 1.2       # plate thickness (Choc v1 clip engagement)
-FOAM_T = 3.0        # poron pads, top + bottom of each tab
-PRELOAD = 0.15      # design assembly compression (spec: 0.15-0.20)
+FOAM_T = 3.0        # poron pads under each tab (bottom gaskets)
+TOP_FOAM_T = 1.5    # poron pads above each tab (top gaskets).  Thin
+                    # STOCK on purpose: the top gap is now 1.28mm at
+                    # the same 15% preload, so the top case sits just
+                    # above the plate instead of 2.5mm above it.  The
+                    # user review called the old 2.5mm foil stack
+                    # "massive spaces above the gaskets".
+PRELOAD = 0.15      # bottom-gasket assembly compression (spec: 0.15-0.20)
+TOP_PRELOAD = 0.333 # top-gasket compression: the review wanted the caps
+                    # to stand proud, so the 1.5mm top foam runs at 1/3
+                    # compression (inside the spec's <=50% ceiling) and
+                    # the whole top case sits at 2.20+1.00
 TAB_W = 10.0        # tab width (plate/gen_plate.py)
 TAB_L = 5.0         # tab protrusion past outline
 
@@ -26,6 +36,8 @@ PLATE_TOP = PLATE_UNDER + PLATE_T          # +2.20 (was 3.50)
 # Tab-support shelf: bottom foam compressed under the tab.
 # SHELF_Z = PLATE_UNDER - FOAM_T*(1-PRELOAD) = 1.00 - 2.55 = -1.55
 SHELF_Z = PLATE_UNDER - FOAM_T * (1 - PRELOAD)   # = -1.55
+# Top gap = compressed top foam between plate top and lip underside:
+TOP_GAP = TOP_FOAM_T * (1 - TOP_PRELOAD)         # = 1.00
 # Floor under the PCB zone: provisioned by the BELOW-PCB protrusions
 # (M1, review-corrected; wording fixed 2026-10-21 — the hotswap SOCKETS
 # are SOLDERED BENEATH (B.Cu pads, body on B.Fab/B.SilkS) and dip ~1.25
@@ -67,15 +79,16 @@ MIRROR_AX = 145.75  # shared left/right mirror axis: RIGHT = 2 * MIRROR_AX
                     # derivations produced 6/7 magnet stations and +0.5mm
                     # plate keep-zone drift; symmetric sources replaced
                     # them).
-TOP_LIP_Z = 4.70    # lip at plate top +2.5 (4.70 was 6.0): leaves a 2.5mm
-                    # gap = 16.7% preload on the 3.0 top foam.  The tie
-                    # TOP_LIP_Z == PLATE_UNDER + PLATE_T + 2.5 is enforced
-                    # by tests/spec_checks.cjs (stack-ties), so this stays a
-                    # literal on purpose.
-#   preload on the 3.0 top foam ((3.0 - 2.5) / 3.0), matching the ~15%
-#   bottom preload (2.55 of 3.0); receives the future top cover / upper
-#   foam. NOTE: the USB-C module stack tops ~7.7 above the PCB — the
-#   COVER must carry that opening (open decisions below).
+TOP_LIP_Z = 3.20    # lip at plate top + TOP_GAP (2.20 + 1.00):
+                    # the 1.5mm top foam runs at 33% compression and the
+                    # top case sits right above the plate, so the caps
+                    # stand 2.4mm proud of the 2.0mm top plate instead of
+                    # barely 1.6mm. The tie TOP_LIP_Z == PLATE_UNDER +
+                    # PLATE_T + TOP_GAP is enforced by
+                    # tests/spec_checks.cjs (stack-ties).
+#   NOTE: the USB-C module stack tops ~7.7 above the PCB, the EC11 body
+#   tops ~5.2 and its shaft ~24.5 — the COVER carries windows for both
+#   (gen_cover.py).
 
 # ---- fastening (REVISED: no visible fasteners on the exterior) ----
 # Rev-1 tub: friction fit (plate + poron preload holds the assembly).
@@ -127,9 +140,17 @@ POCKET_TOP = TOP_LIP_Z     # open to the top (cover presses upper foam)
 USB_MOUTH_W = 14.0     # notch is 11; +3 for housing shoulders
 USB_MOUTH_Z0 = 2.0     # overmold bottom ~2.8 (axis ~6.1, h ~6.5) + margin
 USB_MOUTH_R = 1.2      # bottom-corner fillet (flat top, see above)
-TRRS_MOUTH_R = 4.75    # Ø9.5: boot ball <=8.5 + 0.5/side swing clearance
-TRRS_MOUTH_ZC = 2.5    # jack axis: mouth-face centre vertex z=2.5 in the
-#   vendored STEP; ±0.5 drift stays covered. Verify on the first article.
+TRRS_MOUTH_R = 2.6     # Ø5.2 SIDE HOLE, not the old Ø9.5 boot bore.
+#   Review: the Ø9.5 bore + thin cover cut a rectangular window open to
+#   the top ("gaping"); a 3.5mm plug's METAL barrel is ~Ø3.5-4.0 and the
+#   grip stays outside the 7.6mm wall, so a round Ø5.0 hole passes it.
+#   Its top (zc+r = 4.5) stays 0.7mm under the 5.2 cover top, so the
+#   cover keeps a closed roof over the port. Right-angle plug boots no
+#   longer swing inside; the first article measures the real plug.
+TRRS_MOUTH_ZC = 1.9    # hole centre: jack axis 2.5 dropped to 1.9 so the
+#   Ø5.2 top (4.5) clears under the 5.2 cover top with a 0.7mm roof. The
+#   hole still passes a straight Ø3.5-4.0 barrel (spans 0.75..4.25 at
+#   the jack axis) with margin.
 
 # ---- power-switch actuator window (v3.5, north rim) ----
 # WS-SLTV (450301014042, Wuerth datasheet + KiCad footprint name
@@ -147,7 +168,10 @@ TRRS_MOUTH_ZC = 2.5    # jack axis: mouth-face centre vertex z=2.5 in the
 # full-width cut breaks the ring into two disconnected arcs (2 solids).
 PWRSW_MOUTH_W = 5.0    # lever (~3 swept with throw) + nail entry; ALSO
 #   the ring-safety cap: (7.0 band - w)/2 >= 1.0 web.
-PWRSW_MOUTH_Z0 = 4.3   # 0.7 below the body top for nail entry angle
+PWRSW_MOUTH_Z0 = 4.3   # 0.7 below the body top for nail entry angle.
+#   With the thin-cover lip at 3.48 this is ABOVE the tub, so the tub
+#   has no pwrsw bore at all (compute_ports marks it skipped); the
+#   COVER carries the body window + nail slot (PWRSW_WIN/PWRSW_NAIL_W).
 PWRSW_COVER_IN = 1.6   # cover slot starts this far outboard of the port
                        # anchor, leaving the 1.1mm inner web next to the
                        # cavity edge (W1 must stay the ring's ONLY full
@@ -159,7 +183,8 @@ PWRSW_MOUTH_R = 0.8    # bottom fillets (molded look, matches USB)
 # stack math, boot/face from the vendored PJ-320A STEP, lever from the
 # Wuerth WS-SLTV datasheet (blade ~2.0 + travel 1.6; verify first art.)
 USB_HOUSING_W = 12.35       # overmold body widest around the axis
-TRRS_BOOT_DIA = 8.5         # right-angle plug's ball boot, <= Ø8.5
+TRRS_PLUG_DIA = 4.0         # straight plug metal barrel, <= Ø4.0 (the
+#   grip/overmold stays outside the wall, so it never needs a bore)
 TRRS_FACE_HW = 3.05         # PJ-320A mouth face half-width (STEP)
 TRRS_FACE_TOP = 5.0         # PJ-320A mouth face top plane (STEP)
 PWRSW_LEVER_SWEEP = 3.6     # actuator blade ~2.0 + travel 1.6 (verify)
@@ -176,13 +201,13 @@ MAG_DIA = 4.3          # pocket bore for a Ø4.0 magnet: 0.15/side glue film
                        # (post-audit P1 full adoption; Ø4.2 was starved after
                        # FDM shrink — see spec/case.md retention)
 MAG_DEPTH = 2.2        # TUB pocket depth (2.0 magnet + glue line)
-COVER_MAG_DEPTH = 1.7  # COVER pocket depth (T4, review M4): cover-side
-#   magnets are Ø4x1.5 -> pocket floor 3.0-1.7 = 1.3mm (was 0.8 over a
-#   2.2 pocket = 2 FDM passes). Faces still meet exactly at the lip
-#   plane; Ø4x2 vs Ø4x1.5 is an asymmetric-tolerant pair (force drops
-#   to ~0.7-0.85x/face, 8 pairs still >= 2 kg vs a ~200 g half — the
-#   rigid zero-gap stop is the face plane, not the pull; first-article
-#   pull test gates the change).
+COVER_MAG_DEPTH = 0.7  # COVER pocket depth (thin-cover round): cover-
+#   side magnets are Ø4x0.5 -> pocket floor 2.0-0.7 = 1.3mm, the same
+#   floor the T4 review demanded, on a 2.0mm cover. Faces still meet
+#   exactly at the lip plane; Ø4x2 (tub) vs Ø4x0.5 (cover) is
+#   asymmetric-tolerant (force drops, 8 pairs must still cover the
+#   ~200 g half; the rigid zero-gap stop is the face plane, not the
+#   pull; first-article pull test re-gates the thinner cover magnet).
 MAG_STATION_BAND = 7.5 # local band needed: pocket + >=1.6 web both faces
                        # (6-review audit 2026-10-20: the web >= 1.6 reviewer
                        # floor is NOW met in-band — webs (7.5-4.3)/2 = 1.6,
@@ -246,8 +271,47 @@ PORTS = {"Left": {"usb": (118.0, 49.95), "trrs": (134.55, -22.0),
 # NOT split),
 # the pwrsw flick slot, and the magnet pockets. Outer face = the skin
 # face FLUSH (an intentional lid seam).
-COVER_T = 3.0          # 4.70..7.70 (TOP_LIP_Z + 3.0); 1.3 floor over the
-                    # 1.7 magnet pockets
+COVER_T = 2.0          # 3.20..5.20 (TOP_LIP_Z + 2.0): a thin top
+                    # plate that also covers the MCU/encoder strip and
+                    # the key field between caps (key-field opening +
+                    # component windows), instead of a bare rim ring.
+                    # 1.3 floor over the 0.7 magnet pockets
+# ---- top-cover openings (thin top plate, gen_cover.py) ----
+# The cover is no longer a bare rim ring: it also spans the key field,
+# so it hides the plate/switch bodies between caps and covers the
+# MCU/encoder wiring strip. Openings are fixed here so the render and
+# the CAD read the same numbers:
+#   key field = union of the 22 cap footprints (KLP Lamé Saddle/Thumb
+#               are all 17.48x16.48 in plan) dilated CAP_CLEAR/side —
+#               1.0 makes the 19mm-pitch caps merge into ONE opening
+#   MCU       = module courtyard + margin; the south edge is pulled to
+#               y=12.0 so the cover is >=3mm (in 3D) from the antenna
+#               centre at (118, 15.55) (ANT_CASE_CLEAR)
+#   encoder   = EC11 body 16.2x12.4 + 0.2/side
+#   USB/TRRS  = the SAME compute_ports passages as the tub (shared
+#               anchors; TRRS is now an edge notch because the lip is
+#               below the bore top)
+#   pwrsw     = body window + nail slot to the north skin
+CAP_FOOT_W = 17.48     # KLP Saddle / Thumb plan footprint (measured)
+CAP_FOOT_H = 16.48
+CAP_CLEAR = 1.0        # key-field opening clearance per side. gen_cover
+                       # fills the union's enclosed holes, so the
+                       # staggered caps become ONE opening with no cover
+                       # islands while the inner web to the MCU window
+                       # stays ~1.5mm.
+CAP_ROUND = 2.0        # cutter corner radius (molded look)
+MCU_WIN = (106.5, 12.0, 129.0, 48.6)      # x0, y0, x1, y1
+ENC_WIN = (111.5, -14.35, 124.5, -1.65)   # x0, y0, x1, y1: EC11
+                       # BODY at the cover band (measured 12.0x11.7 at
+                       # z 3.2..5.2, centred (118,-8)) + 0.5/side. The
+                       # old 17.2x13.2 window exposed the whole part;
+                       # this one covers the rectangular terminal base
+                       # and leaves only the body top + bushing/shaft.
+PWRSW_WIN = (101.0, 56.4, 111.6, 70.0)    # x0, y0, x1, y1: body window
+                       # extended through the north skin in ONE clean
+                       # notch (a 5mm nail slot beside the USB slot left
+                       # an enclosed 3x7mm cover island between them).
+
 SLOT_PAST_TOP = 0.5    # bore cut extends past the case top plane so the
 #   mouth's top face is the solid's own face, not a coincident-face seam
 SLOT_IN = 2.0          # bore starts inside the cavity (anchored in material)

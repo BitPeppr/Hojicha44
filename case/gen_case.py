@@ -51,7 +51,10 @@ sys.path.insert(0, os.path.join(REPO, "pcb", "generators"))
 import frame
 
 PLATE_DIR = os.path.join(REPO, "plate")
-OUT_DIR = os.path.join(REPO, "case", "out")
+# Order-vs-dev split: the v0.5.0 order record hashes case/out, so a design
+# revision can build to CASE_OUT (e.g. case/out-dev) and leave the placed
+# order untouched. The render asset builder reads the same variable.
+OUT_DIR = os.environ.get("CASE_OUT", os.path.join(REPO, "case", "out"))
 
 
 def r2(x):
@@ -90,6 +93,54 @@ def read_outline(path):
         return out
     except NameError:
         raise RuntimeError(f"no OUTLINE in {path}")
+
+
+def read_cutouts(path):
+    """(cx, cy, angle_deg) of the 22 square switch CUTOUT loops.
+
+    Every switch hole in the plate is a 14x14 square (the thumb cluster
+    holes are the same square, rotated), so a CUTOUT loop with 5
+    vertices is a switch; everything else (windows, encoder) has more
+    vertices.  The cap footprint (17.48x16.48 for every KLP Lamé
+    Saddle/Thumb) is centred on the switch, so these centres + angles
+    are what the cover's key-field opening needs.  The angle is
+    normalised to (-45, 45] because a square has 90-degree symmetry.
+    """
+    lines = open(path, encoding="latin-1").read().split("\n")
+    holes = []
+    i = 0
+    while i < len(lines):
+        if lines[i] == "0" and i + 1 < len(lines) and lines[i + 1] == "POLYLINE":
+            layer, verts, j = None, [], i + 2
+            while j < len(lines) and not (
+                    lines[j] == "0" and lines[j + 1] == "SEQEND"):
+                if lines[j] == "8" and j + 1 < len(lines) and \
+                        lines[j + 1] in ("OUTLINE", "CUTOUT", "PORON"):
+                    layer = lines[j + 1]
+                    j += 2
+                    continue
+                if lines[j] == "10":
+                    verts.append((float(lines[j + 1]), float(lines[j + 3])))
+                    j += 4
+                else:
+                    j += 1
+            if layer == "CUTOUT" and len(verts) == 5:
+                v = verts[:4]
+                cx = sum(p[0] for p in v) / 4.0
+                cy = sum(p[1] for p in v) / 4.0
+                ang = math.degrees(math.atan2(v[1][1] - v[0][1],
+                                              v[1][0] - v[0][0]))
+                while ang <= -45.0:
+                    ang += 90.0
+                while ang > 45.0:
+                    ang -= 90.0
+                holes.append((cx, cy, ang))
+            i = j + 2
+            continue
+        i += 1
+    if len(holes) != 22:
+        raise RuntimeError(f"{path}: {len(holes)} switch CUTOUTs, want 22")
+    return holes
 
 
 def segd(pt, a, b):
@@ -364,8 +415,16 @@ def compute_ports(tag, rim_ring, rnorm, skin, P):
             z0 = P.USB_MOUTH_Z0 if name == "usb" else P.PWRSW_MOUTH_Z0
             r = P.USB_MOUTH_R if name == "usb" else P.PWRSW_MOUTH_R
             z1 = P.TOP_LIP_Z + P.SLOT_PAST_TOP
-            cut = fillet_slot(base, v, u, w, z0, z1, r, travel)
-            d = {"kind": "fillet", "z0": z0, "z1": z1, "r": r}
+            if z0 >= P.TOP_LIP_Z:
+                # thin-cover lip: this port lives entirely ABOVE the tub
+                # (pwrsw body top 5.0 > lip 3.48) — nothing to cut here;
+                # the COVER carries the window (PWRSW_WIN + nail slot).
+                cut = None
+                d = {"kind": "none", "z0": z0, "z1": z1, "r": r,
+                     "skipped": True}
+            else:
+                cut = fillet_slot(base, v, u, w, z0, z1, r, travel)
+                d = {"kind": "fillet", "z0": z0, "z1": z1, "r": r}
         d.update(o=o, u=u, v=v, w=w, out=out, cut=cut)
         d["rect"] = rect_in_frame(o, u, v, -P.SLOT_IN, out, -w / 2, w / 2)
         ports[name] = d
@@ -614,7 +673,9 @@ def build_half(tag):
     # solid under each bore).
     ports = compute_ports(tag, rim_ring, rnorm, skin, P)
     for name in ("usb", "trrs", "pwrsw"):
-        solid = solid.cut(ports[name].pop("cut"))
+        cut = ports[name].pop("cut")
+        if cut is not None:
+            solid = solid.cut(cut)
 
     # v3.5 retention: recessed Ø4.3x2.2 magnet pockets in the band top
     # face. Stations are measured by magnet_stations against the SAME
@@ -948,13 +1009,12 @@ def check_half(tag, solid, info):
                      f" plug bottom 2.8 ({2.8 - P.USB_MOUTH_Z0:+.1f} "
                      f"to z0)")
         elif name == "trrs":
-            rneed = math.hypot(P.TRRS_FACE_HW,
-                               P.TRRS_FACE_TOP - P.TRRS_MOUTH_ZC)
-            shape = (f"bore Ø{2 * P.TRRS_MOUTH_R:.1f} zc"
-                     f"{P.TRRS_MOUTH_ZC} vs boot Ø{P.TRRS_BOOT_DIA} "
-                     f"({(2 * P.TRRS_MOUTH_R - P.TRRS_BOOT_DIA) / 2:.2f}"
-                     f"/side), drop-in face r {rneed:.2f} -> "
-                     f"{P.TRRS_MOUTH_R - rneed:.2f} clear")
+            shape = (f"side hole Ø{2 * P.TRRS_MOUTH_R:.1f} zc"
+                     f"{P.TRRS_MOUTH_ZC} vs straight plug barrel "
+                     f"Ø{P.TRRS_PLUG_DIA} "
+                     f"({(2 * P.TRRS_MOUTH_R - P.TRRS_PLUG_DIA) / 2:.2f}"
+                     f"/side); top {P.TRRS_MOUTH_ZC + P.TRRS_MOUTH_R:.1f} "
+                     f"keeps a roof under the 5.2 cover top")
         else:
             shape = (f"slot {P.PWRSW_MOUTH_W:.1f}w z"
                      f"{P.PWRSW_MOUTH_Z0:+.1f}..lip vs lever sweep "

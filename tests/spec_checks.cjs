@@ -232,6 +232,8 @@ try {
     const lip = rd("case/params.py", /^TOP_LIP_Z = ([\d.]+)/m);
     const ct = rd("case/params.py", /^COVER_T = ([\d.]+)/m);
     const cmd = rd("case/params.py", /^COVER_MAG_DEPTH = ([\d.]+)/m);
+    const topFoam = rd("case/params.py", /^TOP_FOAM_T = ([\d.]+)/m);
+    const topPreload = rd("case/params.py", /^TOP_PRELOAD = ([\d.]+)/m);
     // Post-audit round: more cross-generator ties that could drift.
     const tabwP = rd("plate/gen_plate.py", /^TAB_W = ([\d.]+)/m);
     const tabwC = rd("case/params.py", /^TAB_W = ([\d.]+)/m);
@@ -256,9 +258,13 @@ try {
         `${((band - mag) / 2).toFixed(2)} < 1.60 (absolute reviewer floor)`);
     if (Math.abs(gap - under) > 1e-9)
       problems.push(`GAP ${gap} != PLATE_UNDER ${under}`);
-    if (Math.abs(lip - (under + pt + 2.5)) > 1e-9)
-      problems.push(`TOP_LIP_Z ${lip} != PLATE_UNDER+PLATE_THICK+2.5 ` +
-        `(${(under + pt + 2.5).toFixed(2)})`);
+    // Thin-top round: the lip follows the 1.5mm TOP foam at TOP_PRELOAD
+    // (33%, inside the spec's <=50% ceiling), not a hand-set gap. The
+    // literal in params.py is the rounded build value, so allow +-0.01.
+    if (Math.abs(lip - (under + pt + topFoam * (1 - topPreload))) > 0.01)
+      problems.push(`TOP_LIP_Z ${lip} != PLATE_UNDER+PLATE_THICK+` +
+        `TOP_FOAM_T*(1-TOP_PRELOAD) ` +
+        `(${(under + pt + topFoam * (1 - topPreload)).toFixed(3)})`);
     if (ct - cmd < 1.2)
       problems.push(`cover pocket floor ${ct - cmd} < 1.2 (M4 fix)`);
     if (problems.length) fail("stack-ties", problems.join("; "));

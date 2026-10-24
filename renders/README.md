@@ -23,7 +23,11 @@ Reproduce the deliverable (bright hero + exploded):
 brew install --cask blender                 # once
 ./case/.venv/bin/pip install trimesh        # once
 bash renders/fetch_keycaps.sh               # once (network)
-./case/.venv/bin/python renders/build_assets.py
+# thin-top revision: build the case into a dev dir so the placed
+# v0.5.0 order record in case/out stays hash-valid
+CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python case/gen_case.py
+CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python case/gen_cover.py
+CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python renders/build_assets.py
 blender --background --python renders/scene.py -- \
     --samples 96 --res 1600x1000 --setups bright --shots hero,exploded
 ```
@@ -65,11 +69,17 @@ required alongside any use of these shapes.
 - The halves keep their committed positions (no synthetic split gap).
   The tub seam measures 2.11 mm; the plate and cover stop at the case
   spine, which is why the visible inner recess is wider than the seam.
-- Stack (z = 0 at the PCB top): substrate −1.60..0; plate 1.00..2.20;
-  switch body 0.30..3.30; cap stem tip 1.50; flat cap top 7.58; cover
-  4.70..7.70. The encoder top is 24.54; the encoder is left bare — the
-  product views carry no knob (the sourced knob is a stand-in and read
-  too tall and too fat).
+- Stack (z = 0 at the PCB top, thin-top revision): substrate −1.60..0;
+  bottom gaskets −1.55..1.00 (3.0 poron → 2.55); plate 1.00..2.20;
+  switch body 0.30..3.30; cap stem tip 1.50; top gaskets 2.20..3.20
+  (1.5 poron → 1.00, 33%); flat cap top 7.58, i.e. 2.4 mm proud of the
+  3.20..5.20 top plate. The plate stays at the Choc v1 clip band
+  (1.00..2.20) — moving it up would lose the clip engagement — so the
+  thin top comes from the lip/plate above it. The top plate carries the
+  key-field opening and the MCU/encoder/pwrsw windows, so the wiring
+  strip is covered. The encoder top is 24.54; the encoder is left bare
+  (no knob in the product views), and its rectangular terminal base is
+  hidden by the cover window (12.0x11.7 body + 0.5/side).
 
 ## Surface textures and studio floor
 
@@ -79,6 +89,10 @@ roughness range on the PA12 tub/cover (sintered grain), the PBT caps
 (finer orange-peel), the PC plate, the PCB soldermask/silk and the
 metal pads. Feature sizes are chosen for the 1600 px delivery (~3 px/mm),
 not for powder-scale detail that would disappear.
+
+The poron gasket pads are rendered at their compressed heights (bottom
+2.55, top 1.00) on the tab roots +2.0 mm outward, so the exploded view
+shows the real stack instead of empty space above the gaskets.
 
 The studio floor is a 4 m plane 0.2 mm under the tub bottom, with the
 same procedural treatment. It is created after the assembly bbox is

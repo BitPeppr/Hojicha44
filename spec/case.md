@@ -26,12 +26,12 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | BUILT — **ring cover v1** (`case/gen_cover.py`, gates exit-0): flush bezel ring spanning z **4.70..7.70** across the wall band (the lip follows the plate top: PLATE_TOP 2.20 + 2.5) (outer face = the tub skin face, inner edge = PCB rim + 0.5 — BRIDGES every tab pocket and presses the top poron pads at the designed 16.7%, gated per pad); USB + pwrsw passages full-depth, TRRS as a blind tunnel (ring stays one piece), 8×Ø4.3 magnet pockets mirroring the tub's stations; no cover material within 3mm of the antenna (gated like the tub) |
-| Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), 3mm thick |
+| Top case | BUILT — **top plate v4** (`case/gen_cover.py`, gates exit-0): thin plate spanning z **3.20..5.20** (lip 3.20 = plate top 2.20 + 1.00 compressed top foam; 2.0mm thick). It covers the key field between caps and the MCU/encoder strip: ONE merged key-field opening around the 22 KLP cap footprints (17.48×16.48 + 1.0/side), windows for the MCU, the EC11 body (12.0×11.7 measured at the cover band +0.5/side, hiding the terminal base), the pwrsw body/nail, the shared USB slot and a **Ø5.2 round TRRS side hole** closed by a 0.7mm roof (straight 3.5mm plugs; the old Ø9.5 boot bore was the "gaping" opening the review rejected). Presses the top poron pads; 8×Ø4.3×0.7 magnet pockets mirroring the tub's; keycaps stand 2.4mm proud; no cover material within 3mm of the antenna (gated) |
+| Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), **1.5mm** thick (thin-top revision; compressed to 1.00 at 33% — TOP_FOAM_T/TOP_PRELOAD in `case/params.py`) |
 | Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
 | Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.55mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.55mm into the underside, do NOT cut through; `plate/gen_plate.py` `DIODE_RELIEF_D`, asserted against `DIODE_TOP_MAX_Z = 1.40`). The pocket XY is the **SOD-123 outline MAX (DS30086 rev 31-2: E 2.55–2.85 long, D 1.40–1.70 wide — `D` is width, A 1.00–1.35 is the height)**, which also covers the KiCad STEP's widest section (2.700 × 1.550 at the plate plane; the earlier 2.566 × 1.416 was the chamfered top face), + **0.15/side** → pocket **3.15 × 2.00** (measured top **1.260mm**; relief floor at 1.00 + 0.55 = **1.55mm**, **0.15mm** over the 1.40 window top and 0.65mm of plate under it) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
-| Bottom gaskets | Same 7×4 pads under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
+| Bottom gaskets | Same 7×4 pads (3.0mm, compressed to 2.55 at 15%) under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
 | Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
 
 - **Bottom-case floor (case design):** floor under the PCB zone sits at
@@ -88,9 +88,10 @@ Encoder push over the window zone stays soft by design.
   never near 0% (rattle, pads can't damp unloaded) and never past ~50%
   (cell densification = accidental hard mount, harsh sound). Per half:
   cavity = 1.2 + 6×(1−c), c ∈ [0.15, 0.20] → **6.0–6.3 mm** sandwich
-  (rev-2's 1.2 plate + 2× 3mm pads).  The case as built measures
-  **6.25 mm** (shelf −1.55 → lip 4.70 = 2.55 + 1.2 plate + 2.5 gap),
-  i.e. mid-band.
+  for a pair of 3mm pads. The thin-top revision deliberately runs the
+  top foam harder: **4.75 mm** (shelf −1.55 → lip 3.20 = 2.55 bottom +
+  1.2 plate + 1.00 top), i.e. 3.0mm bottom at 15% and 1.5mm top at 33%
+  — inside the ≤50% ceiling, and the cover face is the rigid stop.
 - Plate note: foam spec is plate-agnostic; recommended **PC 1.2 mm**
   (softest, most flex, deepest sound) or **POM 1.2 mm** (balanced,
   good feel, stable). Bounce comes from plate span between tabs; foam

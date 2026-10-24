@@ -17,12 +17,14 @@ switch footprint to a plate hole and ABORTS if any is off by > 0.05 mm.
 The caps, switch bodies and thumb rotations all come from the matched
 hole (center + polygon angle), never from a separately-computed origin.
 
-STACK (z=0 is the PCB top):
+STACK (z=0 is the PCB top; thin-top round):
   PCB substrate           -1.60..0        (STEP top 1.60 shifted down)
+  bottom gaskets          -1.55..1.00     (3.0 poron compressed to 2.55)
   plate                    1.00..2.20
   switch body              0.30..3.30, cap stem tip 1.50
-  flat KLP Saddle top      7.58           (cover bezel plane 7.70)
-  cover ring               4.70..7.70
+  top gaskets              2.20..3.20     (1.5 poron compressed to 1.00)
+  flat KLP Saddle top      7.58           (2.4 mm proud of the top case)
+  top cover plate          3.20..5.20     (key field + component windows)
   encoder left bare (no knob in the product views)
 
 The assembled halves are used at their committed positions — the case
@@ -45,7 +47,7 @@ PCB_TOP_IN_STEP = 1.60   # substrate top inside the kicad-cli STEP
 PLATE_Z = 1.00           # plate underside above the PCB top (GAP)
 CAP_STEM_Z = 1.5         # cap stem tip above the PCB top (inside switch)
 # exploded view: keep the tub/PCB/switch stack, lift the top layers apart
-EXPLODE = {"cover": 46.0, "caps": 26.0, "plate": 14.0}
+EXPLODE = {"cover": 40.0, "caps": 26.0, "plate": 14.0, "gaskets": 14.0}
 # nice!nano courtyard in the FOOTPRINT's local (file) frame, from the
 # embedded Socket_Strips_2x12_P2.54mm_NiceNano footprint (KiCad 10)
 NANO_COURT = (-17.07, -29.94, 2.85, 2.60)   # x0, y0, x1, y1
@@ -386,6 +388,9 @@ def main():
 
     placements = json.load(open(os.path.join(ASSETS, "placements.json")))
     cutouts = json.load(open(os.path.join(ASSETS, "cutouts.json")))
+    lands = {h: json.load(open(os.path.join(
+        REPO, "plate", f"Hojicha44-{h}-lands.json")))
+        for h in ("Left", "Right")}
 
     m_cap = pbr("cap_pbt", (0.032, 0.031, 0.034), rough=0.44)
     m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
@@ -393,6 +398,8 @@ def main():
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
     m_usb = pbr("usb_shell", (0.62, 0.63, 0.65), rough=0.28, metal=1.0)
     m_sock = pbr("nano_socket", (0.028, 0.028, 0.030), rough=0.45)
+    m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
+    micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
     m_case = pbr("case_pa12", (0.042, 0.044, 0.048), rough=0.60)
     m_plate = pbr("plate_pc", (0.050, 0.050, 0.055), rough=0.36)
     # PBT caps ~0.7 mm orange-peel; PA12 case a coarser sintered grain;
@@ -518,6 +525,26 @@ def main():
                          (13.6, 13.6, 3.0), m_sw, c["angle"])
             parts[h].setdefault("swbodies", []).append(o)
 
+        # ---- poron gaskets on every tab, compressed to the real
+        # assembly heights (bottom 3.0 -> 2.55, top 1.5 -> 1.28). They
+        # stick to the plate tabs, so the explode lifts them with the
+        # plate; the pad centre is the tab root + 2.0mm outward (the
+        # same rule plate/gen_plate.py uses for the PORON DXF layer).
+        for t in lands[half]["tabs"]:
+            a = math.radians(t["angle"])
+            px = t["x"] + math.cos(a) * 2.0
+            py = t["y"] + math.sin(a) * 2.0
+            o = add_cube(f"gsk_b_{h}_{t['x']:.0f}_{t['y']:.0f}",
+                         (px * SCALE, py * SCALE, -0.275 * SCALE),
+                         (4.0, 7.0, 2.55), m_poron, t["angle"])
+            parts[h].setdefault("gaskets", []).append(o)
+            o = add_cube(f"gsk_t_{h}_{t['x']:.0f}_{t['y']:.0f}",
+                         (px * SCALE, py * SCALE, 2.70 * SCALE),
+                         (4.0, 7.0, 1.00), m_poron, t["angle"])
+            parts[h].setdefault("gaskets", []).append(o)
+        print(f"[scene] {half}: {len(lands[half]['tabs'])} tabs, top+bottom "
+              f"gaskets at the compressed heights", flush=True)
+
         # ---- nice!nano v2 stand-in (the VRML model kicad-cli skips),
         # dimensioned from the committed footprint courtyard
         nanos = [p for p in pl if p["ref"].startswith("U_")]
@@ -584,7 +611,7 @@ def main():
     bpy.context.view_layer.update()
     for h in parts:
         for grp in ("board", "plate", "tub", "cover", "caps",
-                    "swbodies", "nano"):
+                    "swbodies", "nano", "gaskets"):
             objs = parts[h].get(grp, [])
             if not objs:
                 print(f"[diag] {h}/{grp}: EMPTY", flush=True)
@@ -639,7 +666,8 @@ def main():
         sdir = os.path.join(args.out, setup)
         os.makedirs(sdir, exist_ok=True)
         if "hero" in shots:
-            cam = add_cam("hero", (cx - 0.24, cy - 0.44, 0.30),
+            # review: slightly higher, looking down more (30.6 -> 34.5 deg)
+            cam = add_cam("hero", (cx - 0.24, cy - 0.44, 0.345),
                           (cx, cy, 0.004), lens=50)
             render_to(cam, os.path.join(sdir, "hero.png"), res,
                       args.samples, args.device)
@@ -647,8 +675,9 @@ def main():
             for grp, dz in EXPLODE.items():
                 for h in parts:
                     move_z(parts[h].get(grp, []), dz * SCALE)
-            cam = add_cam("exploded", (cx - 0.10, cy - 0.52, 0.47),
-                          (cx, cy, 0.055), lens=50)
+            # review: slightly lower + flatter (38 -> 32 deg, 60mm lens)
+            cam = add_cam("exploded", (cx - 0.12, cy - 0.624, 0.45),
+                          (cx, cy, 0.055), lens=60)
             render_to(cam, os.path.join(sdir, "exploded.png"), res,
                       args.samples, args.device)
             for grp, dz in EXPLODE.items():

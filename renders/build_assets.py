@@ -453,12 +453,12 @@ def main():
     for half in ("Left", "Right"):
         plate_glb(half, os.path.join(OUT, "plate", f"Hojicha44-{half}.glb"))
 
-    print("== 4. case solids (convert from case/out)")
+    case_dir = os.environ.get("CASE_OUT", os.path.join(REPO, "case", "out"))
+    print(f"== 4. case solids (convert from {os.path.relpath(case_dir, REPO)})")
     import trimesh
     for half in ("Left", "Right"):
         for part in ("tub", "cover"):
-            src = os.path.join(REPO, "case", "out",
-                               f"Hojicha44-{half}-{part}.stl")
+            src = os.path.join(case_dir, f"Hojicha44-{half}-{part}.stl")
             mesh = trimesh.load(src, force="mesh")
             scene = trimesh.Scene({f"{part}_{half}": mesh})
             dst = os.path.join(OUT, "case", f"Hojicha44-{half}-{part}.glb")
