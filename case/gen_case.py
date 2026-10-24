@@ -12,7 +12,7 @@ Never hand-drawn; one generic build_half() routine, both halves.
 Outputs (gitignored scratch): case/out/Hojicha44-{half}-tub.step/.stl
 
 Construction (z=0 is the PCB top; see params.py for sources):
-  1. solid   = prism(skin) from the floor bottom (-7.6) to TOP_LIP_Z,
+  1. solid   = prism(skin) from the floor bottom (FLOOR_Z - FLOOR_T = -6.15) to TOP_LIP_Z,
                skin = ONE CASE_OUTSET dilation of the PCB rim (v3: no
                tab bulges, no bosses)
   2. well    = prism(plate outline + RIM_CLEAR) cut FLOOR_Z..lip
@@ -619,7 +619,7 @@ def build_half(tag):
         assert t["protrusion"] == params.TAB_L, f"{tag}: TAB_L drift"
 
     cav_poly = offset_pts(outline, P.RIM_CLEAR)     # plate + clearance
-    z_bot = P.FLOOR_Z - 2.0                          # 2mm floor slab
+    z_bot = P.FLOOR_Z - P.FLOOR_T                      # floor slab
 
     # v3.1 exterior: ONE constant dilation of the PCB RIM — the plate
     # outline includes the tab tongues, and dilating it gave the case
@@ -703,8 +703,8 @@ def check_half(tag, solid, info):
     P = params
     bad = []
     bb = solid.BoundingBox()
-    if abs(bb.zmin - (P.FLOOR_Z - 2.0)) > 0.05:
-        bad.append(f"zmin {bb.zmin:.2f} != floor slab {P.FLOOR_Z - 2.0}")
+    if abs(bb.zmin - (P.FLOOR_Z - P.FLOOR_T)) > 0.05:
+        bad.append(f"zmin {bb.zmin:.2f} != floor slab {P.FLOOR_Z - P.FLOOR_T}")
     if abs(bb.zmax - P.TOP_LIP_Z) > 0.05:
         bad.append(f"zmax {bb.zmax:.2f} != lip {P.TOP_LIP_Z}")
     # pocket centers follow tab roots (+half protrusion along tongue)

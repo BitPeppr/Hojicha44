@@ -33,6 +33,19 @@ Blender visualises.
 values of ITS build — those are historical, not current; the v3.6
 entry below is the current truth for every number it quotes.)
 
+- v4.1 (2026-10-24, user "make the whole keyboard lower" round):
+  the assembled case was 12.80mm tall and the bottom tub (10.80mm)
+  carried almost all of it — 4.0mm of air under the PCB plus a 2.0mm
+  slab. No-trim limits: FLOOR_CLEAR 1.0mm under the deepest untrimmed
+  part (encoder legs −3.65) drops FLOOR_Z −5.6 → **−4.65**, and the
+  floor slab got its own constant (FLOOR_T 2.0 → **1.7**; MJF-safe,
+  braced by the 8 tab pockets). Tub bottom −7.60 → **−6.35**: assembled
+  case **12.80 → 11.55mm**, desk→cap-top 15.18 → **13.93mm**. Tub volume
+  67.3 → 57.5 cm³ (tripwire [55,82] intact), wall_min 2.62 unchanged;
+  gates exit-0 both halves. (A further ~0.8mm is available only by
+  clipping the THT leads after soldering — deepest untrimmable feature
+  is the socket bump −2.85 — not enabled: user prefers no trimming.)
+
 - v4.0 (2026-10-24, user "thin top / component-following" round):
   **the top case is a 2.0mm TOP PLATE at 3.20..5.20**, not a rim ring.
   User review: the ring read as an extraordinarily thick top and the

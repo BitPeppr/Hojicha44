@@ -42,17 +42,23 @@ TOP_GAP = TOP_FOAM_T * (1 - TOP_PRELOAD)         # = 1.00
 # (M1, review-corrected; wording fixed 2026-10-21 — the hotswap SOCKETS
 # are SOLDERED BENEATH (B.Cu pads, body on B.Fab/B.SilkS) and dip ~1.25
 # below the board bottom, i.e. ~-2.85 abs, so they stay well clear of
-# the -5.6 floor; the module itself is 4.5..7.7 above the board).
+# the floor; the module itself is 4.5..7.7 above the board).
 # Measured ruler: encoder
 # legs -3.65 (vendored ROT_EC11E STEP; footprint maps it 1:1 into the
 # PCB frame — rotate 0, no z offset), TRRS THT pin tips -3.0 (vendored
 # PJ-320A STEP), Choc socket bump -1.25 (Kailh datasheet), slide-switch
 # legs <=-3.5 (WS-SLTV family bound; caliper on first article), JST PH
-# ~-2.5 (family bound). Deepest known -3.65 -> -5.6 keeps ~1.95mm
-# clearance. A flat floor at sandwich depth still collides (the PCB
-# bottom is -1.6); the tub MUST step down here (spec/case.md).
-FLOOR_Z = -5.6  # floor top surface (spec-derived, see ruler above;
-# first-article caliper re-measures the family bounds)
+# ~-2.5 (family bound). Deepest known -3.65 -> FLOOR_Z keeps
+# FLOOR_CLEAR mm clearance (no trimming; encoder leads left long).
+# A flat floor at sandwich depth still collides (the PCB bottom is
+# -1.6); the tub MUST step down here (spec/case.md).
+# (FUTURE OPTION: if the THT leads are clipped after soldering, the
+# deepest untrimmable feature is the socket bump -2.85 and the floor can
+# rise by ~0.8mm; not enabled without a build-step change.)
+FLOOR_CLEAR = 1.0  # clearance under the deepest untrimmed part (-3.65)
+FLOOR_Z = -3.65 - FLOOR_CLEAR  # floor top surface = -4.65 (spec ruler above)
+FLOOR_T   = 1.7   # floor slab (MJF PA12; flat, braced by tab pockets)
+                  # first-article caliper re-measures the family bounds
 
 # ---- outer skin (v3: uniform dilation, Sofle/Corne/Lily lesson) ----
 # ONE constant offset of the PCB RIM (gen_case.py). Notches shallower

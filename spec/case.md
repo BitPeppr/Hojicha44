@@ -31,11 +31,11 @@ Encoder push over the window zone stays soft by design.
 | Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
 | Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.55mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.55mm into the underside, do NOT cut through; `plate/gen_plate.py` `DIODE_RELIEF_D`, asserted against `DIODE_TOP_MAX_Z = 1.40`). The pocket XY is the **SOD-123 outline MAX (DS30086 rev 31-2: E 2.55–2.85 long, D 1.40–1.70 wide — `D` is width, A 1.00–1.35 is the height)**, which also covers the KiCad STEP's widest section (2.700 × 1.550 at the plate plane; the earlier 2.566 × 1.416 was the chamfered top face), + **0.15/side** → pocket **3.15 × 2.00** (measured top **1.260mm**; relief floor at 1.00 + 0.55 = **1.55mm**, **0.15mm** over the 1.40 window top and 0.65mm of plate under it) |
 | PCB | 1.6mm, rev-1 release (hangs from the plate on the switches) |
-| Bottom gaskets | Same 7×4 pads (3.0mm, compressed to 2.55 at 15%) under each tab (pairs at one XY); tub floor steps to −5.6 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
-| Bottom case | BUILT — bottom tub v3.5 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations); acoustic foam optional, non-structural |
+| Bottom gaskets | Same 7×4 pads (3.0mm, compressed to 2.55 at 15%) under each tab (pairs at one XY); tub floor steps to −4.65 under the PCB zone (sockets + clearance) — foam sets tab height, floor depth is separate (see `case/params.py`) |
+| Bottom case | BUILT — bottom tub v4.1 (`case/gen_case.py`, gates exit-0; shaped ports + recessed magnet stations; floor −4.65, slab 1.7, tub bottom −6.35 → **assembled case 11.55mm tall**, desk→cap-top 13.93); acoustic foam optional, non-structural |
 
 - **Bottom-case floor (case design):** floor under the PCB zone sits at
-  FLOOR_Z −5.6 (PCB-top frame), provisioned by the BELOW-PCB protrusions
+  FLOOR_Z −4.65 (PCB-top frame), provisioned by the BELOW-PCB protrusions
   (M1, review-corrected 2026-10-18; wording fixed 2026-10-21 — the
   hotswap SOCKETS are SOLDERED BENEATH (their pads are on B.Cu, the
   footprint body on B.Fab/B.SilkS) and dip ~1.25 below the board
@@ -46,10 +46,12 @@ Encoder push over the window zone stays soft by design.
   offset), TRRS THT pin tips **−3.0** (vendored PJ-320A STEP), Choc
   socket bump **−1.25** (Kailh datasheet), slide-switch legs ≤**−3.5**
   (WS-SLTV family bound — caliper on the first article), JST PH ~**−2.5**
-  (family bound). Deepest known = −3.65 → FLOOR_Z −5.6 keeps ~1.95mm
-  clearance; the tab-support shelf at SHELF_Z −1.55 is a separate
-  feature (foam sets tab height, floor depth is separate —
-  `case/params.py`).
+  (family bound). Deepest known = −3.65 (no trimming; leads left long)
+  → FLOOR_Z −4.65 keeps 1.0mm clearance, and the floor slab is
+  **FLOOR_T 1.7** (tub bottom −6.35; the earlier −5.6/2.0 slab cost
+  1.2mm of overall height the user wanted back). The tab-support shelf
+  at SHELF_Z −1.55 is a separate feature (foam sets tab height, floor
+  depth is separate — `case/params.py`).
 
 ## Sources (suppliers, verified)
 
