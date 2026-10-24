@@ -23,13 +23,22 @@ STACK (z=0 is the PCB top; thin-top round):
   plate                    1.00..2.20
   switch body              0.30..3.30, cap stem tip 1.50
   top gaskets              2.20..3.20     (1.5 poron compressed to 1.00)
-  KLP Normal_Tilted top    11.14          (~5.9 mm proud of the band)
+  KLP Normal_Tilted top    11.14          (~5.9 mm proud of the cover;
+                                           thumbs wear the same family)
   top cover plate          3.20..5.20     (flat, no-indent; 0.4 chamfer
                                            on the outer-rim top edges)
-  encoder = 15mm-actuator variant (shaft truncated at 15.0, two-tone)
+  encoder = short-shaft EC11-class (tip 13.5, two-tone) under a low
+  fluted alu knob (OD 16.8, H 9.2, crown ~15.3, skirt rim+0.9 so the
+  0.8mm max push travel can never hit the cover)
 
-The assembled halves are used at their committed positions — the case
-files already place them in one shared layout; no artificial split gap.
+COLOURWAY (round 4: "make it less bland"): warm-bone satin PBT caps,
+mid-grey matte PLA case, near-black waxy POM plate, machined-metal knob
+and encoder, gold traces on the nice!nano.
+
+POSE (round 4): for the product shots the halves are parented to an
+empty on each outer bottom edge, then pushed 7 mm apart, splayed 4 deg
+in plan and tented 5 deg — the classic Sofle/Corne wing presentation.
+Pure render transform; the case files build the assembled layout.
 """
 import bpy
 import sys
@@ -393,7 +402,7 @@ def main():
         REPO, "plate", f"Hojicha44-{h}-lands.json")))
         for h in ("Left", "Right")}
 
-    m_cap = pbr("cap_pbt", (0.030, 0.030, 0.035), rough=0.38)
+    m_cap = pbr("cap_pbt", (0.55, 0.525, 0.475), rough=0.42)  # warm bone
     m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
     m_nano = pbr("nano_pcb", (0.010, 0.010, 0.012), rough=0.42)   # black mask
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
@@ -403,25 +412,32 @@ def main():
     m_silk = pbr("nano_silk", (0.80, 0.80, 0.77), rough=0.55)
     m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
     micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
-    m_case = pbr("case_pa12", (0.046, 0.048, 0.052), rough=0.62)
-    m_plate = pbr("plate_pc", (0.028, 0.029, 0.034), rough=0.20)  # smoke PC
-    m_enc_body = pbr("enc_gunmetal", (0.085, 0.086, 0.095),
-                     rough=0.42, metal=0.85)
-    m_enc_shaft = pbr("enc_steel", (0.55, 0.56, 0.60), rough=0.30, metal=1.0)
-    # multi-material pass (user review: "looks like a sculpture, not a
-    # functioning piece of equipment"): PBT caps get a FINE satin grain,
-    # the PA12 case a clearly coarser sintered grain, the PC plate a
-    # darker glossier smoke with almost none, the encoder reads as metal.
-    micro_texture(m_cap, 42, 0.28, 0.00022, 0.33, 0.45, detail=5.0)
+    # colourway hierarchy (user review 2026-10-24: keycap lighter than
+    # case, case lighter than plate, plate glossier than the matte PLA
+    # case — a POM/PP plate against a printed PLA shell):
+    #   caps   = warm bone, satin fine grain     (lightest)
+    #   case   = mid grey, coarse sintered grain  (middle)
+    #   plate  = near-black waxy POM gloss        (darkest, smoothest)
+    m_case = pbr("case_pla", (0.30, 0.30, 0.315), rough=0.62)
+    m_plate = pbr("plate_pom", (0.035, 0.036, 0.042), rough=0.14)
+    m_knob = pbr("knob_alu", (0.72, 0.73, 0.75), rough=0.26, metal=1.0)
+    m_enc_body = pbr("enc_gunmetal", (0.16, 0.16, 0.175),
+                     rough=0.30, metal=0.9)
+    m_enc_shaft = pbr("enc_steel", (0.66, 0.67, 0.70), rough=0.20, metal=1.0)
+    # texture pass: PBT caps a FINE satin grain, the PLA case a clearly
+    # coarser grain, the POM plate almost none (waxy gloss), the knob and
+    # encoder read as machined metal
+    micro_texture(m_cap, 42, 0.28, 0.00022, 0.36, 0.48, detail=5.0)
     micro_texture(m_sw, 40, 0.20, 0.00004, 0.34, 0.42)
     micro_texture(m_nano, 60, 0.15, 0.00003, 0.38, 0.48)
     micro_texture(m_chip, 120, 0.10, 0.00002, 0.28, 0.34)
     micro_texture(m_usb, 200, 0.10, 0.00002, 0.24, 0.32)
     micro_texture(m_sock, 50, 0.15, 0.00003, 0.42, 0.50)
     micro_texture(m_case, 85, 0.40, 0.00055, 0.52, 0.68, detail=5.0)
-    micro_texture(m_plate, 240, 0.10, 0.00002, 0.17, 0.24)
-    micro_texture(m_enc_body, 140, 0.18, 0.00004, 0.36, 0.48)
-    micro_texture(m_enc_shaft, 260, 0.08, 0.00002, 0.26, 0.34)
+    micro_texture(m_plate, 240, 0.10, 0.00002, 0.11, 0.17)
+    micro_texture(m_knob, 300, 0.06, 0.000015, 0.22, 0.30)
+    micro_texture(m_enc_body, 140, 0.18, 0.00004, 0.24, 0.34)
+    micro_texture(m_enc_shaft, 260, 0.08, 0.00002, 0.16, 0.24)
 
     parts = {}
     for half in ("Left", "Right"):
@@ -501,15 +517,17 @@ def main():
 
         # ---- caps (KLP Lamé; user review: the flat Saddle field read
         # as "basically inline with case" — switch to the TALL Tilted
-        # family, cap tops ~11.1mm abs, ~5.9mm proud of the outer band.
-        # The tilted family has no homing-bar variant, so the homing
-        # keys wear the same cap)
+        # family, cap tops ~11.1mm abs, ~5.9mm proud of the cover.
+        # Round 4 review: the four THUMBS wore the low KLP "Thumb"
+        # profile and read as sunken below the rim ("case seems taller
+        # than the keys, hard to press inside the case holes") — the
+        # KLP families share the foot, so thumbs now wear the same tall
+        # Normal_Tilted as the fingers (Sofle/Lily/Corne thumb clusters
+        # sit at full cap height too). The tilted family has no homing
+        # variant; homing keys wear the same cap.
         for p in sw:
             c = holes[p["ref"]]
-            if p["y"] < -10.0:
-                variant = "thumb"
-            else:
-                variant = "normal_tilted"
+            variant = "normal_tilted"
             _, roots_c, objs = import_glb(os.path.join(
                 ASSETS, "parts", f"klp_{variant}.glb"),
                 f"cap_{h}_{p['ref']}")
@@ -687,32 +705,47 @@ def main():
                                    1.3 * SCALE),
                                   (2.6, 29.0, 2.6), m_sock))
 
-        # ---- EC11: user-approved 15mm-actuator variant (BOM primary).
-        # The board GLB carries the vendored 20mm-class STEP as one mesh:
-        # (a) truncate the shaft at 15.0mm above the board (the ALPS
-        # L1=15 reading, datum = mounting surface), capping the cut ring,
+        # ---- EC11: short-shaft EC11-class variant (BOM primary) under a
+        # low fluted knob. The board GLB carries the vendored 20mm-class
+        # ALPS STEP as one mesh: (a) truncate the shaft at 13.5mm above
+        # the board — the low-profile class the Sofle Choc build guide
+        # documents ("prefer short shaft... 10mm D-shaped shaft") and the
+        # KLOTZ/MKUltra knob aesthetic (a 2-3mm stem above the bush);
         # (b) split body/bush from shaft at the 11.3 step plane for a
-        # two-tone finish (gunmetal body, steel shaft).
+        # two-tone finish (gunmetal body, bright steel shaft). The knob
+        # then covers everything above the rim — no bare shaft shows.
         enc_objs = [o for o in parts[h]["board"]
                     if o.type == "MESH" and o.name.startswith("ENC_")]
         if enc_objs:
             import bmesh
-            ENC_SPLIT_Z, ENC_SHAFT_TOP_Z = 11.3, 15.0
+            ENC_SPLIT_Z, ENC_SHAFT_TOP_Z = 11.35, 13.5
             for o in enc_objs:
-                me_body = o.data.copy()
+                # round-4 debug: the board glb keeps its -90 deg X
+                # counter-rotation (and the 0.001 scale) ON THE OBJECT,
+                # so raw mesh-local z is NOT design z (it is design y!)
+                # -- the first truncation silently matched nothing and
+                # the full 24.5mm shaft kept rendering. All selection is
+                # therefore done in world design metres via matrix_world;
+                # the mesh itself stays untouched in its local frame.
+                mw = o.matrix_world.copy()
                 bm = bmesh.new()
+                me_body = o.data.copy()
                 bm.from_mesh(me_body)
-                drop = [v for v in bm.verts if v.co.z > ENC_SHAFT_TOP_Z]
+                dz = {v: (mw @ v.co).z for v in bm.verts}
+                top = ENC_SHAFT_TOP_Z * SCALE
+                drop = [v for v in bm.verts if dz[v] > top]
+                n_trunc = len(drop)
                 if drop:
                     bmesh.ops.delete(bm, geom=drop, context="VERTS")
                     bmesh.ops.holes_fill(
                         bm, edges=[e for e in bm.edges
                                    if len(e.link_faces) == 1], sides=0)
+                split = ENC_SPLIT_Z * SCALE
                 bm_body, bm_shaft = bmesh.new(), bmesh.new()
                 vmap_body, vmap_shaft = {}, {}
                 for f in bm.faces:
-                    fz = [v.co.z for v in f.verts]
-                    if min(fz) >= ENC_SPLIT_Z - 1e-6:
+                    fz = [dz[v] for v in f.verts]
+                    if min(fz) >= split - 1e-9:
                         tgt, vmap = bm_shaft, vmap_shaft
                     else:
                         tgt, vmap = bm_body, vmap_body
@@ -737,14 +770,44 @@ def main():
                     bm_shaft.to_mesh(me_shaft)
                     bm_shaft.free()
                     so = bpy.data.objects.new(o.name + "_shaft", me_shaft)
-                    so.location = o.location
-                    so.rotation_euler = o.rotation_euler
+                    # inherit the body's full local transform + parent so
+                    # the local-frame shaft mesh lands exactly on it
+                    so.parent = o.parent
+                    so.matrix_basis = o.matrix_basis.copy()
+                    so.rotation_mode = o.rotation_mode
                     bpy.context.collection.objects.link(so)
+                    bpy.context.view_layer.update()
                     assign([so], m_enc_shaft)
                     parts[h]["board"].append(so)
+                print(f"  [enc] {o.name}: truncated {n_trunc} verts "
+                      f"(top {ENC_SHAFT_TOP_Z}mm), shaft faces "
+                      f"{len(vmap_shaft)}", flush=True)
+            # ---- low fluted knob on the short shaft (user review round 4:
+            # "add a knob to it, not too tall, not too thin, not toooo
+            # fat"). parts/knob.glb: OD 16.8, H 9.2, 18 grip ridges, a
+            # lighter machined-aluminium finish. The skirt bottom lands
+            # rim+0.9 = 6.1 abs (push-travel clearance), the crown
+            # reaches ~15.3 — just above the 11.14 cap tops. Placed on
+            # each truncated shaft's axis.
+            bpy.context.view_layer.update()
+            for o in list(parts[h]["board"]):
+                if o.type == "MESH" and o.name.endswith("_shaft"):
+                    (kx0, ky0, _), (kx1, ky1, _) = bbox_mm([o])
+                    _, knob_roots, knob_objs = import_glb(
+                        os.path.join(ASSETS, "parts", "knob.glb"),
+                        f"knob_{h}")
+                    for ko in knob_roots:
+                        # skirt bottom = rim 5.2 + push travel 0.8 (EC11
+                        # push is 0.5 +/- 0.3) + 0.1: the skirt must
+                        # NEVER hit the cover when the knob is pressed
+                        ko.location = ((kx0 + kx1) / 2,
+                                       (ky0 + ky1) / 2,
+                                       6.1 * SCALE)
+                    assign(knob_objs, m_knob)
+                    parts[h].setdefault("knob", []).extend(knob_objs)
             print(f"[scene] {half}: encoder truncated to {ENC_SHAFT_TOP_Z}mm "
-                  f"+ two-tone metal split (15mm-actuator BOM variant)",
-                  flush=True)
+                  f"+ two-tone metal split + low fluted knob "
+                  f"(short-shaft EC11-class BOM variant)", flush=True)
 
     # ---- smooth curved parts (welded glbs make this effective)
     for h in parts:
@@ -756,7 +819,7 @@ def main():
     bpy.context.view_layer.update()
     for h in parts:
         for grp in ("board", "plate", "tub", "cover", "caps",
-                    "swbodies", "nano", "gaskets"):
+                    "swbodies", "nano", "gaskets", "knob"):
             objs = parts[h].get(grp, [])
             if not objs:
                 print(f"[diag] {h}/{grp}: EMPTY", flush=True)
@@ -785,6 +848,47 @@ def main():
             for o in parts[h]["plate"]:
                 o.hide_render = True
 
+    # ---- presentation pose (user review round 4: "two halves slightly
+    # further apart, maybe even slightly angled away from each other"):
+    # every object of a half is parented to an empty sitting on its
+    # OUTER BOTTOM long edge, then the empty is splayed 4° in plan,
+    # tented 5° about that edge (the hinge edge stays on the desk, so
+    # nothing sinks below the floor) and pushed 7mm further out — the
+    # classic Sofle/Corne product-shot wing. Pure render transform: the
+    # committed case files still build the assembled 2.8mm-seam layout.
+    # round-5 review: 7mm + 4 deg pushed the halves out of frame
+    # ("can't see most of the left board") — halve the horizontal
+    # spread, keep the tent (that is the "angled away" that reads)
+    SPLAY_DEG, TENT_DEG, SPLIT_MM = 2.5, 5.0, 2.5
+    for h, sgn in (("L", -1.0), ("R", 1.0)):
+        half_objs = [o for lst in parts[h].values()
+                     for o in (lst if isinstance(lst, list) else [])]
+        (hx0, hy0, hz0), (hx1, hy1, _) = bbox_mm(parts[h]["tub"])
+        pe = bpy.data.objects.new(f"pose_{h}", None)
+        pe.empty_display_size = 0.02
+        bpy.context.collection.objects.link(pe)
+        pe.location = ((hx0 if sgn < 0 else hx1), (hy0 + hy1) / 2, hz0)
+        bpy.context.view_layer.update()
+        # python parenting does NOT keep world transforms (no auto
+        # parent-inverse like the UI operator) — without this every
+        # child jumps by the pivot and the assembly lands ~2x out
+        pe_inv = pe.matrix_world.inverted()
+        for o in half_objs:
+            o.parent = pe
+            o.matrix_parent_inverse = pe_inv.copy()
+        bpy.context.view_layer.update()
+        # tent: +x edge lifts for the left half, -x edge for the right;
+        # splay: far end swings outward (CCW left, CW right)
+        pe.rotation_euler = (
+            0.0,
+            math.radians(TENT_DEG if sgn > 0 else -TENT_DEG),
+            math.radians(SPLAY_DEG if sgn < 0 else -SPLAY_DEG))
+        pe.location.x += sgn * SPLIT_MM * SCALE
+        bpy.context.view_layer.update()
+        print(f"[scene] pose {h}: splayed {SPLAY_DEG} deg, tented "
+              f"{TENT_DEG} deg on the outer edge, split +{SPLIT_MM} mm",
+              flush=True)
+
     # ---- render queue
     (bx0, by0, bz0), (bx1, by1, bz1) = bbox_mm(all_objs)
     cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
@@ -799,8 +903,8 @@ def main():
             size=4.0, location=(cx, cy, bz0 - 0.0002))
         floor = bpy.context.active_object
         floor.name = "studio_floor"
-        m_floor = pbr("studio_floor", (0.52, 0.53, 0.56), rough=0.82)
-        micro_texture(m_floor, 800, 0.60, 0.0008, 0.70, 0.88, detail=3.0)
+        m_floor = pbr("studio_floor", (0.40, 0.385, 0.365), rough=0.85)
+        micro_texture(m_floor, 800, 0.60, 0.0008, 0.72, 0.90, detail=3.0)
         assign([floor], m_floor)
         print(f"[scene] floor at z {bz0*1000 - 0.2:.2f} mm", flush=True)
 
@@ -812,8 +916,8 @@ def main():
         os.makedirs(sdir, exist_ok=True)
         if "hero" in shots:
             # review: slightly higher, looking down more (30.6 -> 34.5 deg)
-            cam = add_cam("hero", (cx - 0.24, cy - 0.44, 0.345),
-                          (cx, cy, 0.004), lens=50)
+            cam = add_cam("hero", (cx - 0.30, cy - 0.52, 0.40),
+                          (cx, cy, 0.010), lens=50)
             render_to(cam, os.path.join(sdir, "hero.png"), res,
                       args.samples, args.device)
         if "exploded" in shots:

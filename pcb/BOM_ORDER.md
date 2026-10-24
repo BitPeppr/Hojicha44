@@ -21,13 +21,13 @@ re-check at cart time. PCB fab choices are NOT here: see
 
 | Buy | Qty | Part | ~Price | Note |
 |---|---|---|---|---|
-| ☐ | 2 | Alps **EC11E 15mm-actuator** (order the 30-detent/15-pulse + push variant, L1=15 — e.g. the EC11E1530401 class; **confirm L1=15 AND "with switch" on the ALPS product page before ordering**; TME/LCSC stock varies) | ~$2.50 | ⚠ the classic **EC11E15244G1** (TME, $2.58) is the FALLBACK: 20mm-class actuator → a 24.5mm-tall bare shaft (user review 2026-10-24: too tall with no knob). Same footprint/body either way — **no case/plate change**; the first-article encoder caliper covers the body envelope either way |
+| ☐ | 2 | **Short-shaft EC11-class rotary encoder, D-flat Ø6, with push** — the generic "EC11 10–15mm D-shaft, 30-detent/15-pulse, with push" (the class the Sofle Choc build guide documents: "prefer short shaft… 10mm, D-shaped shaft, 30 positions"); the tip must land **≤14mm above the PCB** and the body must match the EC11E 11mm-class envelope (the case window is sized to it) — **verify tip height + "with switch" on the listing before ordering** | ~$1.50–2.50 | ⚠ ALPS **EC11E15244G1** (TME, $2.58) is the fallback: it is the **20mm-actuator** part (tip 24.55mm — the low knob's bore tops out ~15.1), so pair it with a tall knob or trim the shaft. The **ALPS EC12** (e.g. EC12E1220301, ≈8.5mm total) is the lowest same-footprint-family part but has **NO push switch** (the keymap's encoder-push binding orphans) and a 12.4mm body that needs the case window opened ~0.5mm — a case rev, not a drop-in |
 | ☐ | 2 | Würth **450301014042** (DigiKey) | $2.15 | WS-SLTV slide SPDT; no drop-in alternate (clones need footprint check) |
 | ☐ | 2 | JST **S2B-PH-K-S** (DigiKey) | $0.12 | side-entry battery header |
 | ☐ | 2 | JST **PHR-2** housing | $0.10 | |
 | ☐ | 1 | JST **SPH-002T-P0.5S** contacts, strip of 100 | $4.09 | 4 needed; strip = cheapest entry + spares |
 | ☐ | 2 | XKB **PJ-320A** (LCSC **C2884926**, MOQ 5) | $0.75 | footprint is PJ-320A-specific — don't substitute PJ-3xx variants |
-| ☐ | 2 | kriscables **anodized EC11 knob 13×13mm**, 6mm bore | €4.90 | ≤13×13 square constraint per `spec/bom.md` (first-article spin/push check; square knobs sweep Ø18.4 at the corners — spin-check every 45°). Shaft is D-flat: align the bore's flat on press-on |
+| ☐ | 2 | **Low round EC11 knob, Ø6 D bore**: OD 15–17mm, height ≤12mm, bore deep enough to swallow the ~13.5mm shaft tip — e.g. a fluted aluminium EC11 knob (beekeeb stocks ≤15.5mm ones) or print the committed geometry (`renders/build_assets.py` knob_glb: Ø16.8 × 9.2, 18 flutes) | ~$4–8 | committed geometry: skirt bottom at 6.1 abs — must stay ≥0.9mm above the 5.2 cover (EC11 push travel 0.5±0.3); the Ø16.8 sweep clears the nearest cap (SW_L17, 24.04mm centre) by 3.6mm at every angle. The old kriscables 13×13 **square** knob is a tall-shaft part — do not pair it with the short-shaft encoder. Shaft is D-flat: align the bore's flat on press-on |
 
 ## D. Keyboard-specialty pass
 
@@ -99,7 +99,7 @@ otherwise).
 
 ## Verify-at-cart flags (things research flagged or spec demands)
 
-1. **EC11 = "G1" suffix** (with switch). The B2 clone is cheaper and wrong.
+1. **Encoder must have the push switch** (ALPS "G1" suffix; the B2 clone is cheaper and wrong — and the generic short-shaft parts come with and without push: order WITH).
 2. **Socket kit = 3.0mm 315 sockets + pins** (assembled 4.5–5.0mm). The
    2.11mm set is banned by the cell sandwich.
 3. **Battery = 301230 only** (30×12×3). Any other clearance story is

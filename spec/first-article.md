@@ -209,14 +209,14 @@ batch; it never forbade coupons.
   plate gap — ~0.34mm/side in y (gen_plate.py asserts >=0.2/side).
   Drop the real (or spec-identical) encoder through a laser-cut window
   sample before ordering the plate batch: ±0.2 fab tolerance can still
-  rub. The 13mm knob RIDES HIGH on the 20mm shaft, its bore never
-  enters the window (verify >=6mm shaft engagement + spin clearance
-  above the plate, not through it). Two knob notes: the knob is SQUARE
-  (13x13) so it sweeps an ~18.4mm circumscribed circle when turned —
-  spin it through every 45° while seated toward the cover plane and
-  feel for corner rub, not just face rub; and the shaft carries a
-  D-flat — press the bore on with the flat aligned (it transmits the
-  torque and prevents a 90° mis-seat). If the calipered terminal blocks
+  rub. The knob sits ABOVE the cover on the short-shaft encoder
+  (verify >=6mm shaft engagement; the skirt must stay ~0.9mm off the
+  5.2 cover through a full push — EC11 travel 0.5±0.3). The committed
+  knob is ROUND (Ø16.8) so its sweep is constant — spin it through a
+  full turn and feel for rub at the nearest cap (SW_L17, 3.6mm clear
+  on paper); and the shaft carries a D-flat — press the bore on with
+  the flat aligned (it transmits the torque and prevents a 90°
+  mis-seat). If the calipered terminal blocks
   do not protrude above ~1.5mm, the window may return to 12.7 square —
   but only with that measurement in hand (see the coupon bullet above).
 - [ ] 301230 cell outline (12×30mm) fits between the socket rows on print.
@@ -354,8 +354,9 @@ batch; it never forbade coupons.
 - [ ] USB notch solder inspection: the socket pads sit 0.78mm from the
   notch edge — tight for fab and solder tolerance. Loupe-check for mask
   registration and solder bridging at the notch shoulders; record a photo.
-- [ ] ×2 Encoder: spin both directions + push click register; knob clears
-  the plate through full rotation.
+- [ ] ×2 Encoder: spin both directions + push click register; knob
+  clears the cover rim and the nearest cap through full rotation +
+  full push (skirt ≥0.9mm off the cover at max travel).
 - [ ] Stack height: 4.5–5.0mm rows swallow the 3mm cell + PCM with
   clearance; JST sits beside the cell, not under the stack.
 - [ ] BLE range with battery and case: with cells fitted and halves in

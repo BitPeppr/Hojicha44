@@ -310,23 +310,32 @@ def cutouts_json(dst):
 # ------------------------------------------------------------- knob + screw
 
 def knob_glb(glb_path):
-    """EC11 knob: kriscables anodized 13x13 with a knurled cylindrical
-    crown. Sits on the 20mm shaft; D-bore not modelled (hidden)."""
+    """EC11 knob, low-profile edition (user review 2026-10-24: "after you
+    find a shorter shafted encoder, add a knob to it — not too tall, not
+    too thin, not too fat"; the previous 13x13 sat high on the 20mm
+    shaft and read as visually too tall). Sized for the short-shaft
+    EC11-class BOM primary on a 5.2mm case rim:
+      - OD 16.8, height 9.2: skirt bottom lands rim+0.9 = 6.1 abs
+        (EC11 push travel 0.5 +/- 0.3: the skirt must clear the 5.2mm
+        cover even at full press), the crown reaches ~15.3 — a touch
+        above the 11.14 cap tops
+      - 18 vertical grip ridges (0.9 grooves on the OD, 0.45 deep)
+      - 0.5 chamfer at the skirt base, 1.0 chamfer on the crown
+      - z=0 is the skirt bottom, centred on the shaft axis
+      - D-bore not modelled (hidden inside the skirt)
+    """
     import math
     import cadquery as cq
     import trimesh
-    body = (cq.Workplane("XY")
-            .rect(13, 13).extrude(4.0)
-            .edges("|Z").chamfer(1.0))
-    crown = (cq.Workplane("XY").workplane(offset=4.0)
-             .circle(6.5).extrude(6.0))
-    for i in range(24):
-        a = 2 * math.pi * i / 24
-        crown = crown.cut(
-            cq.Workplane("XY").workplane(offset=4.0)
-            .center(6.9 * math.cos(a), 6.9 * math.sin(a))
-            .circle(0.55).extrude(6.0))
-    knob = body.union(crown)
+    knob = (cq.Workplane("XY").circle(8.4).extrude(9.2)
+            .edges("<Z").chamfer(0.5)
+            .edges(">Z").chamfer(1.0))
+    for i in range(18):
+        a = 2 * math.pi * i / 18
+        knob = knob.cut(
+            cq.Workplane("XY")
+            .center(8.4 * math.cos(a), 8.4 * math.sin(a))
+            .circle(0.45).extrude(9.2))
     verts, faces = [], []
     from OCP.TopExp import TopExp_Explorer
     from OCP.TopAbs import TopAbs_FACE

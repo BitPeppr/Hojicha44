@@ -75,24 +75,40 @@ required alongside any use of these shapes.
   (1.5 poron → 1.00, 33%); KLP Normal_Tilted cap top ~11.14, i.e. ~5.9 mm
   proud of the flat 5.20 cover (no-indent design: a 0.4 mm chamfer on
   the outer rim is the only embellishment). Openings CAP_CLEAR
-  1.5/side: rows and columns both merge, no row-webs. The encoder is
-  rendered as the 15 mm-actuator BOM variant (shaft truncated at
-  15.0 mm, two-tone metal split).
+  1.5/side: rows and columns both merge, no row-webs. **Thumbs wear
+  the same tall Normal_Tilted family** (review round 4: the low KLP
+  Thumb profile read as sunken below the rim; the families share the
+  foot, so the plan allows either — the build buys tall).
   The plate stays at the Choc v1 clip band
   (1.00..2.20) — moving it up would lose the clip engagement — so the
   thin top comes from the lip/plate above it. The top plate carries the
   key-field opening and the MCU/encoder/pwrsw windows, so the wiring
-  strip is covered. The encoder top is 24.54; the encoder is left bare
-  (no knob in the product views), and its rectangular terminal base is
-  hidden by the cover window (12.0x11.7 body + 0.5/side).
+  strip is covered. **Encoder = the short-shaft EC11-class BOM
+  variant** (vendored 20mm STEP truncated at 13.5 mm, two-tone
+  gunmetal/steel split — note the truncation selects by world-frame
+  z, the board glb keeps its rotation on the root) under the **low
+  fluted knob**: procedural `assets/parts/knob.glb`, Ø16.8 × 9.2,
+  18 ridges, machined-aluminium finish; skirt bottom 6.1 abs (cover
+  5.2 + 0.9 push-travel clearance), crown 15.3 — just above the caps.
+  The knob covers the 12.0×11.7 cover window entirely and clears the
+  nearest cap (SW_L17) by 3.6 mm at every angle.
+- **Colourway hierarchy** (round 4): warm-bone satin PBT caps >
+  mid-grey matte PLA case > near-black waxy POM plate (light-to-dark),
+  silver knob, gunmetal encoder, gold castellations/traces on the
+  nice!nano.
+- **Presentation pose** (rounds 4–5): the halves are parented to an
+  empty on each outer bottom edge and posed 2.5 mm further apart,
+  2.5° splayed in plan, 5° tented (hinge edge stays on the desk) —
+  pure render transform; the case files build the assembled 2.11 mm
+  seam layout.
 
 ## Surface textures and studio floor
 
 All surface detail is procedural, so the render has no external image
 maps to lose: generated-coordinate noise drives a bump normal and a
-roughness range on the PA12 tub/cover (sintered grain), the PBT caps
-(finer orange-peel), the PC plate, the PCB soldermask/silk and the
-metal pads. Feature sizes are chosen for the 1600 px delivery (~3 px/mm),
+roughness range on the PLA tub/cover (coarse grain), the bone PBT caps
+(finer satin), the waxy POM plate, the PCB soldermask/silk and the
+metal pads/knob. Feature sizes are chosen for the 1600 px delivery (~3 px/mm),
 not for powder-scale detail that would disappear.
 
 The poron gasket pads are rendered at their compressed heights (bottom

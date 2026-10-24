@@ -386,13 +386,16 @@ against crack initiation in every material.
   fillet-relief reach ≈ 8.77 → 0.145mm nominal corner clearance;
   tangency would need a 0.85 fillet or the 13.0-hole fallback, both
   rejected as needless (hand insert).
-  The 13mm knob rides HIGH on the 20mm shaft — its bore never enters
-  the hole. Note the knob is SQUARE: as it turns it sweeps an
-  Ø18.4mm circumscribed circle about the shaft centre, so any rub
-  against a case wall would come from the corners at 45°, not the
-  faces — the first-article spin check is what verifies the corners
-  (the knob sits above the plate and below the cover's inner edge,
-  its own z window). A 17mm round hole was rejected: the encoder SHAFT center
+  The knob sits ABOVE the cover, not through it: short-shaft
+  encoder (tip ~13.5 abs) under a low round fluted knob — OD 16.8,
+  skirt bottom 6.1 (cover 5.2 + 0.9: the EC11 push travel is 0.5±0.3,
+  so a full press can never land the skirt on the cover), crown
+  ~15.3. A round knob sweeps a constant Ø16.8 about the shaft centre;
+  the nearest cap corner sits 12.04mm away (SW_L17 centre 24.04mm −
+  12.0 cap half-diagonal), a 3.6mm clearance at every angle — no
+  45° corner-sweep check needed (that was the old square 13×13 knob's
+  caveat). The knob fully covers the cover's 12.0×11.7 encoder
+  window (diagonal 16.75 < 16.8). A 17mm round hole was rejected: the encoder SHAFT center
   sits 24.04mm from the nearest switch center (SW_L17; the old "18.18"
   was the raw EC11 footprint origin, not the shaft center — the "18.2
   pitch" cited by earlier revs is the same off-center figure), so a
