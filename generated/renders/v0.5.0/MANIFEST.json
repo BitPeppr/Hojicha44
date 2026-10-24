@@ -38,7 +38,9 @@
   "bright/orbit_09.png": "4be128dc3e154886bc229c535037bd5dcaa2722bf6e7cf27bf97cc99c65724d7",
   "bright/orbit_10.png": "578a462f6f8ee2840352d65ec8f9e4a44dc3ce43142bc26b04aab1f39436d8c5",
   "bright/orbit_11.png": "c8cdcc2db3188e0a4ca6b9fb41e1ba6aa6c16fc36fbb5aff2cca703e82418cdd",
-  "bright/top.png": "b8116b5bc3ccae1b6a1eb2d91a7ff8e28748da185955a6166e97862fc283e489"
+  "bright/top.png": "b8116b5bc3ccae1b6a1eb2d91a7ff8e28748da185955a6166e97862fc283e489",
+  "env/desk.png": "a04fb444eced3f86a4d0f2cd8abf61697317c5888e598c459429f7691c21fe7b",
+  "env/mat.png": "72d429631dd2ac57e164147dcff9550d049e7fa22ada5ba51ae4af838d042598"
  },
  "note": "regenerate: renders/README.md; assets tree is derived (gitignored), final PNGs are committed"
 }

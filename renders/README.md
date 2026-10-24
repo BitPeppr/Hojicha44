@@ -29,7 +29,9 @@ CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python case/gen_case.py
 CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python case/gen_cover.py
 CASE_OUT="$PWD/case/out-dev" ./case/.venv/bin/python renders/build_assets.py
 blender --background --python renders/scene.py -- \
-    --samples 96 --res 1600x1000 --setups bright --shots hero,exploded
+    --samples 96 --res 2400x1500 --setups bright --shots hero,exploded
+blender --background --python renders/scene_env.py -- \
+    --samples 128 --res 2400x1500 --shots desk,mat
 ```
 
 The same script accepts `--setups dark,bright` and the full shot set
@@ -66,6 +68,43 @@ process the product shots keep their real materials:
     blender --background --python renders/scene.py -- \
         --samples 96 --res 2400x1500 --setups bright \
         --shots exploded --stack-colors
+
+## Desk environments (round 7)
+
+`scene_env.py` reuses `build_keyboard()` (imported from scene.py — no
+duplicated assembly) and wraps the same posed keyboard in a full desk
+environment, then renders two shots into `env/`:
+
+- **desk** — the wide room view: keyboard on its desk mat, monitor
+  behind, Mac mini, mouse, pen cup with three pens, notebook + pen,
+  ceramic mug with coffee, desk lamp (shade, struts, base + a REAL
+  spot light), aluminium dock, TRRS + USB-C + feed cables, procedural
+  walnut desk, wall + baseboard. 28 mm from the user's chair.
+- **mat** — the low closeup across the mat: the TRRS cable sagging
+  between the halves (plugs + collars modelled at the posed jack
+  positions), the USB-C running back to the dock, 45 mm at f/2.6 with
+  the focus pulled onto the cable sag.
+
+Environment pose: the split widens by an extra 44 mm (the product
+shots' 2.5 mm gap leaves no room for the TRRS loop to read) and the
+halves sit ON the 3 mm mat, lifted by its thickness. The TRRS cable
+endpoints come from the posed `J_L1`/`J_R1` jack objects and the
+case-wall bboxes — never from pre-pose constants (the round-5 macro
+lesson, applied).
+
+Procedural materials: walnut (stretched wave bands + noise distortion
+into a colour ramp, pore bump, roughness range), near-black felt mat
+with ~220 individual stitch boxes, dark-desktop screen gradient with a
+window-reflection sheen, brushed aluminium, ceramic, paper, rubber.
+
+Both cameras pass the same `--framecheck` NDC pre-flight as the studio
+shots (subjects: keyboard + props for the wide shot; cables + dock +
+seam caps for the closeup — the backdrop and the far ends of the halves
+intentionally overflow). Light levels were calibrated by pixel
+statistics: mean luma ~0.40, <0.1% blown, shadows to p05 ~0.04. Two
+calibration catches worth remembering: a 152 W light rig blew 22% of
+the frame, and the lamp's spot rendered byte-identical on/off because
+it sat INSIDE its solid shade cone.
 
 Outputs land in `generated/renders/v0.5.0/<setup>/<shot>.png`, with
 `MANIFEST.json` hashing each final PNG plus the tool versions. The

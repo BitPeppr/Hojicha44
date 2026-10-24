@@ -121,6 +121,12 @@ def import_glb(path, prefix):
 
 
 def bbox_mm(objs):
+    """World-frame bbox (metres) of a group. Evaluates the dependency
+    graph FIRST: callers mutate object locations (pose, explode) and
+    matrix_world is lazy — without this a bbox measured right after a
+    move reads the PREVIOUS transform (found when the exploded shot's
+    move-back left the macro's knob reading +52mm stale)."""
+    bpy.context.view_layer.update()
     import mathutils
     pts = []
     for o in objs:
@@ -293,6 +299,8 @@ def move_z(objs, dz):
         if o.parent is None or (o.parent is not None and
                                 o.parent.name.startswith("pose_")):
             o.location.z += dz
+    bpy.context.view_layer.update()   # keep matrix_world truthful for the
+    # next caller's bbox/measure (see bbox_mm)
 
 
 def add_cube(name, loc, size, mat, rot_z=0.0):
@@ -451,20 +459,25 @@ def render_to(cam, path, res, samples, device="metal"):
     print("  wrote", path, flush=True)
 
 
-def main():
-    args = parse_args()
-    res = tuple(int(v) for v in args.res.split("x"))
-    os.makedirs(args.out, exist_ok=True)
+def init_scene():
+    """Empty scene + a Standard view transform (AgX + strong lights
+    lifts near-black albedos toward white — colors must render as
+    authored)."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     print("[scene] empty scene ready", flush=True)
-    # AgX + strong lights lifts near-black albedos toward white — use a
-    # Standard transform so assigned colors render as authored
     sc = bpy.context.scene
     sc.view_settings.view_transform = "Standard"
     sc.view_settings.look = "None"
     sc.view_settings.exposure = 0.0
     sc.view_settings.gamma = 1.0
 
+
+def build_keyboard(args):
+    """Assemble both halves at their posed positions: boards, plates,
+    cases, caps, gaskets, nano proxies, truncated encoders, knobs and
+    the presentation-pose empties. Returns (parts, all_objs); every
+    object is parented to pose_L/pose_R. Shared by the studio scene and
+    the desk-environment scene (scene_env.py)."""
     placements = json.load(open(os.path.join(ASSETS, "placements.json")))
     cutouts = json.load(open(os.path.join(ASSETS, "cutouts.json")))
     lands = {h: json.load(open(os.path.join(
@@ -981,6 +994,16 @@ def main():
         print(f"[scene] stack-colours on ({len(stack_pal)} layers)",
               flush=True)
 
+    return parts, all_objs
+
+
+def main():
+    args = parse_args()
+    res = tuple(int(v) for v in args.res.split("x"))
+    os.makedirs(args.out, exist_ok=True)
+    init_scene()
+    parts, all_objs = build_keyboard(args)
+
     # ---- render queue
     (bx0, by0, bz0), (bx1, by1, bz1) = bbox_mm(all_objs)
     cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
@@ -1096,4 +1119,5 @@ def main():
     print("SCENE-DONE")
 
 
-main()
+if __name__ == "__main__":
+    main()
