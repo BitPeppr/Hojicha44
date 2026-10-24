@@ -1,6 +1,6 @@
 # Hojicha44 CI build matrix: one firmware per half (left = central).
 # Board is the ZMK upstream nice!nano v2, classic name, and the reusable
-# workflow is pinned to the same v0.3 vintage as west.yml (matched pair —
+# workflow and west.yml are pinned to the same v0.3 COMMIT (matched pair —
 # the @main workflow carries a compat diagnostic this tree predates).
 # Shared keymap (config/hojicha44.keymap) serves both shields, Corne-style.
 ---

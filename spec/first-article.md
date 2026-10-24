@@ -10,12 +10,18 @@ window lives in the laser plate (`plate/Hojicha44-{Left,Right}-plate.dxf`),
 which is the cutout source — not the PCB print. (`layout/generated/v2/outlines/plate.dxf`
 is legacy ergogen output, superseded by `plate/`.)
 
-Print notes (for the case tub/cover orders): PETG or ASA recommended
-(PC also works); print both parts AS ORIENTED — tub open-face-up,
-cover underside-up — every feature is then self-supporting except the
-USB/TRRS mouth arc bridges (~7mm spans), which typically bridge
-support-free on any decent bridge profile; add supports only for a
-poor bridger.
+Print notes (for the case tub/cover): **PETG at 100% infill is a
+supported self-print material** (user decision 2026-10-24; strength
+audit in `spec/case.md` — every thin feature >= 1.2mm and PETG is
+STIFFER than the MJF PA12 reference, E ~2.1 vs ~1.65 GPa; the risks
+are warp/dimensional, not strength: 4+ perimeters, brim on the 167mm
+tub, calibrate XY against the 166.9mm outer width). ASA is the
+better-warp alternative; MJF PA12 remains the production-order
+reference. Print both parts AS ORIENTED — tub open-face-up,
+cover underside-up (magnet pockets open) — every feature is then
+self-supporting except the USB/TRRS mouth arc bridges (~7mm spans),
+which typically bridge support-free on any decent bridge profile;
+add supports only for a poor bridger.
 
 ## 0. Pilot batch
 
@@ -27,11 +33,25 @@ poor bridger.
   cases (3–4 printed spares per design), 490 switches (14 packs of
   35), 450–500 hotswap sockets, 500 diodes, 12–14 cells, 150 magnets
   (16/half + spares), 12 modules, 20 polyfuses.
+- [ ] **PRE-MJF caliper (review 2026-10-24):** the case floor keeps
+  1.0mm over the deepest below-PCB part, but the WS-SLTV (<=-3.5) and
+  JST PH (~-2.5) bounds are FAMILY estimates with zero verified data.
+  Caliper the ACTUAL slide-switch legs, JST legs and hotswap socket
+  bump before placing the MJF order — if anything exceeds -3.65, the
+  floor constants move first (`case/params.py` FLOOR_CLEAR/FLOOR_Z).
 - [ ] Indicative unit cost **~USD 35–70 per half** (PCB ~USD 2/5 pcs
   + ENIG adder, PCBA ~USD 8 setup + per-joint, PA12 ~USD 2–4 per
   half, PG1350 ~USD 1.1 ea, LiPo USD 1.5–6, N52 USD 0.01–0.08).
 
-## 1. Paper fit test (before ordering anything)
+**Order policy (rev 3, review 2026-10-24):** *engineering-sample*
+orders — the plate coupon below, the encoder coupon, one PCB pair,
+one printed tub/cover set — are permitted and REQUIRED before §0; what
+§1–§7 gate is the **production/batch order** (the §0 quantities). The
+cheap sequence is: coupon + 1 PCB pair + 1 tub (~USD 60–100), then the
+10-half pilot. "Before ordering anything" in older revisions meant the
+batch; it never forbade coupons.
+
+## 1. Paper fit test (before ordering the batch)
 
 - [ ] **Regenerate the fit PDFs first** — `out/fit` renders predate the
   16 Oct boards (and the case v3.3-v3.5 port changes); rebuild prints
@@ -145,22 +165,29 @@ poor bridger.
   recesses in the band top, faces flush at the lip plane; the ring
   cover mirrors them face-down with 8 × Ø4.3×1.7 recesses. Glue: tub
   magnets FACE-UP flush, cover magnets FACE-DOWN flush (the 0.2mm glue
-  seat decides the zero-gap stop). Station coordinates print in
+  seat decides the zero-gap stop). **Polarity (review 2026-10-24):**
+  face-up/face-down fixes the GEOMETRY, not the pole — a flipped disc
+  still seats. Pick the orientation on ONE tub/cover pair (must
+  attract), then dry-stack ALL 16 in their pockets and confirm every
+  station attracts before any glue is applied; glue one station,
+  re-test the stack, then continue. All-stations-same orientation
+  keeps the covers polarity-interchangeable between halves. Station coordinates print in
   the gen_case/gen_cover census lines each run (PCB frame; LEFT tub at
   writing time: (130.17,57.76), (136.55,12.92), (133.44,-55.70),
   (67.30,-43.06), (19.46,-28.91), (-18.35,8.02), (6.74,52.44),
   (68.42,64.16) — the LEFT set is the SOURCE and Right is its exact
   mirror x->291.5-x). Cross-check one per half in
   the slicer against the STEP. Tests: dry-fit the cover with NO
-  magnets and NO plate — it sits level at the 4.70 lip plane; then drop
-  the plate in (pads live on its tabs) and reseat the cover: the ring
+  magnets and NO plate — it sits level at the 3.20 lip plane; then drop
+  the plate in (pads live on its tabs) and reseat the cover: the cover
   underside must now PRESS each tab pad — a visible cushion gap at any
   tab zone is a reject (the foam compression mark check), and the
   stack rides ~0.5mm lower than the no-plate seat (uncompressed top
-  pads 5.20 vs the 4.70 ring underside = the designed 16.7% preload);
+  pads 3.70 vs the 3.20 cover underside = the designed 33% preload,
+  TOP_PRELOAD);
   then with magnets it must snap-seat without rocking; poron must not
   stick to either case part. **Pull test (M4 gate): with the plate
-  installed, a straight lift must hold ≥1.5 kg before the ring lifts**
+  installed, a straight lift must hold ≥1.5 kg before the cover lifts**
   (8 mixed pairs ≈ 2–2.8 kg predicted; the glue lap is the weak link,
   not the 1.3mm pocket floor — the floor's rim shear is ~10mm² of
   perimeter at FDM in-plane strength, orders above the pull).
@@ -256,9 +283,9 @@ poor bridger.
      switch bodies, the gasket tabs hang over the rim)
   9. **PCB into the tub** (feet/rim seats, no screws)
   10. **poron pads** (bottom pads on the tabs, then the top pads)
-  11. **magnets** (tub face-UP, cover face-DOWN — faces meet at the lip
-      plane)
-  12. **cover on** (the ring presses the top poron pads at 16.7%)
+  11. **magnets** (tub face-UP, cover face-DOWN, polarity stack-tested —
+      faces meet at the lip plane)
+  12. **cover on** (the cover presses the top poron pads at 33%)
 - [ ] TRRS cable mated with **both halves OFF *and* USB unplugged from
   both** (switch OFF alone is insufficient — USB still powers the
   controller), then switch on. Sleeve-GND mates at an angle; live mating
@@ -274,10 +301,17 @@ poor bridger.
   it, do not cut through). The pocket floor is at 1.55mm, so there is
   **0.15–0.29mm** of clearance over the diode, not the solid plate.
   Check on the real build: the pocket must be a POCKET (0.65mm of plate
-  must remain under it) and a **0.5mm feeler must NOT pass** under the
-  plate over a diode row — if it does, the relief was cut through.
-  Anywhere the plate is solid (between the pockets) it must NOT touch
-  a diode: any contact/scrape means the relief is too shallow.
+  must remain under it). Measure it DIRECTLY — depth-gauge the pocket
+  floor against the surrounding underside (accept 0.45–0.65mm deep),
+  or back-light the plate: a through-cut shows as a bright slot. Do
+  NOT use a feeler slid under the plate over a diode as the
+  discriminator: the INTENTIONAL 1.00mm PCB-to-plate gap lets a 0.5mm
+  feeler pass anywhere beside the diodes, so that test cannot tell a
+  pocket from a through-cut — a correct part "fails" and a ruined one
+  "passes" (review finding P0.3, fixed 2026-10-24). Keep the no-contact
+  requirement: anywhere the plate is solid (between the pockets) it
+  must NOT touch a diode — any contact/scrape means the relief is too
+  shallow.
 - [ ] Plate fit (rev-2 plate in `plate/`): 1:1 print over the real PCB —
   every 14×14 cutout frames its switch footprint, the 16.2×12.4 window frames
   the encoder body, W1/W2 windows clear switch/module/JST/TRRS bodies,
@@ -295,6 +329,20 @@ poor bridger.
   built measures 6.25mm — 15–20% foam compression per `spec/case.md`).
   Under 6.0 crushes past 20% (bright/harsh); over 6.3 leaves the stack
   loose (rattle).
+
+### 3b. Service story (review 2026-10-24)
+
+- [ ] **Module / cell swap is a FULL teardown — know it before you
+  build.** There are no fasteners: the PCB hangs off the switches in
+  the plate, the plate on the gaskets/magnets. Reaching the JST cell
+  connector or swapping a nice!nano means lifting the cover, then
+  unseating the plate (22 Choc clips through 14.0mm holes against the
+  socket contacts) — do it on a soft mat, pull switches straight out
+  of their sockets with a switch puller, never pry against the 1.2mm
+  PC plate. Practise the sequence once during the first article and
+  time it; if a cell swap takes more than ~10 minutes or cracks a
+  plate, a hidden screw or a JST extension at the USB end goes into
+  the next case revision.
 
 ## 4. Power-on
 

@@ -1,8 +1,15 @@
-# Hojicha44 — split columnar keyboard (PCB phase)
+# Hojicha44 — split columnar keyboard (case + plate phase)
 
 Custom split columnar mechanical keyboard (44 keys + 2 encoders, nice!nano x2).
 Roadmap: `KEYBOARD_PROJECT_ROADMAP.md`.
-**Current phase: placed+routed (r13), plate rev-8 gated, release cut, ZMK CI green** (roadmap Phase 4 done). Layout geometry lives in
+**Current phase: PCB release v0.5.0 cut + fab-pointable; plate rev-8 gated
+(+ new z-stack gate); case/cover v4.1 generated + gated (thin top plate,
+key-field ledge, floor −6.35) with committed STEP solids; ZMK CI green.**
+Board release evidence: `generated/release/v0.5.0`; order-time print
+geometry: `generated/print/v0.5.0/MANIFEST.txt` (STEP files verified in CI);
+renders: `generated/renders/v0.5.0`. Remaining before any batch: the
+first-article checklist (`spec/first-article.md`) — coupon-first, per its
+order policy. Layout geometry lives in
 `layout/ergogen/config.yaml` (frozen snapshot: `layout/- FINAL/keyboard_layout_v7`);
 each half has a placed+routed board file — see [Schematic](#schematic).
 

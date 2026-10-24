@@ -98,8 +98,14 @@ but every design-shaped field below has exactly one right answer.
   exactly this.
 - JLC machine PCBA is *possible* (`pos-smt.csv` shipped for it) but low-
   value here: the bulk of the part count is hand-placement-class, and
-  their parts library won't hold the keyboard-bit parts. Skip unless a
-  coupon credit is burning a hole in the account.
+  their parts library won't hold the keyboard-bit parts. **Do NOT order
+  PCBA from the released bom.csv (review 2026-10-24):** the 44 Choc
+  hotswap sockets are footprint-only parts with no MPN and are absent
+  from `bom.csv` by design — an assembly order built from it ships
+  boards with ZERO sockets. The Mill-Max strips, EC11E, WS-SLTV and
+  PJ-320A are hand-placed too; reconcile `bom.csv` line-by-line against
+  `BOM_ORDER.md` before uploading anything to a contract assembler.
+  Skip unless a coupon credit is burning a hole in the account.
 
 ## Non-PCB orders (case, plate, magnets)
 

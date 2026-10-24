@@ -1,6 +1,6 @@
 manifest:
   defaults:
-    revision: v0.3
+    revision: edf5c0814fd3ea202e43aad2d68fd32e882a518c  # = tag v0.3, pinned (was a movable tag)
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware

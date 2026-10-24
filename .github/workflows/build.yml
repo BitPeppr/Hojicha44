@@ -13,6 +13,7 @@ permissions:
 jobs:
   firmware_build:
     name: Build the ZMK firmware
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
+    # Pinned to the v0.3 tag's commit (tags can move; review 2026-10-24).
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@edf5c0814fd3ea202e43aad2d68fd32e882a518c
     with:
       archive_name: hojicha44-firmwares

@@ -30,7 +30,8 @@ thumbs:
   # all 1u. The four sit on one true circle (R=91.2 about the thumb joint)
   # even ~13.9deg steps give even ~22mm chords and
   # clock-tangent rotations (tangent error <=1.6deg), so every key sits ON
-  # the curve facing along it. Edge clearance >=1.3mm on every cap pair
+  # the curve facing along it. Edge clearance >=1.0mm on every cap pair at true 18x17 MBK caps
+  (1.5mm at the modelled 17.5x16.5 KLP footprint; 1.3 was the KLP number)
   # (verified by polygon check, not center distance).
   left: [Esc, L1, Tab, Space]              # west->east == outer->inner
   right: [Enter, Backspace, L2, Delete]     # west->east == inner->outer

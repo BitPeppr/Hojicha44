@@ -51,7 +51,13 @@ pcb/kicad/export/
 # generated fit-print / release PDFs (kicad-cli; regenerate on demand)
 out/
 case/.venv/
+# case solids: the STEP files ARE tracked since 2026-10-24 (review §5.3 —
+# CI must verify the exact order-time geometry, not just its hashes); the
+# STLs stay regenerable. case/out-dev/ remains fully local.
 case/out*/
+!case/out/
+case/out/**
+!case/out/*.step
 
 # renders: the regenerable mesh/asset tree is a dev artifact; scripts +
 # final PNGs under generated/renders/v0.5.0/ ARE tracked (see renders/README)

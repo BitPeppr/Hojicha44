@@ -13,6 +13,14 @@ we might ship to.
 
 ## 1. DECISION — pilot market
 
+**Distribution status (2026-10-24): personal builds only.** No sale or
+supply of units is planned for v0.5.0; the product-level obligations
+below (RCM label, user manual with §15.21 text, EESS registration,
+UN 38.3 per cell batch) become live only if that changes. Note the
+module-grant nuance: installing the nice!nano myself is fine, but
+INSTRUCTING an end-user to install it is a compliance act — another
+reason this stays a self-build (review §8).
+
 **The pilot batch is for Australia / New Zealand. The compliance path is
 the RCM via an ACMA "Responsible Supplier" self-declaration, NOT a
 bespoke certification.**

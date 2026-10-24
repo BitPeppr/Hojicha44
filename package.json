@@ -12,5 +12,6 @@
   "type": "commonjs",
   "dependencies": {
     "ergogen": "^4.2.1"
-  }
+  },
+  "$comment": "npm audit: 2 moderate advisories via ergogen -> makerjs <=0.19.1 (unsafe property copying). makerjs 0.19.2 exists but ergogen 4.x targets the 0.18 API — an override is untested against the FROZEN layout v7, and the generator runs only on the maintainer's own config (never untrusted input), never in CI. Risk accepted 2026-10-24; revisit before any layout unfreeze." 
 }

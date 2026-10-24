@@ -812,6 +812,53 @@ def build_half(tag):
     if poly_area(loop) < 10000:
         fail(f'suspicious loop area {poly_area(loop):.0f}')
 
+    # ---- z-stack gate (review 2026-10-24 §2): the 2D web gates cannot
+    # see z. Every TOP-side part whose z-span crosses the plate band
+    # [GAP, GAP+PLATE_THICK] must clear it through a plate opening or a
+    # machined relief. One table, asserted here, so a new or moved part
+    # must be reasoned against the band in the same commit. Below-PCB
+    # parts (sockets bump -1.25, JST legs, encoder legs) never reach the
+    # band and stay ruled by case/params.py FLOOR_CLEAR.
+    band_lo, band_hi = GAP, GAP + PLATE_THICK
+
+    def _crosses(z0, z1):
+        return z0 < band_hi and z1 > band_lo
+
+    # 1. encoder terminal blocks (A/B/C + S1/S2), z 0..1.5 measured off
+    #    the vendored STEP: window >= envelope + 0.2/side (asserts at
+    #    the ENC_W/ENC_H definitions; restated here so the band logic
+    #    stays one table).
+    if _crosses(0.0, 1.5) and not (
+            ENC_W >= ENC_ENV_X + 0.2 and ENC_H >= ENC_ENV_Y + 0.2):
+        fail('zstack: encoder window < terminal envelope + 0.2/side')
+    # 2. diode body, z 0..DIODE_TOP_MAX_Z: cleared by the 0.55 relief —
+    #    the pocket floor (GAP + DIODE_RELIEF_D) must keep >= 0.15 over
+    #    the part ceiling (comment-only before this gate).
+    if _crosses(0.0, DIODE_TOP_MAX_Z) and (
+            (GAP + DIODE_RELIEF_D) - DIODE_TOP_MAX_Z) < 0.15:
+        fail('zstack: diode relief floor within 0.15 of DIODE_TOP_MAX_Z')
+    # 3. MCU module + Mill-Max socket stack, z 0..~7.7 (module 4.5..7.7
+    #    on the 4.5-5.0 socket stack; JST PH body beside it): the W1 core
+    #    must keep >= 0.75 margin beyond the UNEXPANDED part extents
+    #    (pull-in loops floor at 1.0 with 0.25 granularity).
+    if _crosses(0.0, 7.7) and not (
+            cx0 <= px0 - 0.75 and cx1 >= px1 + 0.75 and
+            cy0 <= py0 - 0.75 and cy1 >= py1 + 0.75):
+        fail('zstack: W1 core margin to MCU/JST extents < 0.75')
+    # 4. TRRS body, z 0..5.0 (top face 5.0): the W2 window is the body
+    #    rect +- tpad(1.0) opening to the split-gap edge — containment
+    #    by construction; assert the pad.
+    if _crosses(0.0, 5.0) and tpad < 1.0:
+        fail('zstack: TRRS window pad < 1.0')
+    # 5. slide switch body (WS-SLTV family bound, actuator z <= ~3.5):
+    #    W1 switch strip = F.CrtYd + 1.0 by construction. Caliper the
+    #    real part before the MJF order (family bounds feed FLOOR_CLEAR).
+    print(f'{tag}: zstack band {band_lo:.2f}..{band_hi:.2f} — encoder '
+          f'0..1.5 win {ENC_W}x{ENC_H} vs env {ENC_ENV_X}x{ENC_ENV_Y}; '
+          f'diode 0..{DIODE_TOP_MAX_Z} relief floor {GAP + DIODE_RELIEF_D}; '
+          f'mcu+sockets 0..7.7 W1 margin >=0.75; trrs 0..5.0 pad {tpad}; '
+          f'pwrsw switch strip')
+
     def web(p, q):
         d = min(poly_dist(v, q) for v in p)
         return min(d, min(poly_dist(v, p) for v in q))

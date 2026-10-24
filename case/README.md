@@ -8,8 +8,10 @@ Blender visualises.
 
 - `params.py` — every dimension with its spec source. Change here.
 - `gen_case.py` — tub generator + self-checks. Outputs to `case/out/`
-  (gitignored): STEP (exchange), STL (print).
-- `gen_cover.py` — the ring cover (retention lid, v3.5). It imports the
+  (STEP tracked since 2026-10-24; STL gitignored/regenerable; use
+  `CASE_OUT=case/out-dev` for scratch builds).
+- `gen_cover.py` — the top plate (thin-top v4; the old ring cover is
+  history). It imports the
   tub's `compute_ports` / `pocket_layout` / `magnet_stations`, so the
   two parts interlock from shared anchors; same output convention.
 - `probe_bores.py` — offline bore shape audit on the finished solids
@@ -20,9 +22,22 @@ Blender visualises.
 
 - Units mm. Frame = KiCad board frame (same as `lands.json` / plate DXF).
 - z = 0 is the PCB top surface. Plate underside +1.00, plate top +2.20
-  (1.2mm plate, 1.00mm gap). Current generator census (2026-10-22):
-  tub **71.1 cm³**, cover **10.7 cm³** per half — the 75.7 figures in
-  the changelog are historical (pre-top-lip-4.70 geometry).
+  (1.2mm plate, 1.00mm gap). Current generator census (2026-10-24,
+  v4.1): tub **57.5 cm³**, cover **15.2 cm³** per half — older figures
+  in the changelog are historical (pre thin-top / floor / ledge revs).
+
+## Regenerating the order-time geometry (print-manifest recipe)
+
+The shops are sent exactly what `generated/print/v0.5.0/MANIFEST.txt`
+hashes. If ANY generator constant changes, in the SAME commit:
+
+    case/.venv/bin/python case/gen_case.py            # gates exit-0
+    case/.venv/bin/python case/gen_cover.py           # gates exit-0
+    shasum -a 256 case/out/* > /tmp/h.txt             # paste over the old hashes
+    npm test                                          # print-manifest gate re-verifies
+
+The STEP files are tracked and CI verifies their hashes; the STLs are
+regenerable and gitignored. Never order from a stale hash.
 - Single source of truth: `plate/Hojicha44-{half}-plate.dxf` (OUTLINE +
   tab geometry via `lands.json`). Spec numbers: `spec/case.md`.
 - Generators own geometry; `case/out/` is scratch like `out/fit`.
@@ -32,6 +47,28 @@ Blender visualises.
 (Entries are newest-first. Each older entry keeps the measured
 values of ITS build — those are historical, not current; the v3.6
 entry below is the current truth for every number it quotes.)
+
+- v4.2 (2026-10-24, review-triage + strength round): **PETG at 100%
+  infill is a supported self-print material** (user decision): strength
+  audit in spec/case.md — thinnest structural features 1.2–2.6mm, PETG
+  stiffer than the MJF PA12 reference on every load path, risks are
+  warp/dimensional not strength; tests/spec_checks now pins FLOOR_T
+  >= 1.5 and ledge web >= 1.0. **The 4 case/out STEP files are COMMITTED**
+  and print-manifest-verified in CI (review §5.3: "CI green on a machine
+  that never built the case"); STLs stay gitignored; the print manifest
+  was re-recorded under the v4.1 geometry (same-commit rule honored).
+  Review-driven gates elsewhere: plate/gen_plate --check gained the
+  **z-stack gate** (every top-side part crossing the plate band
+  1.00..2.20 must clear it via a window/relief — encoder terminals,
+  diode relief, MCU+socket stack, TRRS, pwrsw, one table, one place);
+  CI pins the ZMK reusable workflow + west.yml to the v0.3 COMMIT and
+  gains build-variants.yml (all four keymap variants compiled, review
+  P1.6). First-article fixes: the diode-relief feeler test replaced by
+  direct pocket measurement (it was logically invalid against the
+  intentional 1.00mm gap), order policy split (coupons vs batch),
+  magnet polarity stack-test, PRE-MJF family-bound caliper, service
+  story (module/cell swap = full teardown), stale dry-fit numbers
+  (3.20 lip / 33% preload).
 
 - v4.1 (2026-10-24, user "make the whole keyboard lower" round):
   the assembled case was 12.80mm tall and the bottom tub (10.80mm)

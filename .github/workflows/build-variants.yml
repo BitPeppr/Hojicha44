@@ -1,0 +1,82 @@
+name: Compile every keymap variant
+
+# Review 2026-10-24 (P1.6): build.yml compiles only the ACTIVE keymap
+# (config/hojicha44.keymap) for both shields; the four advertised variants
+# were validated structurally (gen_keymap.py --check) but never by the ZMK
+# compiler. This workflow compiles each variant the same way a user runs
+# it: gen_keymap.py --use <variant> (exactly the spec/keymap.md swap), then
+# a west build. The keymap file is SHARED by both shields (the halves
+# differ by overlay/role, both compiled in build.yml with the active
+# variant), so one shield per variant is sufficient to prove every keymap
+# source under the pinned toolchain.
+
+on: [push, pull_request, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  variant:
+    name: Compile ${{ matrix.variant }} (left/central)
+    runs-on: ubuntu-latest
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [mac_left, mac_right_space, win_left, win_right_space]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select variant (the spec/keymap.md swap, done for the compiler)
+        run: python3 config/gen_keymap.py --use ${{ matrix.variant }}
+
+      - name: Create build directory
+        run: |
+          echo "build_dir=$(mktemp -d)" >> $GITHUB_ENV
+
+      # Same recipe as build-user-config.yml@v0.3: zephyr/module.yml at the
+      # repo root makes this tree a Zephyr module, so west init runs in an
+      # isolated temp dir and the module is passed via ZMK_EXTRA_MODULES.
+      - name: Prepare variables
+        shell: sh -x {0}
+        run: |
+          export zmk_load_arg=" -DZMK_EXTRA_MODULES='${GITHUB_WORKSPACE}'"
+          new_tmp_dir="${TMPDIR:-/tmp}/zmk-config-variant"
+          mkdir -p "${new_tmp_dir}"
+          echo "base_dir=${new_tmp_dir}" >> $GITHUB_ENV
+          echo "extra_cmake_args=-DSHIELD=\"hojicha44_left\"${zmk_load_arg}" >> $GITHUB_ENV
+
+      - name: Copy config files to isolated temporary directory
+        run: |
+          mkdir "${{ env.base_dir }}/config"
+          cp -R config/* "${{ env.base_dir }}/config/"
+
+      - name: West Init
+        working-directory: ${{ env.base_dir }}
+        run: west init -l "${{ env.base_dir }}/config"
+
+      - name: West Update
+        working-directory: ${{ env.base_dir }}
+        run: west update --fetch-opt=--filter=tree:0
+
+      - name: West Zephyr export
+        working-directory: ${{ env.base_dir }}
+        run: west zephyr-export
+
+      - name: West Build (${{ matrix.variant }})
+        working-directory: ${{ env.base_dir }}
+        shell: sh -x {0}
+        run: west build -s zmk/app -d "${{ env.build_dir }}" -b "nice_nano_v2" -- -DZMK_CONFIG="${{ env.base_dir }}/config" ${{ env.extra_cmake_args }}
+
+      - name: Archive (${{ matrix.variant }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: variant-${{ matrix.variant }}-left
+          path: ${{ env.build_dir }}/zephyr/zmk.uf2
+          if-no-files-found: error

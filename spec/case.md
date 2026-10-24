@@ -53,6 +53,29 @@ Encoder push over the window zone stays soft by design.
   at SHELF_Z −1.55 is a separate feature (foam sets tab height, floor
   depth is separate — `case/params.py`).
 
+- **Strength & materials (2026-10-24 review round; user: "strong enough
+  in PETG, 100% infill okay, no exotic materials"):** measured minimum
+  features on the gated solids, all >= 1.2mm except one non-spanning
+  rim: tub wall 2.62, tab-pocket web 2.45, floor slab 1.70, cover web
+  1.69, ledge web 1.20 (cover 2.0 − ledge 0.8, by construction — the
+  ledge cutter spans past the cover top), magnet-pocket floor 1.30,
+  TRRS hole roof 0.70 (plate material around a Ø6.0 hole, not a
+  spanning beam). Load paths: the cover's center press deflects
+  ~0.3–0.9mm for a firm 5N press (strip model) against the 1.0mm foam
+  gap — the foam/plate bounds it, magnets only retain; the tub walls
+  take desk/grip loads in compression or in-plane; the only through-
+  layer tension is the 8 magnet-pocket floors (~0.7MPa under a 1kgf
+  magnet — trivial vs PETG's ~20MPa through-layer strength). PETG at
+  100% infill (E ≈ 2.1 GPa, tensile ≈ 50 MPa) is STIFFER and as strong
+  as the MJF PA12 reference (E ≈ 1.65 GPa, ≈ 48 MPa) on every path;
+  the PETG risks are warp/dimensional, not strength: brim the 167mm
+  tub, 4+ perimeters, calibrate XY (measure the 166.9 outer width),
+  print as oriented (tub open-face-up, cover underside-up). Gate:
+  `tests/spec_checks.cjs` pins FLOOR_T >= 1.5 and the ledge web
+  >= 1.0; `plate/gen_plate.py --check` carries the new z-stack gate.
+  The plate stays shop-cut 1.2mm PC (do NOT print it in PETG: flex +
+  creep defeat the Choc clip).
+
 ## Sources (suppliers, verified)
 
 - **Rogers PORON** small sheets (4701-30-15, 3.18–6.35 mm):
@@ -106,7 +129,11 @@ Encoder push over the window zone stays soft by design.
   so the assembly keeps its gaskets on disassembly. Pad centers = tab
   root centers + 2.0mm outward (`lands.json`); placement map on the PORON DXF layer.
 - USB/TRRS port openings in the case walls per the notch/mouth positions
-  in `spec/electronics.yaml`; antenna end keeps the 3mm plastic-only rule.
+  in `spec/electronics.yaml`; antenna end keeps the 3mm plastic-only rule
+  (rationale: it is a dielectric-loss/shadowing guard around the module's
+  own keepout practice, not a λ/10 detune rule — at 2.4GHz λ/4 ≈ 31mm, so
+  full shadowing avoidance is impossible in any closed case; the real
+  validation is the BLE range bench in first-article §5)
 
 ## Port-bore contract (v3.3 breach + v3.4 shaping + v3.5 pwrsw, gate-enforced)
 
