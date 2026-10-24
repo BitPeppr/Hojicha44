@@ -468,7 +468,8 @@ def main():
                   f"y {bb[0][1]:.1f}..{bb[1][1]:.1f} z {bb[0][2]:.1f}..{bb[1][2]:.1f}")
 
     print("== 5. keycaps (KLP Lame, pinned download) -> glb")
-    for v in ("Saddle", "Saddle_Tilted", "Saddle_Homing", "Normal_Tilted",
+    for v in ("Saddle", "Saddle_Tilted", "Saddle_Homing", "Normal",
+              "Normal_Homing", "Normal_Tilted",
               "Thumb"):
         src = os.path.join(KEYCAP_DIR, f"klp_{v}.step")
         if not os.path.exists(src):
@@ -494,7 +495,8 @@ def main():
             "pinned_commit": open(os.path.join(
                 KEYCAP_DIR, "PINNED_SOURCE.txt")).read().strip(),
             "files": [f"klp_{v}.step" for v in ("Saddle", "Saddle_Tilted",
-                      "Saddle_Homing", "Normal_Tilted", "Thumb")],
+                      "Saddle_Homing", "Normal", "Normal_Homing",
+                      "Normal_Tilted", "Thumb")],
         },
         "tools": {
             "kicad_cli": subprocess.run([KICAD_CLI, "version"],

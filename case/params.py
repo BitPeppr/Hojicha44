@@ -308,11 +308,14 @@ KEY_LEDGE_D = 0.8      # the cover top drops 0.8mm over a 3mm border so
                        # sit in (review: 2.4mm still read as flush). The
                        # outer band, magnets and gasket press stay at the
                        # full 2.0mm plate height.
-CAP_CLEAR = 1.0        # key-field opening clearance per side. gen_cover
+CAP_CLEAR = 1.5        # key-field opening clearance per side. gen_cover
                        # fills the union's enclosed holes, so the
-                       # staggered caps become ONE opening with no cover
-                       # islands while the inner web to the MCU window
-                       # stays ~1.5mm.
+                       # staggered caps become ONE opening. 1.0 merged
+                       # COLUMNS only (17.48+2 = 19.48 > 19) and left
+                       # 0.52mm ROW webs that stood proud in the ledged
+                       # field as "ridges and dots" (user review); 1.5
+                       # merges rows too (16.48+3 = 19.48 > 19) so the
+                       # opening is one clean field with no islands.
 CAP_ROUND = 2.0        # cutter corner radius (molded look)
 MCU_WIN = (106.5, 12.0, 129.0, 48.6)      # x0, y0, x1, y1
 ENC_WIN = (111.5, -14.35, 124.5, -1.65)   # x0, y0, x1, y1: EC11

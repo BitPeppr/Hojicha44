@@ -72,9 +72,11 @@ required alongside any use of these shapes.
 - Stack (z = 0 at the PCB top, thin-top revision): substrate −1.60..0;
   bottom gaskets −1.55..1.00 (3.0 poron → 2.55); plate 1.00..2.20;
   switch body 0.30..3.30; cap stem tip 1.50; top gaskets 2.20..3.20
-  (1.5 poron → 1.00, 33%); flat cap top 7.58, i.e. ~3.2 mm proud of the
-  4.40 surfaced key-field ledge (the 3.20..5.20 plate is relieved 0.8 mm
-  over a 3 mm border around the opening; the outer band stays at 5.20).
+  (1.5 poron → 1.00, 33%); KLP Normal_Tilted cap top ~11.14, i.e. ~6.7 mm
+  proud of the 4.40 key-field ledge (the 3.20..5.20 plate is relieved
+  0.8 mm around the key field AND component windows — one recessed
+  field; the outer band stays at 5.20). Openings CAP_CLEAR 1.5/side:
+  rows and columns both merge, no row-webs.
   The plate stays at the Choc v1 clip band
   (1.00..2.20) — moving it up would lose the clip engagement — so the
   thin top comes from the lip/plate above it. The top plate carries the

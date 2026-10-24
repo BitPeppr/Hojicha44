@@ -26,7 +26,7 @@ Encoder push over the window zone stays soft by design.
 
 | Layer | Spec |
 |---|---|
-| Top case | BUILT — **top plate v4** (`case/gen_cover.py`, gates exit-0): thin plate spanning z **3.20..5.20** (lip 3.20 = plate top 2.20 + 1.00 compressed top foam; 2.0mm thick). It covers the key field between caps and the MCU/encoder strip: ONE merged key-field opening around the 22 KLP cap footprints (17.48×16.48 + 1.0/side), windows for the MCU, the EC11 body (12.0×11.7 measured at the cover band +0.5/side, hiding the terminal base), the pwrsw body/nail, the shared USB slot and a **Ø6.0 round TRRS side hole** (zc 1.5) closed by a 0.7mm roof (straight 3.5mm plugs; the old Ø9.5 boot bore was the "gaping" opening the review rejected). A **0.8mm-deep, 3mm-wide ledge** is relieved around the key field so the caps stand ~3.2mm proud of the surface they sit in. Presses the top poron pads; 8×Ø4.3×0.7 magnet pockets mirroring the tub's; no cover material within 3mm of the antenna (gated) |
+| Top case | BUILT — **top plate v4** (`case/gen_cover.py`, gates exit-0): thin plate spanning z **3.20..5.20** (lip 3.20 = plate top 2.20 + 1.00 compressed top foam; 2.0mm thick). It covers the key field between caps and the MCU/encoder strip: ONE merged key-field opening around the 22 KLP cap footprints (17.48×16.48 + 1.0/side), windows for the MCU, the EC11 body (12.0×11.7 measured at the cover band +0.5/side, hiding the terminal base), the pwrsw body/nail, the shared USB slot and a **Ø6.0 round TRRS side hole** (zc 1.5) closed by a 0.7mm roof (straight 3.5mm plugs; the old Ø9.5 boot bore was the "gaping" opening the review rejected). A **0.8mm-deep ledge** is relieved around the key field AND the component strip (the windows are part of the ledge so no full-height strip is left between field and windows — user review "something juts out"; rim ports get keepouts so their roofs stay 0.7). Openings are CAP_CLEAR **1.5/side** so the 19mm-pitch caps merge across rows AND columns — one clean field, zero row-webs/enclosed scraps (the 0.52mm webs read as "ridges and dots" at 1.0). Renders wear the KLP **Normal_Tilted** caps (top ~11.1mm, ~5.9mm proud of the band); the case geometry is cap-agnostic (Saddle foot shared). Presses the top poron pads; 8×Ø4.3×0.7 magnet pockets mirroring the tub's; no cover material within 3mm of the antenna (gated) |
 | Top gaskets | Poron pads 7×4mm on each tab (PORON layer in the DXF), **1.5mm** thick (thin-top revision; compressed to 1.00 at 33% — TOP_FOAM_T/TOP_PRELOAD in `case/params.py`) |
 | Plate | **1.2mm** (material below), outline = PCB outline + tabs (USB notch included). 1.2mm is the Choc v1 clip-engagement thickness (Keebio: a Choc plate must be 1.2mm for the clip to engage; at 1.5/1.6mm the "lower catch doesn't engage" and the switch is held by friction alone) |
 | Plate↔PCB gap | **1.00mm** — the Choc v1 clip band. MEASURED from the Kailh Choc v1 outline drawing + a community STEP model (`spec/research-open-items-2026-10-21.md` §PG1350): above the PCB the switch is skirt 0–0.9, **flexible clip arms 0.9–1.3 (their lip grabs the plate underside)**, then the **14.8–15.0 "ears" at 2.2–3.0 that bear on the plate's top**. So the plate must sit between the lip (≤1.3) and the ears (2.2): a 1.2mm plate on a 1.00mm gap occupies **1.00–2.20** — the lip grabs the underside, the ears seat exactly on the top. A 1.05 gap lifts the ears 0.05 into the plate; a 1.3 gap drives the plate top through the ears (no grab at all). The 22 top-side diodes are the only thing under the plate in the matrix field, so the plate carries a **0.55mm relief pocket** under each one (RELIEF layer in the DXF: machine 0.55mm into the underside, do NOT cut through; `plate/gen_plate.py` `DIODE_RELIEF_D`, asserted against `DIODE_TOP_MAX_Z = 1.40`). The pocket XY is the **SOD-123 outline MAX (DS30086 rev 31-2: E 2.55–2.85 long, D 1.40–1.70 wide — `D` is width, A 1.00–1.35 is the height)**, which also covers the KiCad STEP's widest section (2.700 × 1.550 at the plate plane; the earlier 2.566 × 1.416 was the chamfered top face), + **0.15/side** → pocket **3.15 × 2.00** (measured top **1.260mm**; relief floor at 1.00 + 0.55 = **1.55mm**, **0.15mm** over the 1.40 window top and 0.65mm of plate under it) |
@@ -75,6 +75,23 @@ Encoder push over the window zone stays soft by design.
   >= 1.0; `plate/gen_plate.py --check` carries the new z-stack gate.
   The plate stays shop-cut 1.2mm PC (do NOT print it in PETG: flex +
   creep defeat the Choc clip).
+
+- **Silhouette vs sandwich cases (research round 2026-10-24; user: "the
+  classics don't have beefy top cases"):** Sofle / Corne / Lily58 class
+  builds use an acrylic/FR4 **sandwich** — bottom plate + PCB + a TOP
+  PLATE that IS the switch plate, joined by standoffs (commonly 7mm choc
+  / 10mm+ MX; Aurora Corne plates 1.5–1.6mm). There is no enclosure over
+  the keycaps: the plate is the top, caps tower above it, and the
+  underside is open foam. Hojicha44 keeps the same plate stack (plate at
+  the Choc clip band) and adds a thin magnetic cosmetic cover over
+  everything — that is the design intent (enclosed acoustic volume,
+  no visible fasteners), and the 0.8mm ledge keeps the CAPS as the
+  visual top. Height at the front edge: **11.55mm** (desk→cover top;
+  desk→cap top 13.93 with flat Saddle caps, ~17.5 with the rendered
+  Normal_Tilted) — at or below typical choc sandwich builds (~12–16mm
+  at the edge) and far under MX sandwiches (~18–30mm). The classics'
+  numbers vary with standoff choice and are not published per design;
+  treat the ranges, not decimals.
 
 ## Sources (suppliers, verified)
 

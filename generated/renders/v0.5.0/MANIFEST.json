@@ -9,6 +9,8 @@
    "klp_Saddle.step",
    "klp_Saddle_Tilted.step",
    "klp_Saddle_Homing.step",
+   "klp_Normal.step",
+   "klp_Normal_Homing.step",
    "klp_Normal_Tilted.step",
    "klp_Thumb.step"
   ]
@@ -20,8 +22,8 @@
   "python": "3.12.13"
  },
  "renders": {
-  "bright/exploded.png": "06f79d1caddcd6a31afd31601f52527816c41a15e01afa9eb9826a941acf0552",
-  "bright/hero.png": "d1e3a9afdb7260697b55dcc099d11a40f61570859d9b7d546c2ffdf1866d85d7"
+  "bright/exploded.png": "43121441be814e3035bd15c81b3db4f466bfc75f50866c4bb52c02692385fc77",
+  "bright/hero.png": "2f6060257a550ffaeed5d8c45f79e654fcc46e0be7609e76077d92039bfacf5e"
  },
  "note": "regenerate: renders/README.md; assets tree is derived (gitignored), final PNGs are committed"
 }

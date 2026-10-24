@@ -1,9 +1,10 @@
 # Hojicha44 print-order manifest — v0.5.0 (records exactly which geometry
 # goes to the laser/MJF shops; the PCB release MANIFEST covers only gerbers).
-# geometry anchor at re-recording: the case v4.1 batch (2026-10-24 — key-field
-# ledge, O6.0 TRRS side hole, floor -6.35/FLOOR_T 1.7; case solids regenerated
-# + gates exit-0 same commit; STEP files now COMMITTED so CI verifies them;
-# STLs stay regenerable/gitignored; board stamp = release v0.5.0 @8eef566).
+# geometry anchor at re-recording: the case v4.3 batch (2026-10-24 — v4.1
+# floor -6.35/FLOOR_T 1.7 + O6.0 TRRS side hole; v4.3 CAP_CLEAR 1.5 (rows
+# merge, zero row-webs) + ledge extended over the component strip with rim-
+# port keepouts; tub hashes unchanged since v4.1; STEP files committed and
+# CI-verified; board stamp = release v0.5.0 @8eef566).
 # plate files are tracked + CI-verifiable (tests/spec_checks print-manifest gate);
 # if any generator constant changes, regenerate everything and re-record this
 # manifest in the SAME commit (never order from a stale hash).
@@ -16,9 +17,9 @@ b4d3bdc06522476bdd7cfe076de97e6a8af2033aeb5a63646b3ec03fa8a0a363  plate/Hojicha4
 4ac6a9a5700181f512b21f351c69a5ad79700d1eb160c250674a16a6eb4040ab  plate/Hojicha44-Right-lands.json
 76041fe22d53c81342d01c83b20079afc64d1653c26b4de5238690d10943735d  case/out/Hojicha44-Left-tub.step
 29b171cad816327d3376ee6ec832969677c6f928b283c8ef49c993219cf4c9dd  case/out/Hojicha44-Left-tub.stl
-05d6968abbe81581b675925dd294c73e912e97247eea56863a398598b0923b30  case/out/Hojicha44-Left-cover.step
-4ab45d4eb457de774e3f6802d49b5d8ce38c08c9af987f77173cfd88b2f9265a  case/out/Hojicha44-Left-cover.stl
+1015268920e651e63dda638b7a47b900cd347598273a45eee8a747ed65ae8112  case/out/Hojicha44-Left-cover.step
+9a51b54bf2f952957f9f03515373858abbb102ad325bbc14fece8b847ee37984  case/out/Hojicha44-Left-cover.stl
 f80ec07edfa2c89b9bd222d4c5fb4c623f79dc74f3d425d4c5320d93dd465390  case/out/Hojicha44-Right-tub.step
 52fc27dbc05aa44d21e1ddb20aca07fcafd4f401aa3104d5473315871304cfba  case/out/Hojicha44-Right-tub.stl
-1d7c8103ab059ad872197f199591394c3763eb7bb7f9e731b32d2c74f7b01fcf  case/out/Hojicha44-Right-cover.step
-0b86b1804b87434f8e1d77d69d8047000b51ec1c85d4bb3a1ff28eead6482a32  case/out/Hojicha44-Right-cover.stl
+384004fc6b0987a7dd5094ba513d42aa3b35219ab9cd6d8b01ae8c4ef93684eb  case/out/Hojicha44-Right-cover.step
+4facb4236300a2ea7d86b5806b1412a6dfe43139a83f4f6cd5e25838876f6923  case/out/Hojicha44-Right-cover.stl

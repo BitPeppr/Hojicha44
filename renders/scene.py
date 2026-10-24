@@ -23,7 +23,7 @@ STACK (z=0 is the PCB top; thin-top round):
   plate                    1.00..2.20
   switch body              0.30..3.30, cap stem tip 1.50
   top gaskets              2.20..3.20     (1.5 poron compressed to 1.00)
-  flat KLP Saddle top      7.58           (~3.2 mm proud of the ledge)
+  KLP Normal_Tilted top    11.14          (~5.9 mm proud of the band)
   top cover plate          3.20..5.20     (key field + component windows;
                                            key field ledge relieved 4.40)
   encoder left bare (no knob in the product views)
@@ -395,10 +395,11 @@ def main():
 
     m_cap = pbr("cap_pbt", (0.032, 0.031, 0.034), rough=0.44)
     m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
-    m_nano = pbr("nano_pcb", (0.012, 0.055, 0.032), rough=0.42)
+    m_nano = pbr("nano_pcb", (0.010, 0.010, 0.012), rough=0.42)   # black mask
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
     m_usb = pbr("usb_shell", (0.62, 0.63, 0.65), rough=0.28, metal=1.0)
     m_sock = pbr("nano_socket", (0.028, 0.028, 0.030), rough=0.45)
+    m_gold = pbr("nano_castel", (0.83, 0.68, 0.28), rough=0.30, metal=1.0)
     m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
     micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
     m_case = pbr("case_pa12", (0.042, 0.044, 0.048), rough=0.60)
@@ -491,16 +492,17 @@ def main():
         print(f"[scene] {half}: inner index column x={index_x:.1f}, "
               f"homing key ({home['x']:.1f},{home['y']:.1f})", flush=True)
 
-        # ---- caps (KLP Lamé; flat Saddle profile stays under the bezel)
+        # ---- caps (KLP Lamé; user review: the flat Saddle field read
+        # as "basically inline with case" — switch to the TALL Tilted
+        # family, cap tops ~11.1mm abs, ~5.9mm proud of the outer band.
+        # The tilted family has no homing-bar variant, so the homing
+        # keys wear the same cap)
         for p in sw:
             c = holes[p["ref"]]
             if p["y"] < -10.0:
                 variant = "thumb"
-            elif (abs(p["x"] - home["x"]) < 1e-6
-                  and abs(p["y"] - home["y"]) < 1e-6):
-                variant = "saddle_homing"
             else:
-                variant = "saddle"
+                variant = "normal_tilted"
             _, roots_c, objs = import_glb(os.path.join(
                 ASSETS, "parts", f"klp_{variant}.glb"),
                 f"cap_{h}_{p['ref']}")
@@ -571,13 +573,22 @@ def main():
                       f"y {ny0:.2f}..{ny1:.2f} inside MCU window", flush=True)
             body_y = 33.0            # nice!nano v2 body (module PCB)
             body_x = 17.8
-            z_pcb0 = 3.0             # socket stack under the module PCB
+            z_pcb0 = 4.5             # Mill-Max 315+3320 stack (spec BOM)
             z_pcb1 = z_pcb0 + 1.6
             g = parts[h].setdefault("nano", [])
             g.append(add_cube(f"nano_pcb_{h}",
                               (ncx * SCALE, ncy * SCALE,
                                ((z_pcb0 + z_pcb1) / 2) * SCALE),
                               (body_x, body_y, 1.6), m_nano))
+            # gold castellated pads along BOTH long edges (the nice!nano's
+            # half-plated edge fingers — what made the envelope stand-in
+            # read as a bare green slab in review)
+            for sgn in (-1, 1):
+                g.append(add_cube(f"nano_castel_{h}_{sgn}",
+                                  ((ncx + sgn * (body_x / 2 - 0.35)) * SCALE,
+                                   ncy * SCALE,
+                                   ((z_pcb0 + z_pcb1) / 2) * SCALE),
+                                  (0.7, body_y - 1.0, 1.7), m_gold))
             # USB-C receptacle at the north (+y) end, on the module top
             g.append(add_cube(f"nano_usb_{h}",
                               (ncx * SCALE, (ncy + body_y / 2 - 3.7) * SCALE,
@@ -592,12 +603,22 @@ def main():
                               (ncx * SCALE, (ncy - 14.0) * SCALE,
                                (z_pcb1 + 0.25) * SCALE),
                               (3.0, 2.0, 0.5), m_chip))
-            # two low-profile socket strips under the module
+            # reset pushbutton (top-east corner) + status LED (top-west)
+            g.append(add_cube(f"nano_rst_{h}",
+                              ((ncx + 6.5) * SCALE, (ncy + 13.4) * SCALE,
+                               (z_pcb1 + 0.7) * SCALE),
+                              (2.4, 2.6, 1.4), m_sock))
+            g.append(add_cube(f"nano_led_{h}",
+                              ((ncx - 5.6) * SCALE, (ncy + 13.4) * SCALE,
+                               (z_pcb1 + 0.25) * SCALE),
+                              (1.6, 1.0, 0.5), m_gold))
+            # two low-profile socket strips under the module (the 315
+            # bodies; the 3320 pins rise into the module)
             for sgn in (-1, 1):
                 g.append(add_cube(f"nano_sock_{h}_{sgn}",
                                   ((ncx + sgn * 7.62) * SCALE, ncy * SCALE,
-                                   1.5 * SCALE),
-                                  (2.6, 29.0, 3.0), m_sock))
+                                   1.3 * SCALE),
+                                  (2.6, 29.0, 2.6), m_sock))
 
         # the EC11 is left bare: the product views show the encoder, not a
         # knob (the sourced knob is a stand-in and was visually too tall)

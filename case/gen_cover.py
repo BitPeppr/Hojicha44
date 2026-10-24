@@ -124,7 +124,11 @@ def build_cover(tag):
     # ---- shallow ledge around the key field: the cover top drops
     # KEY_LEDGE_D over a KEY_LEDGE_W border, so the caps stand proud of
     # the surface they sit in while the outer band/magnets keep the full
-    # plate height (review: 2.4mm still read as flush).
+    # plate height (review: 2.4mm still read as flush). The component
+    # windows (dilated) are PART of the ledge so no full-height strip is
+    # left between the field and the windows (user review: "near the
+    # rotary encoder something juts out"); the rim ports (TRRS hole,
+    # USB slot) get keepouts — the ledge must never thin their roofs.
     lw = P.CAP_FOOT_W + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
     lh = P.CAP_FOOT_H + 2 * (P.CAP_CLEAR + P.KEY_LEDGE_W)
     ledge = None
@@ -132,6 +136,27 @@ def build_cover(tag):
         s = rrect(lw, lh, P.CAP_ROUND + P.KEY_LEDGE_W, cx, cy, ang,
                   z1 - P.KEY_LEDGE_D, z1 + 1.0)
         ledge = s if ledge is None else ledge.fuse(s)
+    for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),
+                             win2(tag, P.PWRSW_WIN)):
+        s = rrect(x1 - x0 + 2 * P.KEY_LEDGE_W,
+                  y1 - y0 + 2 * P.KEY_LEDGE_W, 2.0 + P.KEY_LEDGE_W,
+                  (x0 + x1) / 2, (y0 + y1) / 2,
+                  0.0, z1 - P.KEY_LEDGE_D, z1 + 1.0)
+        ledge = ledge.fuse(s)
+    for name in ("usb", "trrs"):
+        pr = ports[name]
+        ox, oy = pr["o"]
+        ux, uy = pr["u"]
+        hw = pr["w"] / 2 + 1.5
+        # the bore spans o-u*(SLOT_IN+1) .. o+u*(out+1); a symmetric
+        # keepout about o would miss the breached outward leg
+        ln = P.SLOT_IN + pr["out"] + 4.0
+        cen = (ox + ux * (pr["out"] - P.SLOT_IN) / 2.0,
+               oy + uy * (pr["out"] - P.SLOT_IN) / 2.0)
+        keep = rrect(ln, 2 * hw, 1.5, cen[0], cen[1],
+                     math.degrees(math.atan2(uy, ux)),
+                     z1 - P.KEY_LEDGE_D, z1 + 1.0)
+        ledge = ledge.cut(keep)
     solid = solid.cut(ledge)
     # ---- component windows (MCU / encoder / pwrsw body; mirrored) ------
     for (x0, y0, x1, y1) in (win2(tag, P.MCU_WIN), win2(tag, P.ENC_WIN),

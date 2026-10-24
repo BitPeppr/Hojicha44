@@ -6,7 +6,7 @@ set -euo pipefail
 DIR="${KEYCAP_DIR:-/tmp/kbd-renders/keycaps}"
 mkdir -p "$DIR"
 BASE="https://raw.githubusercontent.com/braindefender/KLP-Lame-Keycaps/master/STEP/Choc%20Stem%20%2B%20Choc%20Size"
-for v in Saddle Saddle_Tilted Saddle_Homing Normal_Tilted Thumb; do
+for v in Saddle Saddle_Tilted Saddle_Homing Normal Normal_Homing Normal_Tilted Thumb; do
   f="$DIR/klp_${v}.step"
   if [ -s "$f" ]; then echo "have $f"; continue; fi
   curl -sL -o "$f" "$BASE/Choc_Stem_Choc_Size_${v}.step"
