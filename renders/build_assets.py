@@ -410,6 +410,187 @@ def screw_glb(glb_path):
     print(f"  screw glb: {glb_path}")
 
 
+# ------------------------------------------------------ choc + artisan
+
+def choc_glb(glb_path):
+    """Kailh-Choc-style low-profile switch (PG1350 language), centred on
+    the shaft axis at z=0 = PCB top. The 14.6mm base frame hides inside
+    the plate in the assembled product and shows in the exploded
+    diagram; everything above it is what reads at ~0.8 m:
+      - base frame 14.6 x 14.6 x 1.9 (z 0..1.9)
+      - four 1.6 x 1.6 x 1.2 corner clip posts (z 1.9..3.1), rising
+        clear of the housing corners — the signature choc detail
+      - top housing 13.2 x 13.2 x 2.0 (z 1.9..3.9) with a 2mm chamfer on
+        the top edges (a full-height 45deg bevel down to the 9.2 top
+        face) and two thin side-ledge steps (0.7/0.6 deep) cut around
+        the top
+      - central stem 6.0 x 6.0 x 0.9 (z 3.9..4.8) the cap pushes onto
+      - LED window slot, 3.0 wide x 1.5 tall x 0.4 deep, cut into the
+        front-bottom edge
+    """
+    import cadquery as cq
+    import trimesh
+
+    # base frame
+    switch = cq.Workplane("XY").box(14.6, 14.6, 1.9,
+                                    centered=(True, True, False))
+    # four corner clip posts, tops at z 3.1
+    off = 14.6 / 2 - 1.6 / 2
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            switch = switch.union(
+                cq.Workplane("XY").workplane(offset=1.9)
+                .center(sx * off, sy * off)
+                .box(1.6, 1.6, 1.2, centered=(True, True, False)))
+    # top housing: a 2mm chamfer on the top edges of a 2.0-tall box is a
+    # full-height bevel, which OCCT refuses in place — so chamfer a
+    # 4mm-tall box (where it succeeds) and drop it back; the 0.1 that
+    # sinks below z 1.9 is buried in the base frame
+    housing = (cq.Workplane("XY")
+               .box(13.2, 13.2, 4.0, centered=(True, True, False))
+               .edges(">Z").chamfer(2.0)
+               .translate((0, 0, -0.1))
+               .cut(cq.Workplane("XY").workplane(offset=-1.0)
+                    .box(20.0, 20.0, 2.8, centered=(True, True, False))))
+    # side ledges: cut the outer shell above each step height, leaving
+    # thin 0.7/0.6mm-deep steps ringing the top housing
+    for z_step, keep in ((2.5, 10.6), (3.0, 9.4)):
+        ring = (cq.Workplane("XY").workplane(offset=z_step)
+                .box(14.4, 14.4, 2.4, centered=(True, True, False))
+                .cut(cq.Workplane("XY").workplane(offset=z_step - 0.1)
+                     .box(keep, keep, 2.6, centered=(True, True, False))))
+        housing = housing.cut(ring)
+    switch = switch.union(housing)
+    # central stem, z 3.9..4.8
+    switch = switch.union(cq.Workplane("XY").workplane(offset=3.9)
+                          .box(6.0, 6.0, 0.9, centered=(True, True, False)))
+    # LED window slot: 3.0 wide x 1.5 tall, 0.4 deep into the front face
+    switch = switch.cut(
+        cq.Workplane("XY").workplane(offset=0.2)
+        .center(0, -(14.6 / 2) + 0.1)
+        .box(3.0, 0.6, 1.5, centered=(True, True, False)))
+    verts, faces = [], []
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopAbs import TopAbs_FACE
+    from OCP.TopoDS import TopoDS
+    from OCP.BRep import BRep_Tool
+    from OCP.TopLoc import TopLoc_Location
+    from OCP.BRepMesh import BRepMesh_IncrementalMesh
+    shape = switch.val().wrapped
+    BRepMesh_IncrementalMesh(shape, 0.08, False, 0.3, True)
+    exp = TopExp_Explorer(shape, TopAbs_FACE)
+    while exp.More():
+        face = TopoDS.Face_s(exp.Current())
+        loc = TopLoc_Location()
+        tris = BRep_Tool.Triangulation_s(face, loc)
+        if tris is not None:
+            trsf = loc.Transformation()
+            base = len(verts)
+            for i in range(1, tris.NbNodes() + 1):
+                p = tris.Node(i).Transformed(trsf)
+                verts.append((p.X(), p.Y(), p.Z()))
+            for i in range(1, tris.NbTriangles() + 1):
+                a, b, c = tris.Triangle(i).Get()
+                faces.append((base + a - 1, base + b - 1, base + c - 1))
+        exp.Next()
+    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    mesh.merge_vertices()
+    scene = trimesh.Scene({"choc": mesh})
+    scene.export(glb_path)
+    bb = mesh.bounds
+    print(f"  choc glb: {glb_path} ({len(mesh.faces)} tris, "
+          f"{len(mesh.vertices)} verts, bbox "
+          f"{bb[1][0] - bb[0][0]:.2f} x {bb[1][1] - bb[0][1]:.2f} x "
+          f"{bb[1][2] - bb[0][2]:.2f} mm)")
+
+
+def artisan_glb(glb_path):
+    """Sculpted artisan accent cap on the Saddle-family foot — the same
+    17.48 x 16.48 plan and base plane (z=0) as the KLP caps it replaces,
+    total height ~9.5:
+      - dome: sphere R=11 centred at z -3 and cut at the base plane ->
+        an 8mm dome cap height, apex at z +8.0
+      - the plan prism clips the sphere's bulge, so the walls stay at
+        the plan up to the crease at ~z 3.7..4.3 (the clean skirt,
+        blending into the dome); a 1.4mm foot slab of the same plan
+        restores the full family foot where the sphere misses the
+        corners
+      - three concentric ridge rings (tori bedded 0.30 deep along the
+        surface normal, tube radius 0.75 -> 0.45mm relief, above the
+        0.4mm that must still read at ~0.2 mm/px) and a centre button
+        dot topping out at z ~9.45
+    """
+    import math
+    import cadquery as cq
+    import numpy as np
+    import trimesh
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeSphere, BRepPrimAPI_MakeTorus
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
+
+    R, CZ = 11.0, -3.0
+    dome = cq.Shape.cast(BRepPrimAPI_MakeSphere(gp_Pnt(0, 0, CZ), R).Shape())
+    prism = (cq.Workplane("XY")
+             .box(17.48, 16.48, 10.0, centered=(True, True, False))
+             .edges("|Z").fillet(2.5)).val()
+    cap = dome.intersect(prism)
+    # foot slab: the sphere never reaches the plan corners, so bed the
+    # clip on 1.4mm of the full rounded-rect plan
+    foot = (cq.Workplane("XY")
+            .box(17.48, 16.48, 1.4, centered=(True, True, False))
+            .edges("|Z").fillet(2.5)).val()
+    cap = cap.fuse(foot)
+    # three concentric ridge rings, bedded 0.30 deep along the surface
+    # normal so 0.45mm of each tube stands proud of the dome
+    bed = 0.30
+    for z_ring in (5.2, 6.4, 7.35):
+        r = math.sqrt(R * R - (z_ring - CZ) ** 2)
+        major = r * (1.0 - bed / R)
+        cz = z_ring - bed * (z_ring - CZ) / R
+        cap = cap.fuse(cq.Shape.cast(BRepPrimAPI_MakeTorus(
+            gp_Ax2(gp_Pnt(0, 0, cz), gp_Dir(0, 0, 1)), major, 0.75).Shape()))
+    # centre button dot
+    cap = cap.fuse(cq.Shape.cast(
+        BRepPrimAPI_MakeSphere(gp_Pnt(0, 0, 7.45), 2.0).Shape()))
+    cap = cap.clean()
+    verts, faces = [], []
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopAbs import TopAbs_FACE
+    from OCP.TopoDS import TopoDS
+    from OCP.BRep import BRep_Tool
+    from OCP.TopLoc import TopLoc_Location
+    from OCP.BRepMesh import BRepMesh_IncrementalMesh
+    shape = cap.wrapped
+    BRepMesh_IncrementalMesh(shape, 0.02, False, 0.2, True)
+    exp = TopExp_Explorer(shape, TopAbs_FACE)
+    while exp.More():
+        face = TopoDS.Face_s(exp.Current())
+        loc = TopLoc_Location()
+        tris = BRep_Tool.Triangulation_s(face, loc)
+        if tris is not None:
+            trsf = loc.Transformation()
+            base = len(verts)
+            for i in range(1, tris.NbNodes() + 1):
+                p = tris.Node(i).Transformed(trsf)
+                verts.append((p.X(), p.Y(), p.Z()))
+            for i in range(1, tris.NbTriangles() + 1):
+                a, b, c = tris.Triangle(i).Get()
+                faces.append((base + a - 1, base + b - 1, base + c - 1))
+        exp.Next()
+    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    mesh.merge_vertices()
+    # the button sphere's pole leaves one zero-area seam triangle after
+    # the weld — drop degenerate faces so the cap exports watertight
+    mesh.update_faces(trimesh.triangles.area(mesh.triangles) > 1e-8)
+    mesh.remove_unreferenced_vertices()
+    scene = trimesh.Scene({"artisan": mesh})
+    scene.export(glb_path)
+    bb = mesh.bounds
+    print(f"  artisan glb: {glb_path} ({len(mesh.faces)} tris, "
+          f"{len(mesh.vertices)} verts, bbox "
+          f"{bb[1][0] - bb[0][0]:.2f} x {bb[1][1] - bb[0][1]:.2f} x "
+          f"{bb[1][2] - bb[0][2]:.2f} mm)")
+
+
 # ------------------------------------------------------------- placements
 
 def placements_json(dst):
@@ -489,6 +670,10 @@ def main():
     print("== 6. knob + screw (procedural)")
     knob_glb(os.path.join(OUT, "parts", "knob.glb"))
     screw_glb(os.path.join(OUT, "parts", "screw.glb"))
+
+    print("== 6b. choc switch + artisan cap (procedural)")
+    choc_glb(os.path.join(OUT, "parts", "choc.glb"))
+    artisan_glb(os.path.join(OUT, "parts", "artisan.glb"))
 
     print("== 7. placements (design frame) + plate cutout centers (raw DXF)")
     placements_json(os.path.join(OUT, "placements.json"))

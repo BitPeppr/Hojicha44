@@ -75,27 +75,37 @@ process the product shots keep their real materials:
 duplicated assembly) and wraps the same posed keyboard in a full desk
 environment, then renders two shots into `env/`:
 
-- **desk** — the wide room view: keyboard on its desk mat, monitor
-  behind, Mac mini, mouse, pen cup with three pens, notebook + pen,
-  ceramic mug with coffee, desk lamp (shade, struts, base + a REAL
-  spot light), aluminium dock, TRRS + USB-C + feed cables, procedural
-  walnut desk, wall + baseboard. 28 mm from the user's chair.
-- **mat** — the low closeup across the mat: the TRRS cable sagging
-  between the halves (plugs + collars modelled at the posed jack
-  positions), the USB-C running back to the dock, 45 mm at f/2.6 with
+- **desk** — the wide room view, and WIRELESS: every cable and plug is
+  hidden for this shot (round-8 review: "show off wireless" — it is a
+  nice!nano BLE board). Keyboard on its fabric desk mat, monitor with
+  power LED, Mac mini with front ports + debossed logo, mouse with
+  seam ring + scroll nub, pen cup with rim + three pens, notebook +
+  pen, ceramic mug with coffee, desk lamp (shade, struts, base + a
+  REAL spot light), aluminium dock, procedural walnut desk, plastered
+  wall + baseboard. 28 mm from the user's chair.
+- **mat** — the low closeup across the mat: the TRRS cable DRESSED
+  between the halves (round-7 review: "limp, almost like a thread" —
+  now a Ø4.8 jacket with a stiff wide U, gold collar + metal barrel +
+  rubber strain boot at each jack, exits tangent), the USB-C running
+  back to the dock with its own connector boot, 45 mm at f/2.6 with
   the focus pulled onto the cable sag.
 
-Environment pose: the split widens by an extra 44 mm (the product
-shots' 2.5 mm gap leaves no room for the TRRS loop to read) and the
-halves sit ON the 3 mm mat, lifted by its thickness. The TRRS cable
-endpoints come from the posed `J_L1`/`J_R1` jack objects and the
-case-wall bboxes — never from pre-pose constants (the round-5 macro
-lesson, applied).
+Environment pose: the split widens by an extra 200 mm (44 mm still
+read limp — a real cable needs room) and the halves sit ON the 3 mm
+mat, lifted by its thickness. The TRRS endpoints come from the posed
+`J_L1`/`J_R1` jack objects and the case-wall bboxes — never from
+pre-pose constants (the round-5 macro lesson, applied).
 
-Procedural materials: walnut (stretched wave bands + noise distortion
-into a colour ramp, pore bump, roughness range), near-black felt mat
-with ~220 individual stitch boxes, dark-desktop screen gradient with a
-window-reflection sheen, brushed aluminium, ceramic, paper, rubber.
+Procedural materials (round 8: "desk mat should have fabric texture,
+walls should have more texture"): the mat is a woven fabric — crossed
+thread-scale wave bands form the weave bump, fuzz noise softens it, a
+wash noise varies the colour, roughness rides the weave — with ~220
+individual stitch boxes; the wall is mottled plaster (1 m blotch
+clouds + 8 cm tooth + fine roughness); the walnut runs distortion 13
+with deeper pores and a MULTIPLY wash (a 50/50 grey blend was the
+round-8 calibration catch — it doubled the desk's brightness and blew
+4.5% of the frame); plus dark-desktop screen gradient, brushed
+aluminium, ceramic, paper, rubber.
 
 Both cameras pass the same `--framecheck` NDC pre-flight as the studio
 shots (subjects: keyboard + props for the wide shot; cables + dock +
