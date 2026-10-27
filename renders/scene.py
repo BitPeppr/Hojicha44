@@ -92,6 +92,10 @@ def parse_args():
     p.add_argument("--shots", default="hero,exploded,macro,orbit")
     p.add_argument("--out", default=OUTROOT)
     p.add_argument("--device", default="metal", choices=["metal", "cpu"])
+    p.add_argument("--pp", action="store_true",
+                   help="photoreal post pipeline (render_pp.py: Cycles "
+                        "bounce/clamp tuning + subtle bloom/fringing/"
+                        "grain compositor)")
     p.add_argument("--colourway", default="bright",
                    choices=["bright", "dark", "play", "artisan"],
                    help="product colourway (renders/SHOTLIST.md): dark = "
@@ -396,12 +400,17 @@ def setup_world_and_lights(setup, cx, cy):
         # grazing sweeps; the 350 mm panels read as window glare
         # round 17: 70/60 mm accents — the 120 mm panels still read
         # as "a large rectangle of light" in the marble's coat
-        area("acc_left", 0.7, 0.07, (cx - 0.30, cy - 0.15, 0.052),
-             (cx + 0.04, cy + 0.06, 0.02), (1.0, 0.86, 0.62))
-        area("acc_right", 0.35, 0.06, (cx + 0.34, cy - 0.09, 0.056),
-             (cx - 0.02, cy + 0.04, 0.02), (0.55, 0.70, 1.0))
-        area("rim_cool", 0.35, 0.09, (cx + 0.05, cy + 0.40, 0.22),
-             (cx, cy, 0.0), (0.45, 0.60, 1.0))
+        # round 19: SIDE mood lighting — the accents moved OFF the
+        # camera axis (front-left/front-right) to the flanks, aimed
+        # ACROSS the board, so their reflections in the marble leave
+        # the camera's view instead of glaring at it; the rim sweeps
+        # high and behind. Flanks low, edges grazing.
+        area("acc_west", 0.85, 0.09, (cx - 0.52, cy + 0.10, 0.062),
+             (cx + 0.06, cy - 0.04, 0.015), (1.0, 0.84, 0.58))
+        area("acc_east", 0.55, 0.08, (cx + 0.58, cy + 0.16, 0.055),
+             (cx - 0.10, cy - 0.02, 0.015), (0.50, 0.66, 1.0))
+        area("rim_cool", 0.45, 0.10, (cx + 0.22, cy + 0.46, 0.30),
+             (cx, cy, 0.0), (0.42, 0.58, 1.0))
 
 
 def frame_report(cam, objs, label, res, tol=1.0):
@@ -467,10 +476,20 @@ def add_cam(name, loc, look_at, lens=50):
     return co
 
 
-def render_to(cam, path, res, samples, device="metal"):
+def render_to(cam, path, res, samples, device="metal", pp=False):
     sc = bpy.context.scene
     sc.camera = cam
     sc.render.engine = "CYCLES"
+    if pp:
+        # render_pp: Cycles bounce/clamp realism + the photographic
+        # compositor (5.2 quirks handled inside the module)
+        try:
+            import render_pp
+            render_pp.tune_cycles(sc)
+            render_pp.build_pp_chain(sc, res=res)
+        except Exception as e:
+            print(f"  (render_pp unavailable, base render: {e})",
+                  flush=True)
     sc.cycles.samples = samples
     sc.cycles.use_denoising = True
     sc.render.film_transparent = False
@@ -522,12 +541,31 @@ def build_keyboard(args):
         sys.exit("[scene] ABORT missing assets/parts/choc.glb — "
                  "run: case/.venv/bin/python /tmp/build_newparts.py")
     _, choc_roots, _ = import_glb(choc_glb_path, "choc_src")
-    choc_src_data = choc_roots[0].data
-    choc_src_transform = (choc_roots[0].rotation_euler.copy(),
-                          choc_roots[0].scale.copy())
+    # round 19: the choc is a TWO-MESH export (housing + stem) — each
+    # switch instance is both meshes, so the exploded can tint the
+    # housing cream and the stem charcoal (the real two-tone)
+    choc_sources = [(r.name, r.data, r.rotation_euler.copy(),
+                     r.scale.copy())
+                    for r in choc_roots if r.type == "MESH"]
     for _r in choc_roots:
         _r.hide_render = True
         _r.hide_set(True)
+
+    # round 20: corner hardware — M2 pan-head screws at the four
+    # corners of each half's cover, hex-socketed, sunk flush
+    screw_path = os.path.join(ASSETS, "parts", "screw.glb")
+    m_screw = pbr("screw_steel", (0.60, 0.61, 0.64), rough=0.26,
+                  metal=1.0)
+    micro_texture(m_screw, 300, 0.08, 0.00003, 0.20, 0.34, detail=4.0)
+    if os.path.exists(screw_path):
+        _, screw_roots, _ = import_glb(screw_path, "screw_src")
+        screw_src = [(r.data, r.rotation_euler.copy(), r.scale.copy())
+                     for r in screw_roots if r.type == "MESH"]
+        for _r in screw_roots:
+            _r.hide_render = True
+            _r.hide_set(True)
+    else:
+        screw_src = []
 
     placements = json.load(open(os.path.join(ASSETS, "placements.json")))
     cutouts = json.load(open(os.path.join(ASSETS, "cutouts.json")))
@@ -535,28 +573,55 @@ def build_keyboard(args):
         REPO, "plate", f"Hojicha44-{h}-lands.json")))
         for h in ("Left", "Right")}
 
-    m_cap = pbr("cap_pbt", (0.55, 0.525, 0.475), rough=0.42)  # warm bone
-    m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
+    # round 21: DETAIL-pass materials (materials_detail.py — multi-
+    # signal: brightness wash + roughness RANGE + two bump octaves +
+    # micro-structure per material) with the original pbr set as the
+    # fallback. Detail materials are MARKED so the generic
+    # micro_texture pass below skips them (no double-processing).
+    try:
+        import materials_detail as MD
+        m_cap = MD.cap_pbt_v2("cap_pbt")
+        m_sw = MD.case_sintered_v2("switch_body")
+        m_case = MD.case_sintered_v2("case_pla")
+        m_plate = MD.plate_pom_v2("plate_pom")
+        m_knob = MD.alu_anodized_v2("knob_alu")
+        m_enc_body = MD.alu_anodized_v2("enc_gunmetal")
+        m_enc_shaft = MD.steel_shaft_v2("enc_steel")
+        m_poron = MD.poron_v2("poron_pad")
+        for m in (m_cap, m_sw, m_case, m_plate, m_knob, m_enc_body,
+                  m_enc_shaft, m_poron):
+            m["micro_texture"] = True
+        print("[scene] materials: DETAIL pass active (materials_detail)",
+              flush=True)
+    except Exception as e:
+        print(f"  (materials_detail unavailable, base set: {e})",
+              flush=True)
+        m_cap = pbr("cap_pbt", (0.55, 0.525, 0.475), rough=0.42)
+        m_sw = pbr("switch_body", (0.026, 0.026, 0.030), rough=0.38)
+        m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
+        micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
+        m_case = pbr("case_pla", (0.30, 0.30, 0.315), rough=0.62)
+        m_plate = pbr("plate_pom", (0.035, 0.036, 0.042), rough=0.14)
+        m_knob = pbr("knob_alu", (0.72, 0.73, 0.75), rough=0.26,
+                     metal=1.0)
+        m_enc_body = pbr("enc_gunmetal", (0.16, 0.16, 0.175),
+                         rough=0.30, metal=0.9)
+        m_enc_shaft = pbr("enc_steel", (0.66, 0.67, 0.70), rough=0.20,
+                          metal=1.0)
     m_nano = pbr("nano_pcb", (0.010, 0.010, 0.012), rough=0.42)   # black mask
     m_chip = pbr("nano_chip", (0.020, 0.020, 0.023), rough=0.30)
     m_usb = pbr("usb_shell", (0.62, 0.63, 0.65), rough=0.28, metal=1.0)
     m_sock = pbr("nano_socket", (0.028, 0.028, 0.030), rough=0.45)
+    # round 20: the audit found these two flat (no height/bump) —
+    # ENIG pads get a faint plating tooth + roughness swing, silk a
+    # woven screen-print tooth
     m_gold = pbr("nano_castel", (0.83, 0.68, 0.28), rough=0.30, metal=1.0)
+    micro_texture(m_gold, 420, 0.10, 0.00003, 0.24, 0.36, detail=4.0)
     m_silk = pbr("nano_silk", (0.80, 0.80, 0.77), rough=0.55)
-    m_poron = pbr("poron_pad", (0.40, 0.38, 0.36), rough=0.93)
-    micro_texture(m_poron, 90, 0.5, 0.001, 0.88, 0.97, detail=3.0)
-    # colourway hierarchy (user review 2026-10-24: keycap lighter than
-    # case, case lighter than plate, plate glossier than the matte PLA
-    # case — a POM/PP plate against a printed PLA shell):
-    #   caps   = warm bone, satin fine grain     (lightest)
-    #   case   = mid grey, coarse sintered grain  (middle)
-    #   plate  = near-black waxy POM gloss        (darkest, smoothest)
-    m_case = pbr("case_pla", (0.30, 0.30, 0.315), rough=0.62)
-    m_plate = pbr("plate_pom", (0.035, 0.036, 0.042), rough=0.14)
-    m_knob = pbr("knob_alu", (0.72, 0.73, 0.75), rough=0.26, metal=1.0)
-    m_enc_body = pbr("enc_gunmetal", (0.16, 0.16, 0.175),
-                     rough=0.30, metal=0.9)
-    m_enc_shaft = pbr("enc_steel", (0.66, 0.67, 0.70), rough=0.20, metal=1.0)
+    micro_texture(m_silk, 260, 0.22, 0.00004, 0.48, 0.62, detail=4.0)
+    # colourway hierarchy (review 2026-10-24): warm-bone caps (lightest)
+    # > mid-grey case > near-black waxy POM plate (darkest); the DETAIL
+    # pass above builds this same ladder with real surface signals
     # texture pass: PBT caps a FINE satin grain, the PLA case a clearly
     # coarser grain, the POM plate almost none (waxy gloss), the knob and
     # encoder read as machined metal
@@ -681,20 +746,41 @@ def build_keyboard(args):
         # ---- switch housings visible between plate and cap skirt
         for p in sw:
             c = holes[p["ref"]]
-            # round-9: REAL choc switches (assets/parts/choc.glb: base
-            # frame, four corner clip posts, stepped housing, stem, LED
-            # slot) instead of the 13.6x13.6x3.0 box the round-8 review
-            # read as "foam switch pads". One imported source mesh, 46
-            # linked instances.
-            o = bpy.data.objects.new(f"swbody_{h}_{p['ref']}",
-                                     choc_src_data)
-            o.rotation_euler = choc_src_transform[0]
-            o.scale = choc_src_transform[1]
-            o.location = (c["x"] * SCALE, c["y"] * SCALE, 0.0)
-            o.rotation_euler.z += math.radians(c["angle"])
-            bpy.context.collection.objects.link(o)
-            assign([o], m_sw)
-            parts[h].setdefault("swbodies", []).append(o)
+            # round 9/19: REAL choc switches (housing + stem meshes,
+            # base frame, corner clip posts, stepped housing, LED
+            # window) instead of the 13.6x13.6x3.0 box the round-8
+            # review read as "foam switch pads". Linked instances per
+            # switch position, both meshes.
+            for src_name, src_data, rot, scl in choc_sources:
+                tag = "housing" if "housing" in src_name else "stem"
+                o = bpy.data.objects.new(
+                    f"swbody_{h}_{p['ref']}_{tag}", src_data)
+                o.rotation_euler = rot
+                o.scale = scl
+                o.location = (c["x"] * SCALE, c["y"] * SCALE, 0.0)
+                o.rotation_euler.z += math.radians(c["angle"])
+                bpy.context.collection.objects.link(o)
+                assign([o], m_sw)
+                parts[h].setdefault("swbodies", []).append(o)
+
+        # ---- round 20: the four corner screws (cover parts; they
+        # ride with the cover in the explode)
+        if screw_src:
+            (c0, c1) = bbox_mm(parts.get(h, {}).get("tub", []))
+            for si, (sx, sy) in enumerate((( 1, 1), (1, -1),
+                                            (-1, 1), (-1, -1))):
+                px = (c1[0] - 7.0 * SCALE if sx > 0 else c0[0] + 7.0 * SCALE)
+                py = (c1[1] - 7.0 * SCALE if sy > 0
+                      else c0[1] + 7.0 * SCALE)
+                for sdata, srot, sscl in screw_src:
+                    so = bpy.data.objects.new(
+                        f"corner_screw_{h}_{si}", sdata)
+                    so.rotation_euler = srot
+                    so.scale = sscl
+                    so.location = (px, py, 5.20 * SCALE)
+                    bpy.context.collection.objects.link(so)
+                    assign([so], m_screw)
+                    parts[h].setdefault("cover", []).append(so)
 
         # ---- poron gaskets on every tab, compressed to the real
         # assembly heights (bottom 3.0 -> 2.55, top 1.5 -> 1.28). They
@@ -1097,7 +1183,7 @@ def build_keyboard(args):
             "foam":    ((0.520, 0.470, 0.380), 0.75, 0.0),  # pale sand
             "gaskets": ((0.450, 0.400, 0.330), 0.70, 0.0),  # sand
             "plate":   ((0.620, 0.620, 0.630), 0.35, 0.6),  # silver
-            "swbodies": ((0.720, 0.700, 0.660), 0.45, 0.0),  # cream
+
             "caps":    ((0.780, 0.750, 0.690), 0.45, 0.0),  # bone
             "cover":   ((0.500, 0.490, 0.470), 0.50, 0.0),  # warm grey
             "knob":    ((0.720, 0.560, 0.260), 0.30, 1.0),  # brass
@@ -1107,20 +1193,29 @@ def build_keyboard(args):
         # web + vias) from env_materials when available, and the
         # mounted parts keep component-true tints: gold jack, gunmetal
         # encoder, charcoal MCU/power switch, gold pads
-        try:
-            import env_materials as EM
-            m_pcb = EM.proc_pcb("stack_pcb")
-        except Exception:
-            m_pcb = pbr("stack_pcb", (0.015, 0.105, 0.050), rough=0.42)
+        m_pcb = proc_pcb_diagram("stack_pcb")
         m_comp_gold = pbr("stack_comp_gold", (0.75, 0.58, 0.24),
                           rough=0.28, metal=1.0)
         m_comp_metal = pbr("stack_comp_metal", (0.22, 0.22, 0.24),
                            rough=0.32, metal=0.9)
         m_comp_dark = pbr("stack_comp_dark", (0.09, 0.09, 0.10), rough=0.40)
+        m_housing = pbr("stack_sw_housing", (0.72, 0.70, 0.66), rough=0.45)
+        m_stem = pbr("stack_sw_stem", (0.09, 0.09, 0.10), rough=0.40)
+        # round 19: choc switches are TWO-TONE — the cream PG1350
+        # housing vs the dark stem (one flat colour read as foam pads)
         for h in parts:
             for grp, (col, rough, metal) in stack_pal.items():
-                assign(parts[h].get(grp, []),
-                       pbr(f"stack_{grp}", col, rough=rough, metal=metal))
+                mat = pbr(f"stack_{grp}", col, rough=rough, metal=metal)
+                if grp == "foam":
+                    # round 19: "foam should look porous, not a sheet
+                    # of perfectly even paper" — open-cell acoustic
+                    # foam: fine high-frequency bump + deep roughness
+                    micro_texture(mat, 700, 0.75, 0.0002,
+                                  rough + 0.12, 0.92, detail=6.0)
+                assign(parts[h].get(grp, []), mat)
+            for o in parts[h].get("swbodies", []):
+                assign([o], m_stem if o.name.endswith("_stem")
+                       else m_housing)
             for o in parts[h].get("board", []):
                 if o.type != "MESH":
                     continue
@@ -1235,6 +1330,88 @@ def proc_dark_marble(name):
         if key in bsdf.inputs:
             bsdf.inputs[key].default_value = (
                 0.50 if key == "Coat Weight" else 0.10)
+    return mat
+
+
+def proc_pcb_diagram(name):
+    """Diagram-scale PCB (round 18-19: "pcb should have wiring/traces
+    on it"): deep green soldermask under a BOLD gold trace web — two
+    orthogonal trace families at ~4-5mm pitch in the generated space
+    (the agent's authentic-scale pitch was mush at diagram distance) —
+    plus via dots and a silkscreen haze. Reads as circuitry; no
+    accuracy claimed."""
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nt = mat.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = (0.016, 0.085, 0.045, 1.0)
+    bsdf.inputs["Roughness"].default_value = 0.40
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    gold = (0.78, 0.62, 0.26, 1.0)
+    silk = (0.80, 0.79, 0.74, 1.0)
+    dark = (0.0, 0.0, 0.0, 1.0)
+    L = nt.links.new
+
+    def trace_family(scale, tag):
+        """Narrow gold bands on a tight mapping -> a gold spike ramp."""
+        mp = nt.nodes.new("ShaderNodeMapping")
+        mp.inputs["Scale"].default_value = scale
+        wv = nt.nodes.new("ShaderNodeTexWave")
+        wv.wave_type, wv.bands_direction = "BANDS", "X"
+        wv.inputs["Scale"].default_value = 1.0
+        wv.inputs["Distortion"].default_value = 3.5
+        wv.inputs["Detail"].default_value = 3.0
+        ramp = nt.nodes.new("ShaderNodeValToRGB")
+        e = ramp.color_ramp.elements
+        e[0].position, e[0].color = 0.0, dark
+        e[1].position, e[1].color = 0.5, dark
+        m = ramp.color_ramp.elements.new(0.5)
+        m.color = gold
+        m2 = ramp.color_ramp.elements.new(0.52)
+        m2.color = (0.0, 0.0, 0.0, 0.0)
+        m2.color = dark
+        L(tc.outputs["Generated"], mp.inputs["Vector"])
+        L(mp.outputs["Vector"], wv.inputs["Vector"])
+        L(wv.outputs["Fac"], ramp.inputs["Fac"])
+        return ramp
+
+    t_h = trace_family((48.0, 7.0, 1.0), "h")
+    t_v = trace_family((7.0, 48.0, 1.0), "v")
+    add_t = nt.nodes.new("ShaderNodeMixRGB")
+    add_t.blend_type = "ADD"
+    add_t.inputs["Fac"].default_value = 1.0
+    L(t_h.outputs["Color"], add_t.inputs["Color1"])
+    L(t_v.outputs["Color"], add_t.inputs["Color2"])
+
+    nz = nt.nodes.new("ShaderNodeTexNoise")      # via dots
+    nz.inputs["Scale"].default_value = 380.0
+    nz.inputs["Detail"].default_value = 2.0
+    vr = nt.nodes.new("ShaderNodeValToRGB")
+    ve = vr.color_ramp.elements
+    ve[0].position, ve[0].color = 0.72, dark
+    ve[1].position, ve[1].color = 0.74, (0.78, 0.62, 0.26, 1.0)
+    L(nz.outputs["Fac"], vr.inputs["Fac"])
+
+    sk = nt.nodes.new("ShaderNodeTexNoise")      # silk haze
+    sk.inputs["Scale"].default_value = 6.0
+    sk.inputs["Detail"].default_value = 2.0
+    sr = nt.nodes.new("ShaderNodeValToRGB")
+    se = sr.color_ramp.elements
+    se[0].position, se[0].color = 0.75, dark
+    se[1].position, se[1].color = 0.78, silk
+    L(sk.outputs["Fac"], sr.inputs["Fac"])
+
+    add_all = nt.nodes.new("ShaderNodeMixRGB")
+    add_all.blend_type = "ADD"
+    add_all.inputs["Fac"].default_value = 1.0
+    L(add_t.outputs["Color"], add_all.inputs["Color1"])
+    L(vr.outputs["Color"], add_all.inputs["Color2"])
+    L(add_all.outputs["Color"], bsdf.inputs["Base Color"])
+    L(sr.outputs["Color"], bsdf.inputs["Base Color"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.12
+    L(nz.outputs["Fac"], bump.inputs["Height"])
+    L(bump.outputs["Normal"], bsdf.inputs["Normal"])
     return mat
 
 
@@ -1378,7 +1555,7 @@ def main():
                 frame_report(cam, all_objs, "hero", res)
             else:
                 render_to(cam, os.path.join(sdir, "hero.png"), res,
-                          args.samples, args.device)
+                          args.samples, args.device, pp=args.pp)
         if "exploded" in shots:
             for grp, dz in EXPLODE.items():
                 for h in parts:
@@ -1406,7 +1583,16 @@ def main():
                       ("switches", "swbodies"), ("PCB", "board"),
                       ("case foam", "foam"), ("case", "tub"))
             label_objs = []
-            m_txt = pbr("label_txt", (0.045, 0.045, 0.05), rough=0.85)
+            # round 19: the diagram sits over a mid-dark backdrop, so
+            # the label type goes LIGHT and the world dims with it
+            _bgs = [n for n in bpy.context.scene.world.node_tree.nodes
+                    if n.type == "SHADER_NODE_BACKGROUND"]
+            _saved_bg = [_bg.inputs[0].default_value.copy() for _bg in _bgs]
+            for _bg in _bgs:
+                _c = _bg.inputs[0].default_value
+                _bg.inputs[0].default_value = (
+                    _c[0] * 0.16, _c[1] * 0.17, _c[2] * 0.20, 1.0)
+            m_txt = pbr("label_txt", (0.80, 0.79, 0.76), rough=0.85)
             m_lead = pbr("label_leader", (0.16, 0.16, 0.17), rough=0.6)
             floor_obj = bpy.data.objects.get("studio_floor")
             if floor_obj is not None:
@@ -1415,8 +1601,11 @@ def main():
             # round 17: a real minimalist face, not Blender's default
             # book font — try the system Helvetica first
             _font = None
-            for _fp in ("/System/Library/Fonts/Supplemental/Helvetica.ttf",
-                        "/System/Library/Fonts/HelveticaNeue.ttc",
+            # round 19: HelveticaNeue (ttc first face is thin-ish)
+            # then Avenir, then the supplemental faces
+            for _fp in ("/System/Library/Fonts/HelveticaNeue.ttc",
+                        "/System/Library/Fonts/Avenir Next.ttc",
+                        "/System/Library/Fonts/Supplemental/Helvetica.ttf",
                         "/System/Library/Fonts/Supplemental/Arial.ttf"):
                 try:
                     _font = bpy.data.fonts.load(_fp)
@@ -1429,6 +1618,8 @@ def main():
                 (g0, g1) = bbox_mm(grp_objs) if grp_objs else ((0,) * 3,) * 2
                 z_l = (g0[2] + g1[2]) / 2
                 crv = bpy.data.curves.new(f"label_{li}", type="FONT")
+                # round 19: all-CAPS type in a thinner modern face
+                txt = txt.upper()
                 if _font is not None:
                     crv.font = _font
                 crv.body = txt
@@ -1474,12 +1665,14 @@ def main():
             if args.framecheck:
                 frame_report(cam, all_objs + label_objs, "exploded", res)
             else:
-                render_to(cam, os.path.join(sdir, "exploded.png"), res,
-                          args.samples, args.device)
+                render_to(cam, os.path.join(sdir, "exploded.png"),
+                          res, args.samples, args.device, pp=args.pp)
             # restore: layers back down, labels + leaders gone, floor
             # back (they must not leak into later shots in this run)
             for lo_obj in label_objs:
                 bpy.data.objects.remove(lo_obj, do_unlink=True)
+            for _bg, _c in zip(_bgs, _saved_bg):
+                _bg.inputs[0].default_value = _c
             if floor_obj is not None:
                 floor_obj.hide_render = False
             for grp, dz in EXPLODE.items():
@@ -1515,8 +1708,9 @@ def main():
                 if args.framecheck:
                     frame_report(cam, near_art, "artisan", res)
                 else:
-                    render_to(cam, os.path.join(sdir, "artisan.png"), res,
-                              args.samples, args.device)
+                    render_to(cam, os.path.join(sdir, "artisan.png"),
+                              res, args.samples, args.device,
+                              pp=args.pp)
         if "orbit" in shots:
             # round-9: only the 02 (60 deg) and 08 (240 deg) perspectives
             # survive the shot-list cut — radius 0.20 was a single-half
@@ -1530,8 +1724,9 @@ def main():
                 if args.framecheck:
                     frame_report(cam, all_objs, f"orbit_{i:02d}", res)
                 else:
-                    render_to(cam, os.path.join(sdir, f"orbit_{i:02d}.png"),
-                              res, args.samples, args.device)
+                    render_to(cam, os.path.join(
+                        sdir, f"orbit_{i:02d}.png"),
+                        res, args.samples, args.device, pp=args.pp)
         if "top" in shots:
             cam = add_cam("top", (cx, cy - 0.0001, 0.50), (cx, cy, 0.0),
                           lens=60)
@@ -1541,7 +1736,7 @@ def main():
                 frame_report(cam, all_objs, "top", res)
             else:
                 render_to(cam, os.path.join(sdir, "top.png"), res,
-                          args.samples, args.device)
+                          args.samples, args.device, pp=args.pp)
     print("SCENE-DONE")
 
 

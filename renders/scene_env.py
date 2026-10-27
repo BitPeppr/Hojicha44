@@ -45,6 +45,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import scene as S     # noqa: E402
 import env_props as EP     # noqa: E402
 import env_materials as EM   # noqa: E402
+import env_surfaces as ES    # noqa: E402
+import props_detail_v2 as P2  # noqa: E402
 
 import mathutils
 
@@ -413,8 +415,16 @@ def add_mug(loc, mats):
     handle."""
     mx, my, mz = loc
     out = []
-    o = cyl("env_mug_wall", (mx, my, mz + 0.048), 0.041, 0.096,
-            mats["mug_outer"])
+    # round 19: tapered wall (cone Ø82 base -> Ø78 rim) — a straight
+    # pipe read as a blob
+    bpy.ops.mesh.primitive_cone_add(radius1=0.041, radius2=0.0385,
+                                    depth=0.096,
+                                    location=(mx, my, mz + 0.048))
+    o = bpy.context.active_object
+    o.name = "env_mug_wall"
+    bpy.ops.object.shade_smooth()
+    S.assign([o], mats["mug_outer"])
+    PROPS.append(o)
     out.append(o)
     o = cyl("env_mug_inner", (mx, my, mz + 0.0465), 0.0365, 0.089,
             mats["mug_glaze"])
@@ -428,9 +438,9 @@ def add_mug(loc, mats):
     o = torus("env_mug_crema", (mx, my, mz + 0.0623), 0.0345, 0.0009,
               mats["mug_crema"])
     out.append(o)
-    o = torus("env_mug_handle", (mx + 0.046, my, mz + 0.048),
-              0.024, 0.0055, mats["mug_outer"],
-              rot=(math.radians(90), 0.0, 0.0), scale=(1.0, 1.0, 1.35))
+    o = torus("env_mug_handle", (mx + 0.044, my, mz + 0.050),
+              0.022, 0.0050, mats["mug_outer"],
+              rot=(math.radians(90), 0.0, 0.0), scale=(1.0, 1.0, 1.25))
     out.append(o)
     return out
 
@@ -439,34 +449,37 @@ def add_mouse(loc, mats, rot_z=0.25):
     """Two-button shell mouse: egg body + rear hump, two button
     shells with a dark seam, exposed scroll wheel, thumb buttons."""
     out = []
+    R = rot_z
     bx, by, bz = loc
-    o = sphere("env_ms_body", (bx, by, bz + 0.009),
-               (0.029, 0.057, 0.017), mats["ms_body"])
-    o.rotation_euler.z = rot_z
+    # round 19: teardrop silhouette — LOW nose + TALL rear rump union
+    o = sphere("env_ms_nose", (bx + 0.0015, by + 0.026, bz + 0.0075),
+               (0.0215, 0.031, 0.0115), mats["ms_body"])
+    o.rotation_euler.z = R
     out.append(o)
-    o = sphere("env_ms_hump", (bx - 0.008, by - 0.018, bz + 0.013),
-               (0.024, 0.036, 0.017), mats["ms_body"])
-    o.rotation_euler.z = rot_z
+    o = sphere("env_ms_rump", (bx - 0.0040, by - 0.017, bz + 0.0145),
+               (0.0265, 0.0385, 0.0195), mats["ms_body"])
+    o.rotation_euler.z = R
     out.append(o)
-    for tag, dx in (("l", -0.0135), ("r", 0.0135)):
-        o = box(f"env_ms_btn_{tag}",
-                (bx + dx, by + 0.020, bz + 0.0145),
-                (0.0145, 0.018, 0.0035), mats["ms_body"],
-                rot=(0.0, 0.0, rot_z), bevel=0.002)
-        out.append(o)
-    o = box("env_ms_seam", (bx, by + 0.020, bz + 0.0148),
-            (0.0011, 0.019, 0.0038), mats["ms_seam"],
-            rot=(0.0, 0.0, rot_z))
+    # the full-length split line: nose to rump — the cue that reads
+    o = box("env_ms_split", (bx - 0.0010, by + 0.002, bz + 0.0245),
+            (0.0013, 0.060, 0.0020), mats["ms_seam"],
+            rot=(math.radians(-9.0), 0.0, R), bevel=0.0004)
     out.append(o)
-    o = cyl("env_ms_wheel", (bx, by + 0.0125, bz + 0.0225),
-            0.0065, 0.0045, mats["ms_wheel"],
-            rot=(math.radians(90), 0.0, rot_z))
+    # wheel sunk INTO the split, slightly rear of the nose
+    o = cyl("env_ms_wheel", (bx - 0.0025, by + 0.0105, bz + 0.0250),
+            0.0058, 0.0040, mats["ms_wheel"],
+            rot=(math.radians(90), 0.0, R))
     out.append(o)
-    for i, dy in enumerate((-0.003, 0.009)):
-        o = box(f"env_ms_thumb_{i}",
-                (bx - 0.0245, by + dy, bz + 0.011),
-                (0.003, 0.010, 0.0035), mats["ms_seam"],
-                rot=(0.0, 0.0, rot_z), bevel=0.0008)
+    # thumb shelf + two side buttons on the left flank
+    o = sphere("env_ms_thumb", (bx - 0.0195, by + 0.004, bz + 0.0085),
+               (0.0095, 0.024, 0.0095), mats["ms_body"])
+    o.rotation_euler.z = R
+    out.append(o)
+    for i, dy in enumerate((0.000, 0.013)):
+        o = box(f"env_ms_side_{i}",
+                (bx - 0.0235, by + 0.001 + dy, bz + 0.0105),
+                (0.0025, 0.010, 0.0032), mats["ms_seam"],
+                rot=(0.0, 0.0, R), bevel=0.0007)
         out.append(o)
     return out
 
@@ -494,6 +507,73 @@ def add_standing_pens(loc, mats, n=3):
                 rot=(0.0, 0.0, math.radians(lean * 1.2)), bevel=0.0004)
         out.append(o)
     return out
+
+
+# ------------------------------------------------------- detail sweep
+# Round 20: "not a single face should be void of a height map" — a
+# final pass over every material in the scene: anything still lacking
+# a bump/roughness treatment gets a scale-appropriate tooth. Emissive
+# materials (LEDs, bulbs, screens, fan rings) are skipped — a bump on
+# an emitter reads as nothing. Idempotent via micro_texture's marker
+# property, so hand-tuned materials and agent-supplied ones pass
+# through untouched.
+_SWEEP_TUNE = {
+    # high-visibility props: specifically scaled treatments
+    "my_ms":        (120, 0.30, 0.00009, 0.10, 0.22),   # soft-touch shell
+    "my_ms_seam":   (300, 0.12, 0.00004, 0.28, 0.44),   # rubber seam
+    "my_ms_wheel":  (240, 0.22, 0.00005, 0.34, 0.52),   # tyre rubber
+    "my_glaze":     (600, 0.06, 0.00002, 0.05, 0.09),   # mug glaze
+    "my_coffee":    (500, 0.04, 0.00002, 0.04, 0.08),   # coffee
+    "my_crema":     (420, 0.16, 0.00005, 0.24, 0.44),   # crema
+    "env_pen_white": (110, 0.16, 0.00005, 0.14, 0.26),
+    "env_pen_dark":  (110, 0.16, 0.00005, 0.20, 0.34),
+    "env_pen_copper": (130, 0.12, 0.00005, 0.22, 0.36),
+    "env_connector": (280, 0.08, 0.00003, 0.26, 0.40),  # USB-C metal
+    "env_gold":     (300, 0.07, 0.00003, 0.22, 0.36),  # TRRS gold
+    "tower_dark":   (160, 0.22, 0.00005, 0.30, 0.48),  # case plastic
+    "tower_glass":  (900, 0.02, 0.00002, 0.04, 0.08),  # smudged glass
+    "tower_interior": (400, 0.18, 0.00004, 0.28, 0.44),
+    "mon_dark":     (220, 0.16, 0.00004, 0.26, 0.40),  # bezel plastic
+    "env_baseboard": (400, 0.20, 0.00005, 0.45, 0.62),  # painted wood
+    "nb_title":     (300, 0.28, 0.00005, 0.46, 0.64),  # debossed block
+    "lamp_nub":     (220, 0.32, 0.00006, 0.30, 0.46),  # rocker rubber
+}
+_EMITTERS = ("env_led", "lamp_bulb", "env_bulb", "mon_led", "env_mon_led",
+             "tower_rgb", "tower_pwrled", "mon_screen", "env_screen",
+             "pp_bulb")
+
+
+def detail_sweep():
+    swept, tuned = 0, 0
+    for mat in list(bpy.data.materials):
+        if mat.get("micro_texture"):
+            continue
+        nt = mat.node_tree
+        if nt is None:
+            continue
+        bsdf = nt.nodes.get("Principled BSDF")
+        if bsdf is None:
+            continue
+        if mat.users == 0:
+            continue
+        try:
+            em = bsdf.inputs["Emission Strength"].default_value
+        except Exception:
+            em = 0.0
+        if em > 0.05 or mat.name in _EMITTERS:
+            continue
+        if mat.name in _SWEEP_TUNE:
+            sc, bp, dist, rl, rh = _SWEEP_TUNE[mat.name]
+            S.micro_texture(mat, sc, bp, dist, rl, rh, detail=5.0)
+            tuned += 1
+        else:
+            rough = bsdf.inputs["Roughness"].default_value
+            S.micro_texture(mat, 300, 0.20, 0.00005,
+                            max(rough - 0.08, 0.05),
+                            min(rough + 0.12, 0.90), detail=4.5)
+            swept += 1
+    print(f"[env] detail sweep: {tuned} hand-tuned + {swept} swept "
+          f"materials now carry height maps", flush=True)
 
 
 # ------------------------------------------------------------- the scene
@@ -568,32 +648,20 @@ def main():
     m_mon_led = emit_mat("env_mon_led", (0.15, 0.85, 1.0), 1.5)
 
     # ---- desk, wall, floor
-    box("env_desk", (cx, cy + 0.06, desk_z - 0.020),
-        (2.40, 1.06, 0.040), m_wood, bevel=0.003)
-    box("env_wall", (cx, cy + 0.635, 0.42), (3.60, 0.045, 2.60), m_wall)
-    box("env_baseboard", (cx, cy + 0.615, -0.735), (3.60, 0.055, 0.075),
-        m_base)
-    box("env_floor", (cx, cy - 0.40, -0.775), (3.60, 2.40, 0.012), m_carpet)
+    # round 20: the agent's plank desk — end-grain strips, thickness
+    # variance, y-jitter, one bowed board (loc = top-surface centre)
+    _esmats = {"wood": EM.proc_walnut2("env_walnut2")}
+    PROPS.extend(ES.build_plank_desk((cx, cy + 0.06, desk_z), _esmats))
+    # round 20: the agent's room — plaster + stepped two-piece
+    # baseboard + chair rail, floor + dark rug (loc = wall inner face
+    # at floor level)
+    PROPS.extend(ES.build_room((cx, cy + 0.6125, desk_z - 0.885),
+                               _esmats))
 
-    # ---- fabric desk mat + stitched border
-    mat = box("env_mat", (cx, cy - 0.010, mat_top - MAT_T / 2),
-              (0.900, 0.400, MAT_T), m_fabric, bevel=0.0012)
-    mat_x, mat_y = cx, cy - 0.010
-    inset, step = 0.012, 0.0075
-    for sy in (-1, 1):
-        y = mat_y + sy * (0.200 - inset)
-        n = int((0.900 - 2 * inset) / step)
-        for i in range(n + 1):
-            x = mat_x - 0.450 + inset + i * step
-            box(f"env_stitch_{sy}_{i}", (x, y, mat_top + 0.00030),
-                (0.0042, 0.0012, 0.0009), m_stitch)
-    for sx in (-1, 1):
-        x = mat_x + sx * (0.450 - inset)
-        n = int((0.400 - 2 * inset) / step)
-        for i in range(n + 1):
-            y = mat_y - 0.200 + inset + i * step
-            box(f"env_stitchV_{sx}_{i}", (x, y, mat_top + 0.00030),
-                (0.0012, 0.0042, 0.0009), m_stitch)
+    # ---- round 20: the agent's mat — 3mm filleted slab, folded
+    # front-left corner, 342-piece raised welt (loc = underside centre)
+    mat_objs = ES.build_desk_mat((cx, cy - 0.010, desk_z), _esmats)
+    PROPS.extend(mat_objs)
 
     # ---- round 12: the sculpted props replace the primitives
     # (env_props.py — the agent-built high-detail module)
@@ -623,27 +691,25 @@ def main():
     # USB-C x2 + headphone, debossed top circle
     mini_x, mini_y = cx + 0.42, cy + 0.36
     PROPS.extend(EP.build_minipc((mini_x, mini_y, desk_z), ep_mats))
-    # sculpted ergonomic RH mouse: two buttons, thumb buttons, notched
-    # wheel, seam groove
-    PROPS.extend(add_mouse((cx + 0.40, cy - 0.105, desk_z),
-                           my_mats, rot_z=0.30))
-    # pen cup stays ours (the builder pens fan into it)
+    # round 21: props v2 — the waisted-profile mouse with a real
+    # channel, wheel well and thumb ledge (rounds 17-19 still failed
+    # review: "shaped nothing like a mouse")
+    PROPS.extend(P2.build_mouse_v4((cx + 0.40, cy - 0.105, desk_z),
+                                   my_mats, rot_z=0.30))
+    # round 21: props v2 — the HOLLOW holder (outer tapered wall + inner
+    # wall + thick rim = a cavity you can see into) with the three
+    # standing pens built inside as one assembly
     cupx, cupy = cx - 0.62, cy + 0.20
-    # round 18: a HOLLOW cup — the old inner disc was a lid the pens
-    # clipped through; an inner wall makes a real cavity they stand in
-    cyl("env_cup", (cupx, cupy, desk_z + 0.048), 0.038, 0.096, m_cup_dark)
-    cyl("env_cup_inner", (cupx, cupy, desk_z + 0.047), 0.0335, 0.086,
-        m_rubber)
-    torus("env_cup_rim", (cupx, cupy, desk_z + 0.0955),
-          0.0375, 0.0022, m_cup_dark)
-    PROPS.extend(add_standing_pens((cupx, cupy, desk_z), my_mats, n=3))
+    PROPS.extend(P2.build_pen_holder_v3((cupx, cupy, desk_z), my_mats))
     # notebook: overhanging covers, page block with true sheet lines
     # (proc_page_edges), spine ridge, strap, ribbon, title block
     nbx, nby = cx - 0.44, cy + 0.33
-    PROPS.extend(EP.build_notebook((nbx, nby, desk_z),
-                                   ep_mats, rot_z=math.radians(-14)))
-    # mug (round 17): mine — visible coffee + crema, honest handle
-    PROPS.extend(add_mug((cx + 0.70, cy + 0.30, desk_z), my_mats))
+    PROPS.extend(P2.build_notebook_v2((nbx, nby, desk_z),
+                                      ep_mats,
+                                      rot_z=math.radians(-14)))
+    # round 21: props v2 — tapered + glazed, meniscus, genuine C-handle
+    PROPS.extend(P2.build_mug_v3((cx + 0.70, cy + 0.30, desk_z),
+                                 my_mats))
     # architect lamp: rocker switch, knuckle joints, real bulb
     lampx, lampy = cx - 0.80, cy + 0.44
     shade_pt = (lampx + 0.150, lampy - 0.110, desk_z + 0.345)
@@ -726,11 +792,14 @@ def main():
     hole_r = posed_hole(parts["R"]["tub"], _jy["J_R1"], -1.0)
     dir_l = wall_dir(parts["L"]["tub"], 1.0)
     dir_r = wall_dir(parts["R"]["tub"], -1.0)
-    PLUG_TIP = 0.018   # round 16: jacket starts inside the boot
+    # round 19: fully inserted — the gold collar AND the metal barrel
+    # sit INSIDE the Ø6 wall bore (invisible from the seam); only the
+    # rubber boot + jacket are visible outside the case
+    PLUG_TIP = 0.0065
     for tag, hole, d in (("l", hole_l, dir_l), ("r", hole_r, dir_r)):
         for name, r, t0, t1, m in (
-                ("collar", 0.0019, -0.0020, 0.0035, m_gold),
-                ("barrel", 0.0024, 0.0035, 0.0125, m_connector)):
+                ("collar", 0.0019, -0.0140, -0.0075, m_gold),
+                ("barrel", 0.0024, -0.0075, 0.0000, m_connector)):
             tc = (t0 + t1) / 2
             cyl(f"env_trrs_{name}_{tag}",
                 tuple(hole + d * tc), r, t1 - t0, m,
@@ -739,7 +808,7 @@ def main():
         # jacket so it swallows the cable — the old 2.1 mouth was
         # narrower than the 2.4 jacket and left a visible gap/step
         boot = cone(f"env_trrs_boot_{tag}",
-                    tuple(hole + d * 0.0165), 0.0027, 0.0027, 0.008,
+                    tuple(hole + d * 0.0045), 0.0027, 0.0027, 0.009,
                     m_rubber, track_to=tuple(hole + d * 10.0))
         CABLES.append(boot)
     tip_l = tuple(hole_l + dir_l * PLUG_TIP)
@@ -858,6 +927,8 @@ def main():
                         (cx, cy - 0.02, 0.02), color=col, size=0.16)
                   for i, (pos, col) in enumerate(zip(rgb_pos, rgb_cols))]
 
+    detail_sweep()
+
     # ---- cameras (calibrated round 7; unchanged)
     desk_cam = S.add_cam("env_desk", (cx + 0.10, cy - 1.45, 0.74),
                          (cx + 0.02, cy + 0.12, 0.05), lens=28)
@@ -889,16 +960,24 @@ def main():
     # the frame edges; so do the far ends of the halves in the closeup.
     # desk (round 8): WIRELESS — the cables are hidden, so they are not
     # subjects either. mat: cables + dock + the caps around the seam.
-    backdrop = {"env_desk", "env_wall", "env_baseboard", "env_floor"}
+    # room surfaces extend to the frame edges by design — backdrop,
+    # not subjects (the agent builders prefix dsk_/mat_/room_/chair_)
+    _surf_prefixes = ("dsk_", "mat_", "room_", "wall_", "floor_",
+                      "rug_", "chair_")
+    backdrop = {o.name for o in PROPS
+                if o.name.startswith(_surf_prefixes)}
     desk_subjects = ([o for o in all_objs]
                       + [o for o in PROPS
                          if o.name not in backdrop and o not in CABLES]
-                      + [mat])
+                      + mat_objs)
     # seam-adjacent columns only: the third column still RENDERS, it
     # just isn't a framing constraint (a closeup lets the outer edge
     # of the board run past the frame by design)
     near_caps = [o for h in parts for o in parts[h]["caps"]
                  if abs(o.matrix_world[0][3] - cx) < 0.130]
+    # the mat is the SURFACE under this closeup, not a subject — it
+    # may crop the frame edges (round-19 catch: keeping the body in
+    # the subjects clipped every frame check)
     mat_subjects = (CABLES + near_caps
                     + [o for o in PROPS
                        if o.name.startswith("env_dock")])
@@ -923,9 +1002,9 @@ def main():
                           if o.name not in backdrop
                           and o.name not in tower_names
                           and o.name not in mon_names]
-                       + [mat])
+                       + mat_objs)
     # the dev top-down frames the SETUP: keyboard on the mat
-    dev_subjects = ([o for o in all_objs] + [mat])
+    dev_subjects = ([o for o in all_objs] + mat_objs)
     cams = {"desk": (desk_cam, desk_subjects),
             "mat": (mat_cam, mat_subjects),
             "gaming": (gaming_cam, gaming_subjects),
@@ -953,8 +1032,9 @@ def main():
         for i, li in enumerate(rgb_lights):
             li.data.energy = (0.55, 0.35, 0.45)[i] if gaming else 0.0
         S.render_to(cam, os.path.join(args.out, "env", f"{name}.png"),
-                    res, args.samples, args.device)
+                    res, args.samples, args.device, pp=args.pp)
     print("ENV-DONE")
 
 
-main()
+if __name__ == "__main__":
+    main()

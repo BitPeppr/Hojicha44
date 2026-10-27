@@ -377,7 +377,10 @@ def screw_glb(glb_path):
     socket = (cq.Workplane("XY").workplane(offset=0.4)
               .circle(0.6).extrude(0.5))
     head = head.cut(socket)
-    shank = cq.Workplane("XY").circle(1.0).extrude(6.0)
+    # round 20: the shank extruded UPWARD through the head (a pin, not
+    # a screw) — build it downward: z -6..0
+    shank = (cq.Workplane("XY").circle(1.0).extrude(6.0)
+             .translate((0, 0, -6.0)))
     screw = head.union(shank)
     from OCP.TopExp import TopExp_Explorer
     from OCP.TopAbs import TopAbs_FACE
@@ -461,47 +464,58 @@ def choc_glb(glb_path):
                      .box(keep, keep, 2.6, centered=(True, True, False))))
         housing = housing.cut(ring)
     switch = switch.union(housing)
-    # central stem, z 3.9..4.8
-    switch = switch.union(cq.Workplane("XY").workplane(offset=3.9)
-                          .box(6.0, 6.0, 0.9, centered=(True, True, False)))
     # LED window slot: 3.0 wide x 1.5 tall, 0.4 deep into the front face
     switch = switch.cut(
         cq.Workplane("XY").workplane(offset=0.2)
         .center(0, -(14.6 / 2) + 0.1)
         .box(3.0, 0.6, 1.5, centered=(True, True, False)))
-    verts, faces = [], []
-    from OCP.TopExp import TopExp_Explorer
-    from OCP.TopAbs import TopAbs_FACE
-    from OCP.TopoDS import TopoDS
-    from OCP.BRep import BRep_Tool
-    from OCP.TopLoc import TopLoc_Location
-    from OCP.BRepMesh import BRepMesh_IncrementalMesh
-    shape = switch.val().wrapped
-    BRepMesh_IncrementalMesh(shape, 0.08, False, 0.3, True)
-    exp = TopExp_Explorer(shape, TopAbs_FACE)
-    while exp.More():
-        face = TopoDS.Face_s(exp.Current())
-        loc = TopLoc_Location()
-        tris = BRep_Tool.Triangulation_s(face, loc)
-        if tris is not None:
-            trsf = loc.Transformation()
-            base = len(verts)
-            for i in range(1, tris.NbNodes() + 1):
-                p = tris.Node(i).Transformed(trsf)
-                verts.append((p.X(), p.Y(), p.Z()))
-            for i in range(1, tris.NbTriangles() + 1):
-                a, b, c = tris.Triangle(i).Get()
-                faces.append((base + a - 1, base + b - 1, base + c - 1))
-        exp.Next()
-    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
-    mesh.merge_vertices()
-    scene = trimesh.Scene({"choc": mesh})
+    # round 19: TWO materials — the housing and the stem export as
+    # separate meshes so the exploded can tint the housing cream and
+    # the stem charcoal (real chocs are exactly this two-tone); the
+    # stem also reads as its own piece at diagram distance
+    stem = cq.Workplane("XY").workplane(offset=3.9).box(
+        6.0, 6.0, 0.9, centered=(True, True, False))
+
+    def tessellate(shape, deflection):
+        verts, faces = [], []
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopAbs import TopAbs_FACE
+        from OCP.TopoDS import TopoDS
+        from OCP.BRep import BRep_Tool
+        from OCP.TopLoc import TopLoc_Location
+        from OCP.BRepMesh import BRepMesh_IncrementalMesh
+        sh = shape.val().wrapped
+        BRepMesh_IncrementalMesh(sh, deflection, False, 0.3, True)
+        exp = TopExp_Explorer(sh, TopAbs_FACE)
+        while exp.More():
+            face = TopoDS.Face_s(exp.Current())
+            loc = TopLoc_Location()
+            tris = BRep_Tool.Triangulation_s(face, loc)
+            if tris is not None:
+                trsf = loc.Transformation()
+                base = len(verts)
+                for i in range(1, tris.NbNodes() + 1):
+                    p = tris.Node(i).Transformed(trsf)
+                    verts.append((p.X(), p.Y(), p.Z()))
+                for i in range(1, tris.NbTriangles() + 1):
+                    a, b, c = tris.Triangle(i).Get()
+                    faces.append((base + a - 1, base + b - 1,
+                                  base + c - 1))
+            exp.Next()
+        m = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+        m.merge_vertices()
+        return m
+
+    scene = trimesh.Scene({
+        "choc_housing": tessellate(switch, 0.03),   # round 19: finer
+        "choc_stem": tessellate(stem, 0.02)})
     scene.export(glb_path)
-    bb = mesh.bounds
-    print(f"  choc glb: {glb_path} ({len(mesh.faces)} tris, "
-          f"{len(mesh.vertices)} verts, bbox "
-          f"{bb[1][0] - bb[0][0]:.2f} x {bb[1][1] - bb[0][1]:.2f} x "
-          f"{bb[1][2] - bb[0][2]:.2f} mm)")
+    for name, mesh in scene.geometry.items():
+        bb = mesh.bounds
+        print(f"  choc glb[{name}]: {glb_path} ({len(mesh.faces)} tris, "
+              f"{len(mesh.vertices)} verts, bbox "
+              f"{bb[1][0] - bb[0][0]:.2f} x {bb[1][1] - bb[0][1]:.2f} x "
+              f"{bb[1][2] - bb[0][2]:.2f} mm)")
 
 
 def artisan_glb(glb_path):
