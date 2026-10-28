@@ -405,7 +405,8 @@ def setup_world_and_lights(setup, cx, cy):
         # ACROSS the board, so their reflections in the marble leave
         # the camera's view instead of glaring at it; the rim sweeps
         # high and behind. Flanks low, edges grazing.
-        area("acc_west", 0.85, 0.09, (cx - 0.52, cy + 0.10, 0.062),
+        # round 22: the west accent was reading too weak on the board
+        area("acc_west", 1.15, 0.09, (cx - 0.52, cy + 0.10, 0.062),
              (cx + 0.06, cy - 0.04, 0.015), (1.0, 0.84, 0.58))
         area("acc_east", 0.55, 0.08, (cx + 0.58, cy + 0.16, 0.055),
              (cx - 0.10, cy - 0.02, 0.015), (0.50, 0.66, 1.0))
@@ -767,11 +768,15 @@ def build_keyboard(args):
         # ride with the cover in the explode)
         if screw_src:
             (c0, c1) = bbox_mm(parts.get(h, {}).get("tub", []))
+            # round 22: 16mm inset — at 7mm the screws landed inside the
+            # case's corner radius and hovered over the edge ("floating
+            # screws everywhere")
             for si, (sx, sy) in enumerate((( 1, 1), (1, -1),
                                             (-1, 1), (-1, -1))):
-                px = (c1[0] - 7.0 * SCALE if sx > 0 else c0[0] + 7.0 * SCALE)
-                py = (c1[1] - 7.0 * SCALE if sy > 0
-                      else c0[1] + 7.0 * SCALE)
+                px = (c1[0] - 16.0 * SCALE if sx > 0
+                      else c0[0] + 16.0 * SCALE)
+                py = (c1[1] - 16.0 * SCALE if sy > 0
+                      else c0[1] + 16.0 * SCALE)
                 for sdata, srot, sscl in screw_src:
                     so = bpy.data.objects.new(
                         f"corner_screw_{h}_{si}", sdata)
@@ -899,7 +904,9 @@ def build_keyboard(args):
             # copper runs: from each pad inward with a deterministic
             # length + jog, plus scattered vias — the board reads as
             # wired, not printed
-            tr = 0.25
+            # round 22: traces widened 0.25 -> 0.35 — the nano read as
+            # "just grey" at window size; thicker gold reads wired
+            tr = 0.35
             for sgn in (-1, 1):
                 for i in range(12):
                     y_off = (i - 5.5) * 2.54
@@ -924,10 +931,10 @@ def build_keyboard(args):
                     f"nano_via_{h}_{k}",
                     ((ncx + vx) * SCALE, (ncy + vy) * SCALE,
                      (z_pcb1 + 0.015) * SCALE),
-                    (0.4, 0.4, 0.03), m_gold))
+                    (0.5, 0.5, 0.03), m_gold))  # round 22: bigger
             # silkscreen text (Blender font, lies flat on the mask)
             for tname, tbody, ty, tsize in (
-                    ("nice!nano v2", "nice!nano v2", -10.6, 2.2),
+                    ("nice!nano v2", "nice!nano v2", -10.6, 2.6),
                     ("hojicha44", "hojicha44", -5.4, 1.5)):
                 crv = bpy.data.curves.new(f"nano_txt_{h}_{tname}",
                                           type="FONT")
@@ -1174,6 +1181,51 @@ def build_keyboard(args):
     # different layers more contrasting shades"). Run the exploded
     # render as its own invocation with --stack-colors so the product
     # shots keep their real materials.
+    # ---- presentation pose (user review round 4: "two halves slightly
+    # further apart, maybe even slightly angled away from each other"):
+    # every object of a half is parented to an empty sitting on its
+    # OUTER BOTTOM long edge, then the empty is splayed 4° in plan,
+    # tented 5° about that edge (the hinge edge stays on the desk, so
+    # nothing sinks below the floor) and pushed 7mm further out — the
+    # classic Sofle/Corne product-shot wing. Pure render transform: the
+    # committed case files still build the assembled 2.8mm-seam layout.
+    # round-5 review: 7mm + 4 deg pushed the halves out of frame
+    # ("can't see most of the left board") — halve the horizontal
+    # spread, keep the tent (that is the "angled away" that reads)
+    SPLAY_DEG, TENT_DEG, SPLIT_MM = 2.5, 5.0, 2.5
+    for h, sgn in (("L", -1.0), ("R", 1.0)):
+        half_objs = [o for lst in parts[h].values()
+                     for o in (lst if isinstance(lst, list) else [])]
+        (hx0, hy0, hz0), (hx1, hy1, _) = bbox_mm(parts[h]["tub"])
+        pe = bpy.data.objects.new(f"pose_{h}", None)
+        pe.empty_display_size = 0.02
+        bpy.context.collection.objects.link(pe)
+        pe.location = ((hx0 if sgn < 0 else hx1), (hy0 + hy1) / 2, hz0)
+        bpy.context.view_layer.update()
+        # python parenting does NOT keep world transforms (no auto
+        # parent-inverse like the UI operator) — without this every
+        # child jumps by the pivot and the assembly lands ~2x out
+        pe_inv = pe.matrix_world.inverted()
+        for o in half_objs:
+            o.parent = pe
+            o.matrix_parent_inverse = pe_inv.copy()
+        bpy.context.view_layer.update()
+        # tent: +x edge lifts for the left half, -x edge for the right;
+        # splay: far end swings outward (CCW left, CW right)
+        pe.rotation_euler = (
+            0.0,
+            math.radians(TENT_DEG if sgn > 0 else -TENT_DEG),
+            math.radians(SPLAY_DEG if sgn < 0 else -SPLAY_DEG))
+        pe.location.x += sgn * SPLIT_MM * SCALE
+        bpy.context.view_layer.update()
+        print(f"[scene] pose {h}: splayed {SPLAY_DEG} deg, tented "
+              f"{TENT_DEG} deg on the outer edge, split +{SPLIT_MM} mm",
+              flush=True)
+
+    # ---- diagram palette for the exploded shot (user: "colour
+    # different layers more contrasting shades"). Run the exploded
+    # render as its own invocation with --stack-colors so the product
+    # shots keep their real materials.
     if args.stack_colors:
         # round-8 review: "slight colour variations, not something this
         # radical" (purple case / turquoise plate). Round 9 = a
@@ -1264,8 +1316,8 @@ def proc_dark_marble(name):
     cloud.inputs["Roughness"].default_value = 0.45
     cloudr = nt.nodes.new("ShaderNodeValToRGB")
     ce = cloudr.color_ramp.elements
-    ce[0].position, ce[0].color = 0.30, (0.020, 0.021, 0.025, 1.0)
-    ce[1].position, ce[1].color = 0.70, (0.058, 0.056, 0.062, 1.0)
+    ce[0].position, ce[0].color = 0.30, (0.018, 0.019, 0.022, 1.0)
+    ce[1].position, ce[1].color = 0.72, (0.070, 0.068, 0.078, 1.0)
     # (2) veins: warped contour lines, thick spike + halo
     warp1 = nt.nodes.new("ShaderNodeTexNoise")
     warp1.inputs["Scale"].default_value = 22.0
@@ -1347,29 +1399,32 @@ def proc_pcb_diagram(name):
     bsdf.inputs["Base Color"].default_value = (0.016, 0.085, 0.045, 1.0)
     bsdf.inputs["Roughness"].default_value = 0.40
     tc = nt.nodes.new("ShaderNodeTexCoord")
-    gold = (0.78, 0.62, 0.26, 1.0)
+    gold = (0.86, 0.68, 0.28, 1.0)   # round 22: brighter
     silk = (0.80, 0.79, 0.74, 1.0)
     dark = (0.0, 0.0, 0.0, 1.0)
     L = nt.links.new
 
     def trace_family(scale, tag):
-        """Narrow gold bands on a tight mapping -> a gold spike ramp."""
+        """Gold bands on a tight mapping -> a gold spike ramp. Round
+        22: the spike widened 0.5..0.52 -> 0.482..0.518 so the traces
+        read as WIRING at diagram distance instead of fine hatching."""
         mp = nt.nodes.new("ShaderNodeMapping")
         mp.inputs["Scale"].default_value = scale
         wv = nt.nodes.new("ShaderNodeTexWave")
         wv.wave_type, wv.bands_direction = "BANDS", "X"
         wv.inputs["Scale"].default_value = 1.0
-        wv.inputs["Distortion"].default_value = 3.5
         wv.inputs["Detail"].default_value = 3.0
+        wv.inputs["Distortion"].default_value = 4.5
         ramp = nt.nodes.new("ShaderNodeValToRGB")
         e = ramp.color_ramp.elements
         e[0].position, e[0].color = 0.0, dark
-        e[1].position, e[1].color = 0.5, dark
-        m = ramp.color_ramp.elements.new(0.5)
+        e[1].position, e[1].color = 0.482, dark
+        m = ramp.color_ramp.elements.new(0.482)
         m.color = gold
-        m2 = ramp.color_ramp.elements.new(0.52)
-        m2.color = (0.0, 0.0, 0.0, 0.0)
-        m2.color = dark
+        m2 = ramp.color_ramp.elements.new(0.518)
+        m2.color = gold
+        m3 = ramp.color_ramp.elements.new(0.518)
+        m3.color = dark
         L(tc.outputs["Generated"], mp.inputs["Vector"])
         L(mp.outputs["Vector"], wv.inputs["Vector"])
         L(wv.outputs["Fac"], ramp.inputs["Fac"])
@@ -1557,6 +1612,76 @@ def main():
                 render_to(cam, os.path.join(sdir, "hero.png"), res,
                           args.samples, args.device, pp=args.pp)
         if "exploded" in shots:
+            # ---- round 22: the stack palette is scoped to THIS shot
+            # only. It used to apply to the whole scene, so any
+            # invocation carrying --stack-colors tinted the hero/top
+            # with the exploded's palette (silver plate, graphite case,
+            # flat PCB board, gold jack = "odd plate, blank black
+            # microcontroller" in the bright hero).
+            if args.stack_colors:
+                # round-8 review: "slight colour variations, not something this
+                # radical" (purple case / turquoise plate). Round 9 = a
+                # warm-neutral ladder with the PCB its real dark-green self.
+                stack_pal = {
+                    "tub":     ((0.140, 0.135, 0.125), 0.55, 0.0),  # graphite
+                    "foam":    ((0.520, 0.470, 0.380), 0.75, 0.0),  # pale sand
+                    "gaskets": ((0.450, 0.400, 0.330), 0.70, 0.0),  # sand
+                    "plate":   ((0.620, 0.620, 0.630), 0.35, 0.6),  # silver
+
+                    "caps":    ((0.780, 0.750, 0.690), 0.45, 0.0),  # bone
+                    "cover":   ((0.500, 0.490, 0.470), 0.50, 0.0),  # warm grey
+                    "knob":    ((0.720, 0.560, 0.260), 0.30, 1.0),  # brass
+                    "nano":    ((0.120, 0.120, 0.130), 0.45, 0.0),  # charcoal
+                }
+                # board: a REAL-looking PCB (dark green + procedural gold trace
+                # web + vias) from env_materials when available, and the
+                # mounted parts keep component-true tints: gold jack, gunmetal
+                # encoder, charcoal MCU/power switch, gold pads
+                m_pcb = proc_pcb_diagram("stack_pcb")
+                m_comp_gold = pbr("stack_comp_gold", (0.75, 0.58, 0.24),
+                                  rough=0.28, metal=1.0)
+                m_comp_metal = pbr("stack_comp_metal", (0.22, 0.22, 0.24),
+                                   rough=0.32, metal=0.9)
+                m_comp_dark = pbr("stack_comp_dark", (0.09, 0.09, 0.10), rough=0.40)
+                m_housing = pbr("stack_sw_housing", (0.72, 0.70, 0.66), rough=0.45)
+                m_stem = pbr("stack_sw_stem", (0.09, 0.09, 0.10), rough=0.40)
+                # round 19: choc switches are TWO-TONE — the cream PG1350
+                # housing vs the dark stem (one flat colour read as foam pads)
+                for h in parts:
+                    for grp, (col, rough, metal) in stack_pal.items():
+                        mat = pbr(f"stack_{grp}", col, rough=rough, metal=metal)
+                        if grp == "foam":
+                            # round 19: "foam should look porous, not a sheet
+                            # of perfectly even paper" — open-cell acoustic
+                            # foam: fine high-frequency bump + deep roughness
+                            micro_texture(mat, 700, 0.75, 0.0002,
+                                          rough + 0.12, 0.92, detail=6.0)
+                        assign(parts[h].get(grp, []), mat)
+                    for o in parts[h].get("swbodies", []):
+                        assign([o], m_stem if o.name.endswith("_stem")
+                               else m_housing)
+                    for o in parts[h].get("board", []):
+                        if o.type != "MESH":
+                            continue
+                        n = o.name
+                        if n.startswith(("J_",)):
+                            assign([o], m_comp_gold)          # TRRS jack
+                        elif n.startswith(("ENC_",)):
+                            assign([o], m_comp_metal)         # encoder body
+                        elif n.startswith(("SW_", "D_")):
+                            assign([o], m_comp_dark)          # pwrsw / diodes
+                        else:
+                            assign([o], m_pcb)                # substrate/pours
+                # round-14 review: "there should be no foam above pcb" — the
+                # top-gasket slab is HIDDEN in the exploded (it still exists in
+                # every other shot; the diagram shows one foam layer, in the
+                # case, below the PCB)
+                for h in parts:
+                    for o in parts[h].get("gaskets", []):
+                        o.hide_render = True
+                print(f"[scene] stack-colours on ({len(stack_pal)} layers + "
+                      f"pcb traces + component tints; top gaskets hidden)",
+                      flush=True)
             for grp, dz in EXPLODE.items():
                 for h in parts:
                     move_z(parts[h].get(grp, []), dz * SCALE)
@@ -1623,7 +1748,7 @@ def main():
                 if _font is not None:
                     crv.font = _font
                 crv.body = txt
-                crv.size = 0.0120
+                crv.size = 0.0132   # round 22: legibility
                 crv.align_x = "LEFT"
                 crv.extrude = 0.0010
                 tob = bpy.data.objects.new(f"label_{li}", crv)

@@ -158,14 +158,14 @@ PP_TUNING = {
     # subtle on purpose: 3% bloom is a whisper of halation, and only the
     # pixels above 1.15 ever move, which is what "bloom only the hot spots
     # slightly" has to mean. Flip to +0.03 if a positive bloom is wanted.
-    "glare_mix": -0.03,
+    "glare_mix": -0.018,
     # ---- Lens Distortion ------------------------------------------------
     # Dispersion ONLY: 0.15 of radial channel separation. Distortion stays
     # 0 (a keyboard must not bend) and Jitter stays off (it is a dither,
     # not chromatic aberration). This is the tiny fringing on the edges of
     # the machined knob and the plate gap — the single strongest "this came
     # through a lens" cue at this resolution.
-    "lens_dispersion": 0.15,
+    "lens_dispersion": 0.04,
     "lens_distortion": 0.0,
     "lens_jitter": False,
     "lens_fit": False,
@@ -190,11 +190,11 @@ PP_TUNING = {
     # the corners (and the studio floor already falls off). Grain instead:
     # mean-neutral, bipolar, so it does not shift the average or the
     # levels, it only breaks up the flat gradients that read as "CG".
-    # Strength 0.015 = 1.5% of full scale, scaled so the grain stays the
+    # Strength 0.005 = 1.5% of full scale, scaled so the grain stays the
     # same PIXEL SIZE at any output resolution (the frequency is driven by
     # scene resolution, not left at Noise Texture's default of 5, which
     # would give 100-px blobs at 2400x1500).
-    "grain_strength": 0.015,
+    "grain_strength": 0.005,
     "grain_pixels": 1.5,      # grain feature size in pixels
     # The amplitude compensates for Perlin's real dynamic range: the
     # Noise Texture Fac output only spans ~0..1 around 0.5 (measured std
