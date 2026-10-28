@@ -75,9 +75,11 @@ CAP_STEM_Z = 1.5         # cap stem tip above the PCB top (inside switch)
 # EVEN 22mm label ladder (70, 48, 26, 4, -18, -40) — round-16 review:
 # "top plate and keycaps are very close, but pcb and case foam text
 # is extremely far; actual components may also need to be moved"
+# round 23: tub -56 -> -40 — the foam-to-case label gap was 40mm
+# vs ~20mm everywhere else
 EXPLODE = {"knob": 82.0, "cover": 66.0, "caps": 44.0,
            "gaskets": 42.0, "swbodies": 24.0, "plate": 24.0,
-           "foam": -17.5, "tub": -56.0}
+           "foam": -17.5, "tub": -40.0}
 # nice!nano courtyard in the FOOTPRINT's local (file) frame, from the
 # embedded Socket_Strips_2x12_P2.54mm_NiceNano footprint (KiCad 10)
 NANO_COURT = (-17.07, -29.94, 2.85, 2.60)   # x0, y0, x1, y1
@@ -552,21 +554,9 @@ def build_keyboard(args):
         _r.hide_render = True
         _r.hide_set(True)
 
-    # round 20: corner hardware — M2 pan-head screws at the four
-    # corners of each half's cover, hex-socketed, sunk flush
-    screw_path = os.path.join(ASSETS, "parts", "screw.glb")
-    m_screw = pbr("screw_steel", (0.60, 0.61, 0.64), rough=0.26,
-                  metal=1.0)
-    micro_texture(m_screw, 300, 0.08, 0.00003, 0.20, 0.34, detail=4.0)
-    if os.path.exists(screw_path):
-        _, screw_roots, _ = import_glb(screw_path, "screw_src")
-        screw_src = [(r.data, r.rotation_euler.copy(), r.scale.copy())
-                     for r in screw_roots if r.type == "MESH"]
-        for _r in screw_roots:
-            _r.hide_render = True
-            _r.hide_set(True)
-    else:
-        screw_src = []
+    # round 23: ALL SCREWS REMOVED — the design has none (magnets
+    # hold the cover); round-20's "corner hardware" was invented from
+    # a misread of the review and floated/hovered in every shot.
 
     placements = json.load(open(os.path.join(ASSETS, "placements.json")))
     cutouts = json.load(open(os.path.join(ASSETS, "cutouts.json")))
@@ -763,29 +753,6 @@ def build_keyboard(args):
                 bpy.context.collection.objects.link(o)
                 assign([o], m_sw)
                 parts[h].setdefault("swbodies", []).append(o)
-
-        # ---- round 20: the four corner screws (cover parts; they
-        # ride with the cover in the explode)
-        if screw_src:
-            (c0, c1) = bbox_mm(parts.get(h, {}).get("tub", []))
-            # round 22: 16mm inset — at 7mm the screws landed inside the
-            # case's corner radius and hovered over the edge ("floating
-            # screws everywhere")
-            for si, (sx, sy) in enumerate((( 1, 1), (1, -1),
-                                            (-1, 1), (-1, -1))):
-                px = (c1[0] - 16.0 * SCALE if sx > 0
-                      else c0[0] + 16.0 * SCALE)
-                py = (c1[1] - 16.0 * SCALE if sy > 0
-                      else c0[1] + 16.0 * SCALE)
-                for sdata, srot, sscl in screw_src:
-                    so = bpy.data.objects.new(
-                        f"corner_screw_{h}_{si}", sdata)
-                    so.rotation_euler = srot
-                    so.scale = sscl
-                    so.location = (px, py, 5.20 * SCALE)
-                    bpy.context.collection.objects.link(so)
-                    assign([so], m_screw)
-                    parts[h].setdefault("cover", []).append(so)
 
         # ---- poron gaskets on every tab, compressed to the real
         # assembly heights (bottom 3.0 -> 2.55, top 1.5 -> 1.28). They
@@ -1396,7 +1363,7 @@ def proc_pcb_diagram(name):
     mat.use_nodes = True
     nt = mat.node_tree
     bsdf = nt.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = (0.016, 0.085, 0.045, 1.0)
+    bsdf.inputs["Base Color"].default_value = (0.030, 0.155, 0.075, 1.0)
     bsdf.inputs["Roughness"].default_value = 0.40
     tc = nt.nodes.new("ShaderNodeTexCoord")
     gold = (0.86, 0.68, 0.28, 1.0)   # round 22: brighter
@@ -1417,13 +1384,16 @@ def proc_pcb_diagram(name):
         wv.inputs["Distortion"].default_value = 4.5
         ramp = nt.nodes.new("ShaderNodeValToRGB")
         e = ramp.color_ramp.elements
+        # round 23: the 0.482..0.518 spike was 3.6% of the ~7mm
+        # period = 0.25mm traces — invisible. 0.35..0.56 gives ~2mm
+        # gold runs that read as WIRING at diagram distance
         e[0].position, e[0].color = 0.0, dark
-        e[1].position, e[1].color = 0.482, dark
-        m = ramp.color_ramp.elements.new(0.482)
+        e[1].position, e[1].color = 0.35, dark
+        m = ramp.color_ramp.elements.new(0.35)
         m.color = gold
-        m2 = ramp.color_ramp.elements.new(0.518)
+        m2 = ramp.color_ramp.elements.new(0.56)
         m2.color = gold
-        m3 = ramp.color_ramp.elements.new(0.518)
+        m3 = ramp.color_ramp.elements.new(0.56)
         m3.color = dark
         L(tc.outputs["Generated"], mp.inputs["Vector"])
         L(mp.outputs["Vector"], wv.inputs["Vector"])
@@ -1612,6 +1582,19 @@ def main():
                 render_to(cam, os.path.join(sdir, "hero.png"), res,
                           args.samples, args.device, pp=args.pp)
         if "exploded" in shots:
+            # ---- round 23: snapshot every material assignment the
+            # stack palette is about to override — the top shot renders
+            # AFTER the exploded in this same invocation, and the
+            # palette used to leak into it (the "grey nano in bright"
+            # was the tainted top)
+            _stack_groups = ("board", "plate", "tub", "cover", "caps",
+                             "swbodies", "nano", "foam", "knob",
+                             "gaskets")
+            _pre_stack = [
+                (o, list(o.data.materials), o.hide_render)
+                for h in parts
+                for grp in _stack_groups
+                for o in parts[h].get(grp, [])]
             # ---- round 22: the stack palette is scoped to THIS shot
             # only. It used to apply to the whole scene, so any
             # invocation carrying --stack-colors tinted the hero/top
@@ -1710,9 +1693,13 @@ def main():
             label_objs = []
             # round 19: the diagram sits over a mid-dark backdrop, so
             # the label type goes LIGHT and the world dims with it
+            # round 23: the enum is "BACKGROUND", not
+            # "SHADER_NODE_BACKGROUND" — the dimming silently matched
+            # NOTHING and the labels rendered light-on-bright
             _bgs = [n for n in bpy.context.scene.world.node_tree.nodes
-                    if n.type == "SHADER_NODE_BACKGROUND"]
-            _saved_bg = [_bg.inputs[0].default_value.copy() for _bg in _bgs]
+                    if n.type == "BACKGROUND"]
+            _saved_bg = [tuple(_bg.inputs[0].default_value)
+                         for _bg in _bgs]   # bpy_prop_array has no .copy()
             for _bg in _bgs:
                 _c = _bg.inputs[0].default_value
                 _bg.inputs[0].default_value = (
@@ -1798,6 +1785,14 @@ def main():
                 bpy.data.objects.remove(lo_obj, do_unlink=True)
             for _bg, _c in zip(_bgs, _saved_bg):
                 _bg.inputs[0].default_value = _c
+            # round 23: restore the product materials + visibility the
+            # stack palette overrode, so any later shot in this
+            # invocation (top) renders untainted
+            for o, mats_, hid_ in _pre_stack:
+                o.data.materials.clear()
+                for m_ in mats_:
+                    o.data.materials.append(m_)
+                o.hide_render = hid_
             if floor_obj is not None:
                 floor_obj.hide_render = False
             for grp, dz in EXPLODE.items():
