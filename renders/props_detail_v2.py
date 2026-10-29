@@ -74,6 +74,7 @@ Run (module is import-safe; scene.py's main is guarded):
 import bpy
 import bmesh
 import math
+import os
 
 import mathutils
 
@@ -1143,3 +1144,88 @@ def build_notebook_v2(loc, mats, rot_z=0.0):
     out.append(_box("p2_nb_title", loc, rz, (0.005, -0.012, Z_TOP + 0.00135),
                     (0.058, 0.082, 0.0007), m_title, bevel=0.0006))
     return out
+
+
+# ---------------------------------------------------------------------------
+# round 24: the desk mouse is now a REAL asset, not a procedural shell.
+#
+# Review: "Your computer mice looks completely abysmal. Try to go online
+# and get a detailed model of a good mice." The procedural v4 was a
+# credible silhouette at 50 px but never had the surfacing of a product
+# (button parting lines, ribbed wheel, side-button geometry).
+#
+# Asset: generated/renders/assets/props/computer-mouse.glb — Grab3D
+# "Computer Mouse" (Cozy Electronics Kit), CC0-1.0, 9,692 tris, 2K PBR
+# (base colour + metallic/roughness + normal), separate wheel object.
+# Downloaded 2026-10-28 from
+# https://grab3d.com/dl/computer-mouse/computer-mouse.glb
+# Licence text kept beside the file as computer-mouse.LICENSE.txt.
+#
+# The shipped texture set is peach. We keep its NORMAL map (that is the
+# seam/rib detail that makes the model read) and its roughness/metal
+# texture, but replace the base colour with a graphite soft-touch so it
+# belongs on this desk. The material is tagged micro_texture=True so
+# scene_env.detail_sweep() does not overwrite the normal link with a
+# generic bump.
+
+_MOUSE_GLB = os.path.join("generated", "renders", "assets", "props",
+                          "computer-mouse.glb")
+_MOUSE_DONE = False
+
+
+def build_mouse_asset(loc, rot_z=0.35, body=(0.082, 0.084, 0.092)):
+    """Import the CC0 Grab3D mouse, retint it graphite, place it.
+
+    loc = desk contact point (metres), same convention as the other
+    builders. Returns the object list (the importer root + meshes).
+    """
+    global _MOUSE_DONE
+    path = os.path.join(S.REPO, _MOUSE_GLB)
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=path)
+    objs = [o for o in bpy.data.objects if o not in before]
+    roots = [o for o in objs if o.parent is None or o.parent not in objs]
+
+    if not _MOUSE_DONE:
+        for o in objs:
+            if o.type != "MESH":
+                continue
+            for slot in o.material_slots:
+                m = slot.material
+                if not m or not m.node_tree:
+                    continue
+                nt = m.node_tree
+                bsdf = nt.nodes.get("Principled BSDF")
+                if bsdf is None:
+                    continue
+                is_wheel = "wheel" in m.name
+                # drop the peach base-colour texture only
+                for lk in list(nt.links):
+                    if lk.to_socket == bsdf.inputs["Base Color"]:
+                        nt.links.remove(lk)
+                if is_wheel:
+                    bsdf.inputs["Base Color"].default_value = (
+                        0.020, 0.021, 0.024, 1.0)
+                    bsdf.inputs["Roughness"].default_value = 0.66
+                else:
+                    bsdf.inputs["Base Color"].default_value = (*body, 1.0)
+                    if "Coat Weight" in bsdf.inputs:
+                        bsdf.inputs["Coat Weight"].default_value = 0.26
+                        bsdf.inputs["Coat Roughness"].default_value = 0.28
+                    if "Specular IOR Level" in bsdf.inputs:
+                        bsdf.inputs["Specular IOR Level"].default_value = 0.42
+                # the imported roughness texture stays connected; mark
+                # the material as already detailed for detail_sweep()
+                m["micro_texture"] = True
+        _MOUSE_DONE = True
+
+    for r in roots:
+        r.rotation_mode = "XYZ"
+        r.location = (loc[0], loc[1], loc[2])
+        r.rotation_euler = (0.0, 0.0, rot_z)
+    bpy.context.view_layer.update()
+    print(f"[props] mouse asset: {len(objs)} objects, "
+          f"CC0 Grab3D 9.7k tris", flush=True)
+    return objs

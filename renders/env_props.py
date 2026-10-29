@@ -437,8 +437,8 @@ def _screen_mat(name):
     grad.gradient_type = "LINEAR"
     ramp = nt.nodes.new("ShaderNodeValToRGB")
     e = ramp.color_ramp.elements
-    e[0].position, e[0].color = 0.05, (0.010, 0.013, 0.022, 1.0)
-    e[1].position, e[1].color = 0.95, (0.055, 0.078, 0.110, 1.0)
+    e[0].position, e[0].color = 0.05, (0.006, 0.007, 0.010, 1.0)
+    e[1].position, e[1].color = 0.95, (0.016, 0.021, 0.030, 1.0)
     L = nt.links.new
     L(tc.outputs["Generated"], grad.inputs["Vector"])
     L(grad.outputs["Fac"], ramp.inputs["Fac"])
@@ -447,9 +447,13 @@ def _screen_mat(name):
         if key in bsdf.inputs:
             L(ramp.outputs["Color"], bsdf.inputs[key])
             break
-    bsdf.inputs["Emission Strength"].default_value = 0.55
-    bsdf.inputs["Roughness"].default_value = 0.08
+    bsdf.inputs["Emission Strength"].default_value = 0.10
+    bsdf.inputs["Roughness"].default_value = 0.045
     bsdf.inputs["Metallic"].default_value = 0.0
+    for _k, _v in (("Coat Weight", 0.65), ("Coat Roughness", 0.04),
+                   ("Specular IOR Level", 0.55)):
+        if _k in bsdf.inputs:
+            bsdf.inputs[_k].default_value = _v
     return mat
 
 

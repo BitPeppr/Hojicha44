@@ -377,6 +377,20 @@ def _plank_wood(base, i):
         k = 0.88 + 0.24 * rnd.random()
         bsdf.inputs["Base Color"].default_value = (c[0] * k, c[1] * k,
                                                   c[2] * k, 1.0)
+    elif bsdf is not None:
+        # round 24: the procedural walnut leaves Base Color LINKED, so
+        # the old branch never jittered it and all five boards rendered
+        # the same tone ("looks like one printed sheet"). Insert a
+        # per-plank multiply after the grain graph.
+        src = bsdf.inputs["Base Color"].links[0].from_socket
+        nt = pm.node_tree
+        mul = nt.nodes.new("ShaderNodeMixRGB")
+        mul.blend_type = "MULTIPLY"
+        mul.inputs["Fac"].default_value = 1.0
+        k = 0.86 + 0.28 * rnd.random()
+        mul.inputs["Color2"].default_value = (k, k, k, 1.0)
+        nt.links.new(src, mul.inputs["Color1"])
+        nt.links.new(mul.outputs["Color"], bsdf.inputs["Base Color"])
     return pm
 
 
@@ -515,8 +529,10 @@ def build_desk_mat(loc, mats, rot_z=0.0):
     m_fabric = _M(mats, "fabric", lambda: S.micro_texture(
         S.pbr("mat_fabric", (0.055, 0.058, 0.066), rough=0.85),
         700, 0.35, 0.00008, 0.78, 0.95, detail=5.0))
+    # round 24: cream welt read as a string of pearls. A tonal
+    # stitch (dark taupe, same family as the fabric) reads as an edge.
     m_welt = _M(mats, "welt", lambda: S.micro_texture(
-        S.pbr("mat_welt", (0.40, 0.36, 0.30), rough=0.70),
+        S.pbr("mat_welt", (0.165, 0.148, 0.122), rough=0.72),
         900, 0.20, 0.00006, 0.60, 0.78, detail=4.0))
     m_fold = _M(mats, "fold", lambda: S.micro_texture(
         S.pbr("mat_fold", (0.040, 0.042, 0.050), rough=0.88),

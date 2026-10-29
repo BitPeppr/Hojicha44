@@ -237,51 +237,127 @@ def proc_walnut2(name):
     L = nt.links.new
     tc = nt.nodes.new("ShaderNodeTexCoord")
 
-    # ---- ring space: value varies across Y (bands parallel to X, the
-    # desk's long axis), 62 periods per bbox width
-    mp_rings = _mapping(nt, (1.0, 62.0, 1.0), name="ring_space")
+    # ---- ring space (round 24 rebuild) -------------------------------
+    # The old graph was a Wave BANDS field on a 1:62 mapping: perfect
+    # parallel stripes ~3 mm apart. Warping the VECTOR can only bend
+    # those stripes; it can never produce cathedral FIGURE, because the
+    # band spacing stays constant along the board. Real flat-sawn
+    # walnut reads because the growth rings drift in and out of the
+    # cut plane: the lines bunch, fan and pinch along the grain.
+    #
+    # So the ring coordinate is now
+    #     c = y * RINGS + phase(x, y)
+    # where `phase` is a broad noise field. The gradient of the phase
+    # adds to (or cancels) the ring frequency, which is exactly how
+    # bands spread apart and squeeze together. The phase also drifts
+    # along X at 15-30 cm wavelength, so the figure runs down the
+    # board instead of lying in dead-straight rails.
+    #
+    # RINGS = 5.0 on a 211 mm plank = ~42 mm between latewood lines:
+    # at the desk camera (0.43 px/mm) that is ~18 px -- figure, not
+    # pinstripes. The thin dark stop at the period wrap is the
+    # latewood line (0.6 mm, sub-pixel: it reads as grain, not a rule).
+    mp_phys = _mapping(nt, (0.088, 1.0, 1.0), name="phys_space")
+    L(tc.outputs["Generated"], mp_phys.inputs["Vector"])
+    phase_nz = _noise(nt, 1.6, 3.0, 0.55, name="figure_drift")
+    L(mp_phys.outputs["Vector"], phase_nz.inputs["Vector"])
+    phase_c = nt.nodes.new("ShaderNodeVectorMath")
+    phase_c.label = "phase_centred"; phase_c.operation = "SUBTRACT"
+    L(phase_nz.outputs["Color"], phase_c.inputs[0])
+    phase_half = nt.nodes.new("ShaderNodeCombineXYZ")
+    phase_half.inputs["X"].default_value = 0.5
+    phase_half.inputs["Y"].default_value = 0.5
+    phase_half.inputs["Z"].default_value = 0.5
+    L(phase_half.outputs["Vector"], phase_c.inputs[1])
+    phase_amp = nt.nodes.new("ShaderNodeVectorMath")
+    phase_amp.label = "phase_amp"; phase_amp.operation = "SCALE"
+    try:
+        phase_amp.inputs["Scale"].default_value = 3.40
+    except Exception:
+        phase_amp.inputs[1].default_value = 2.60
+    L(phase_c.outputs["Vector"], phase_amp.inputs[0])
+
+    # base coordinate: y across the plank, ~5 rings over the width
+    mp_rings = _mapping(nt, (1.0, 1.0, 1.0), name="ring_space")
     L(tc.outputs["Generated"], mp_rings.inputs["Vector"])
+    ring_scaled = nt.nodes.new("ShaderNodeVectorMath")
+    ring_scaled.label = "ring_y_scaled"; ring_scaled.operation = "MULTIPLY"
+    L(mp_rings.outputs["Vector"], ring_scaled.inputs[0])
+    ring_k = nt.nodes.new("ShaderNodeCombineXYZ")
+    ring_k.inputs["X"].default_value = 0.0
+    ring_k.inputs["Y"].default_value = 5.0
+    ring_k.inputs["Z"].default_value = 0.0
+    L(ring_k.outputs["Vector"], ring_scaled.inputs[1])
 
-    # warp field sources: sampled on their OWN mappings so the wander
-    # wavelength is decoupled from the 1:62 ring anisotropy
-    mp_wb = _mapping(nt, (3.0, 8.0, 1.0), name="warp_broad_src")
-    L(tc.outputs["Generated"], mp_wb.inputs["Vector"])
-    vec = _warp(nt, mp_rings.outputs["Vector"], mp_wb.outputs["Vector"],
-                2.6, 2.0, 0.85, name="warp_broad")   # round 16: bolder
-    mp_wf = _mapping(nt, (9.0, 22.0, 1.0), name="warp_fine_src")
-    L(tc.outputs["Generated"], mp_wf.inputs["Vector"])
-    vec = _warp(nt, vec, mp_wf.outputs["Vector"], 7.5, 3.0, 0.26,
-                name="warp_fine")   # round 16: bolder
+    ring_sum = nt.nodes.new("ShaderNodeVectorMath")
+    ring_sum.label = "ring_sum"; ring_sum.operation = "ADD"
+    L(ring_scaled.outputs["Vector"], ring_sum.inputs[0])
+    L(phase_amp.outputs["Vector"], ring_sum.inputs[1])
 
-    # Distortion stays ~0: the wave's INTERNAL distortion noise is
-    # sampled on the 1:62 anisotropic vector, so any real distortion
-    # amount shreds the rings into 16 mm static (the flat wash the
-    # round-8 walnut rendered as). The organic wander is the external
-    # warp chain's job; 0.15 is only latewood edge fuzz.
-    rings = _wave(nt, 1.0, 0.15, 4.0, 1.6, bands="Y", name="growth_rings")
-    L(vec, rings.inputs["Vector"])
+    # take Y of the sum, add a fine ragged term, wrap to 0..1
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    L(ring_sum.outputs["Vector"], sep.inputs[0])
+    fine_nz = _noise(nt, 9.0, 3.0, 0.58, name="latewood_ragged")
+    L(mp_phys.outputs["Vector"], fine_nz.inputs["Vector"])
+    fine_c = nt.nodes.new("ShaderNodeMath")
+    fine_c.operation = "SUBTRACT"; fine_c.inputs[1].default_value = 0.5
+    L(fine_nz.outputs["Fac"], fine_c.inputs[0])
+    fine_a = nt.nodes.new("ShaderNodeMath")
+    fine_a.operation = "MULTIPLY"; fine_a.inputs[1].default_value = 0.75
+    L(fine_c.outputs["Value"], fine_a.inputs[0])
+    coord = nt.nodes.new("ShaderNodeMath")
+    coord.operation = "ADD"
+    L(sep.outputs["Y"], coord.inputs[0])
+    L(fine_a.outputs["Value"], coord.inputs[1])
+    wrap = nt.nodes.new("ShaderNodeMath")
+    wrap.label = "ring_wrap"; wrap.operation = "FRACT"
+    L(coord.outputs["Value"], wrap.inputs[0])
 
-    # 4 mid tones between umber and honey; the wrap discontinuity at
-    # Fac 1->0 is the crisp latewood boundary
+    # 5-stop ramp; the wrap discontinuity is the crisp latewood line
     ramp = _ramp(nt, [
-        (0.00, (0.070, 0.042, 0.022)),   # deep heartwood umber
-        (0.22, (0.098, 0.060, 0.032)),
-        (0.50, (0.120, 0.075, 0.042)),
-        (0.78, (0.146, 0.098, 0.055)),
-        (1.00, (0.165, 0.118, 0.068)),   # honey earlywood
+        (0.000, (0.118, 0.074, 0.040)),
+        (0.250, (0.112, 0.070, 0.038)),
+        (0.600, (0.104, 0.064, 0.035)),
+        (0.900, (0.092, 0.056, 0.030)),
+        (0.975, (0.074, 0.046, 0.026)),
+        (1.000, (0.076, 0.047, 0.027)),
     ], name="ring_ramp", interp="B_SPLINE")
-    L(rings.outputs["Fac"], ramp.inputs["Fac"])
+    L(wrap.outputs["Value"], ramp.inputs["Fac"])
 
-    # SECOND broad tone wash: +-10% warm/cool figure zones, MULTIPLIED
+    # SECOND broad tone wash: +-12% warm/cool figure zones, MULTIPLIED
     wash_nz = _noise(nt, 2.2, 2.0, 0.50, name="wash")
     L(tc.outputs["Generated"], wash_nz.inputs["Vector"])
-    wash = _ramp(nt, [(0.30, (0.80, 0.785, 0.77)),
-                      (0.72, (1.13, 1.105, 1.05))],
-                 name="wash_ramp", interp="B_SPLINE")  # round 16
+    wash = _ramp(nt, [(0.30, (0.82, 0.805, 0.79)),
+                      (0.72, (1.12, 1.095, 1.04))],
+                 name="wash_ramp", interp="B_SPLINE")
     L(wash_nz.outputs["Fac"], wash.inputs["Fac"])
+    # a mid-scale cloud field (3-8 cm) breaks the arcs into patches
+    cloud_nz = _noise(nt, 7.0, 3.0, 0.55, name="figure_clouds")
+    L(mp_phys.outputs["Vector"], cloud_nz.inputs["Vector"])
+    cloud = _ramp(nt, [(0.34, (0.84, 0.83, 0.82)),
+                       (0.70, (1.10, 1.09, 1.06))],
+                  name="cloud_ramp", interp="B_SPLINE")
+    L(cloud_nz.outputs["Fac"], cloud.inputs["Fac"])
     mix_wash = _mix(nt, "MULTIPLY", "wash_x_ring")
     L(ramp.outputs["Color"], mix_wash.inputs["Color1"])
     L(wash.outputs["Color"], mix_wash.inputs["Color2"])
+    mix_cloud = _mix(nt, "MULTIPLY", "cloud_x_ring")
+    L(mix_wash.outputs["Color"], mix_cloud.inputs["Color1"])
+    L(cloud.outputs["Color"], mix_cloud.inputs["Color2"])
+
+    # ---- GRAIN STREAKS (round 24c) ------------------------------
+    # The ring figure is a 40 mm signal and the pores are sub-pixel;
+    # between them there was nothing, which is why the desk still read
+    # flat at review size. Real walnut carries fine dark streaks along
+    # the grain at 2-6 mm. phys_space compresses X by 0.088, so a noise
+    # sampled there is stretched ~11:1 along the grain -- exactly the
+    # shape of a grain streak.
+    streak_nz = _noise(nt, 9.0, 4.0, 0.58, name="grain_streaks")
+    L(mp_phys.outputs["Vector"], streak_nz.inputs["Vector"])
+    streak = _ramp(nt, [(0.38, (0.905, 0.900, 0.895)),
+                        (0.66, (1.085, 1.080, 1.070))],
+                   name="streak_ramp", interp="B_SPLINE")
+    L(streak_nz.outputs["Fac"], streak.inputs["Fac"])
 
     # ---- pore space: ~5:1 stretched along the grain, warped so the
     # pores flow with the rings
@@ -292,8 +368,16 @@ def proc_walnut2(name):
     gvec = _warp(nt, mp_grain.outputs["Vector"], mp_pw.outputs["Vector"],
                  2.4, 2.0, 0.12, name="pore_warp")
 
-    pores = _noise(nt, 900.0, 5.0, 0.55, name="pores")
+    pores = _noise(nt, 620.0, 6.0, 0.62, name="pores")
     L(gvec, pores.inputs["Vector"])
+    # vessels are ring-porous: they crowd into the latewood. Build a
+    # mask from the ring ramp's own luminance (dark band = dense pores)
+    bw = nt.nodes.new("ShaderNodeRGBToBW")
+    L(ramp.outputs["Color"], bw.inputs[0])
+    late = _maprange(nt, 1.0, 0.0, name="latewood_mask")
+    late.inputs["From Min"].default_value = 0.058
+    late.inputs["From Max"].default_value = 0.105
+    L(bw.outputs["Val"], late.inputs["Value"])
 
     # deep grain channels: coarser noise in the SAME stretched space
     # (a 0.10 x-mapping stretches it ~10:1 -> 30 cm x 3 mm streaks),
@@ -308,33 +392,57 @@ def proc_walnut2(name):
     ch_depth = _math(nt, "MULTIPLY", "channel_depth", b=1.8)
     L(ch_mask.outputs["Color"], ch_depth.inputs[0])
 
+    pore_w = _math(nt, "MULTIPLY", "pore_in_latewood")
+    L(pores.outputs["Fac"], pore_w.inputs[0])
+    pore_w2 = _math(nt, "MULTIPLY", "pore_density", b=0.55)
+    L(pore_w.outputs["Value"], pore_w2.inputs[0])
+    L(late.outputs["Result"], pore_w2.inputs[1])
     height = _math(nt, "ADD", "pore_height")
-    L(pores.outputs["Fac"], height.inputs[0])
+    L(pore_w2.outputs["Value"], height.inputs[0])
     L(ch_depth.outputs["Value"], height.inputs[1])
 
-    bump = _bump(nt, 0.45, 0.00028, name="pore_bump")
+    bump = _bump(nt, 0.58, 0.00034, name="pore_bump")
     L(height.outputs["Value"], bump.inputs["Height"])
     L(bump.outputs["Normal"], bsdf.inputs["Normal"])
 
     # roughness rides the pores: oiled grain is glossier where intact,
     # dull inside the pores -- that sheen break-up is what reads as
     # wood rather than printed plastic at closeup scale
-    rr = _maprange(nt, 0.30, 0.46, name="rough_riding_pores")
+    rr = _maprange(nt, 0.44, 0.62, name="rough_riding_pores")
     L(height.outputs["Value"], rr.inputs["Value"])
-    L(rr.outputs["Result"], bsdf.inputs["Roughness"])
+    # round 24: a broad sheen field — 10-20 cm patches of fresher /
+    # duller oil — so a big softbox draws PATCHES, not one even sheet
+    sheen_nz = _noise(nt, 4.5, 2.0, 0.52, name="sheen_field")
+    L(tc.outputs["Generated"], sheen_nz.inputs["Vector"])
+    sheen = _maprange(nt, 0.26, 0.56, name="sheen_range")
+    L(sheen_nz.outputs["Fac"], sheen.inputs["Value"])
+    mix_rough = _math(nt, "MULTIPLY", "rough_x_sheen", b=0.55)
+    L(rr.outputs["Result"], mix_rough.inputs[0])
+    add_rough = _math(nt, "ADD", "rough_plus_sheen")
+    L(mix_rough.outputs["Value"], add_rough.inputs[0])
+    L(sheen.outputs["Result"], add_rough.inputs[1])
+    L(add_rough.outputs["Value"], bsdf.inputs["Roughness"])
 
     # pores also darken the colour (x0.80 at the deepest): a bump-only
     # pore disappears under the oiled coat
-    pr = _maprange(nt, 1.02, 0.80, name="pore_darkening")
+    pr = _maprange(nt, 1.06, 0.58, name="pore_darkening")
     L(height.outputs["Value"], pr.inputs["Value"])
     mix_pore = _mix(nt, "MULTIPLY", "pore_x_colour")
-    L(mix_wash.outputs["Color"], mix_pore.inputs["Color1"])
+    mix_streak = _mix(nt, "MULTIPLY", "streak_x_colour")
+    L(mix_cloud.outputs["Color"], mix_streak.inputs["Color1"])
+    L(streak.outputs["Color"], mix_streak.inputs["Color2"])
+    L(mix_streak.outputs["Color"], mix_pore.inputs["Color1"])
     L(pr.outputs["Result"], mix_pore.inputs["Color2"])
     L(mix_pore.outputs["Color"], bsdf.inputs["Base Color"])
 
     bsdf.inputs["Metallic"].default_value = 0.0
-    _set(bsdf, "Coat Weight", 0.12)       # oiled sheen
+    _set(bsdf, "Coat Weight", 0.14)       # oiled sheen
+    _set(bsdf, "Coat Roughness", 0.16)
     _set(bsdf, "Coat Roughness", 0.28)
+    # the pore/channel bump above IS this material's height map; the
+    # env detail sweep overwrites Normal links on untagged materials,
+    # which is why earlier rounds lost the grain and read waxy
+    mat["micro_texture"] = True
     return mat
 
 

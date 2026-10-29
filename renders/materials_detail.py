@@ -556,7 +556,32 @@ def case_sintered_v2(name):
     ly_mix = _dt_mix(nt, "MULTIPLY", "case_x_layers")
     L(case_col2.outputs["Color"], ly_mix.inputs["Color1"])
     L(lt.outputs["Color"], ly_mix.inputs["Color2"])
-    L(ly_mix.outputs["Color"], bsdf.inputs["Base Color"])
+
+    # ---- round 24b: MID-SCALE ORANGE PEEL. The sintered grain is a
+    # ~1 mm signal: at 800 px it is one pixel and the denoiser eats it,
+    # which is why the case kept reading as smooth plastic in review.
+    # A 4-5 mm fusion ripple plus a 2 cm density mottle survive the
+    # downsample; both are things real MJF/PLA shells actually show.
+    peel = _dt_noise(nt, 38.0, 3.0, 0.55, "orange_peel")
+    L(gen, peel.inputs["Vector"])
+    peel_r = _dt_ramp(nt, [(0.34, (0.930, 0.930, 0.936)),
+                           (0.68, (1.070, 1.068, 1.062))],
+                      name="peel_tone", interp="B_SPLINE")
+    L(peel.outputs["Fac"], peel_r.inputs["Fac"])
+    peel_mix = _dt_mix(nt, "MULTIPLY", "case_x_peel")
+    L(ly_mix.outputs["Color"], peel_mix.inputs["Color1"])
+    L(peel_r.outputs["Color"], peel_mix.inputs["Color2"])
+
+    mottle = _dt_noise(nt, 9.0, 2.0, 0.50, "density_mottle")
+    L(gen, mottle.inputs["Vector"])
+    mottle_r = _dt_ramp(nt, [(0.30, (0.900, 0.900, 0.906)),
+                             (0.72, (1.075, 1.072, 1.066))],
+                        name="mottle_tone", interp="B_SPLINE")
+    L(mottle.outputs["Fac"], mottle_r.inputs["Fac"])
+    mottle_mix = _dt_mix(nt, "MULTIPLY", "case_x_mottle")
+    L(peel_mix.outputs["Color"], mottle_mix.inputs["Color1"])
+    L(mottle_r.outputs["Color"], mottle_mix.inputs["Color2"])
+    L(mottle_mix.outputs["Color"], bsdf.inputs["Base Color"])
 
     # ---- height: multi-octave grain, ~420 um of total relief
     ga = _dt_math(nt, "MULTIPLY", "sint_a_amt", b=0.75)
@@ -565,7 +590,11 @@ def case_sintered_v2(name):
     L(grain_b.outputs["Fac"], gb.inputs[0])
     height = _dt_add2(nt, [ga.outputs["Value"], gb.outputs["Value"]],
                       name="sinter_height")
-    bump = _dt_bump(nt, 0.55, 0.00042, "sinter_bump")
+    peel_h = _dt_math(nt, "MULTIPLY", "peel_height", b=0.95)
+    L(peel.outputs["Fac"], peel_h.inputs[0])
+    height = _dt_add2(nt, [height.outputs["Value"], peel_h.outputs["Value"]],
+                      name="sinter_height_peel")
+    bump = _dt_bump(nt, 0.72, 0.00062, "sinter_bump")
     L(height.outputs["Value"], bump.inputs["Height"])
     L(bump.outputs["Normal"], bsdf.inputs["Normal"])
 
@@ -815,7 +844,10 @@ def alu_anodized_v2(name):
     # speckle tooth, all summed
     zone = _dt_noise(nt, 4.0, 2.0, 0.50, "alu_zone")
     L(gen, zone.inputs["Vector"])
-    zr = _dt_range(nt, 0.22, 0.38, "zone_rough", from_min=0.28,
+    # round 24: a 0.22 floor turned the flat knob cap into a pure-white
+    # disc under the ortho top key (a mirror at normal incidence).
+    # 0.30 spreads the lobe; anodised aluminium is satin, not chrome.
+    zr = _dt_range(nt, 0.30, 0.44, "zone_rough", from_min=0.28,
                    from_max=0.72)
     L(zone.outputs["Fac"], zr.inputs["Value"])
     br_r = _dt_madd(nt, "brush_rough_ripple", mul=0.18, add=-0.09)
@@ -828,7 +860,7 @@ def alu_anodized_v2(name):
     r2 = _dt_math(nt, "ADD", "alu_rough")
     L(r1.outputs["Value"], r2.inputs[0])
     L(sp_rough.outputs["Value"], r2.inputs[1])
-    rfloor = _dt_math(nt, "MAXIMUM", "alu_rough_floor", b=0.14)
+    rfloor = _dt_math(nt, "MAXIMUM", "alu_rough_floor", b=0.22)
     L(r2.outputs["Value"], rfloor.inputs[0])
     L(rfloor.outputs["Value"], bsdf.inputs["Roughness"])
 

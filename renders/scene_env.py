@@ -138,59 +138,196 @@ def proc_wood(name):
     return mat
 
 
-def proc_weave(name, base=(0.045, 0.047, 0.054)):
-    """Fabric desk mat (round 8 review: "desk mat should have fabric
-    texture"): two crossed thread-scale wave bands form the weave bump,
-    a fuzz noise softens it, a broad wash noise varies the colour, and
-    the roughness rides the weave so the mat never reads flat."""
+def proc_weave(name, base=(0.048, 0.051, 0.060)):
+    """Fabric desk mat: a REAL plain weave.
+
+    Round 24: the old graph had one 2 mm band field and one 37 mm band
+    field, so after the detail sweep stopped eating the bump it read as
+    grey corduroy -- stripes, not cloth. A plain weave is the PRODUCT
+    of warp and weft at the same pitch: threads cross, and the height
+    map is a field of little domes. Pitch is 3.5 mm (1.5 px at the
+    desk camera): fine enough to read as cloth, coarse enough not to
+    alias into moire. Slubs and a heather mottle carry the 1-10 cm
+    scale, and a modest sheen lobe catches the window.
+    """
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nt = mat.node_tree
     bsdf = nt.nodes["Principled BSDF"]
     bsdf.inputs["Base Color"].default_value = (*base, 1.0)
     tc = nt.nodes.new("ShaderNodeTexCoord")
-    mp1 = nt.nodes.new("ShaderNodeMapping")
-    mp1.inputs["Scale"].default_value = (460.0, 24.0, 1.0)
-    mp2 = nt.nodes.new("ShaderNodeMapping")
-    mp2.inputs["Scale"].default_value = (24.0, 460.0, 1.0)
-    w1 = nt.nodes.new("ShaderNodeTexWave")
-    w1.wave_type, w1.bands_direction = "BANDS", "X"
-    w1.inputs["Scale"].default_value = 1.0
-    w2 = nt.nodes.new("ShaderNodeTexWave")
-    w2.wave_type, w2.bands_direction = "BANDS", "X"
-    w2.inputs["Scale"].default_value = 1.0
-    mult = nt.nodes.new("ShaderNodeMath")
-    mult.operation = "MULTIPLY"
+
+    # both fields share ONE physical mapping so the weave is square
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.inputs["Scale"].default_value = (257.0, 114.0, 1.0)   # 3.5 mm
+    L = nt.links.new
+    L(tc.outputs["Generated"], mp.inputs["Vector"])
+
+    warp = nt.nodes.new("ShaderNodeTexWave")
+    warp.wave_type, warp.bands_direction = "BANDS", "X"
+    warp.inputs["Scale"].default_value = 1.0
+    weft = nt.nodes.new("ShaderNodeTexWave")
+    weft.wave_type, weft.bands_direction = "BANDS", "Y"
+    weft.inputs["Scale"].default_value = 1.0
+    L(mp.outputs["Vector"], warp.inputs["Vector"])
+    L(mp.outputs["Vector"], weft.inputs["Vector"])
+    cross = nt.nodes.new("ShaderNodeMath")
+    cross.operation = "MULTIPLY"
+    L(warp.outputs["Fac"], cross.inputs[0])
+    L(weft.outputs["Fac"], cross.inputs[1])
+
+    # domes, not sine rails
+    dome = nt.nodes.new("ShaderNodeValToRGB")
+    de = dome.color_ramp.elements
+    de[0].position, de[0].color = 0.10, (0.0, 0.0, 0.0, 1.0)
+    de[1].position, de[1].color = 0.72, (1.0, 1.0, 1.0, 1.0)
+    L(cross.outputs["Value"], dome.inputs["Fac"])
+
     fuzz = _noise(nt, 1600.0, 5.0, "fuzz")
-    addf = nt.nodes.new("ShaderNodeMath")
-    addf.operation = "ADD"
-    addf.use_clamp = True
+    L(tc.outputs["Generated"], fuzz.inputs["Vector"])
+
+    # slubs: occasional thicker yarn bundles at 4-8 cm
+    slub = _noise(nt, 14.0, 3.0, "slub")
+    slubr = nt.nodes.new("ShaderNodeValToRGB")
+    se = slubr.color_ramp.elements
+    se[0].position, se[0].color = 0.58, (0.0, 0.0, 0.0, 1.0)
+    se[1].position, se[1].color = 0.78, (1.0, 1.0, 1.0, 1.0)
+    L(slub.outputs["Fac"], slubr.inputs["Fac"])
+
+    # a 12 mm diagonal twill: the structure a real woven mat shows when
+    # you actually look at it. 5-8 px at preview, so it survives.
+    mp_t = nt.nodes.new("ShaderNodeMapping")
+    mp_t.inputs["Scale"].default_value = (75.0, 33.3, 1.0)
+    L(tc.outputs["Generated"], mp_t.inputs["Vector"])
+    twill = nt.nodes.new("ShaderNodeTexWave")
+    twill.wave_type, twill.bands_direction = "BANDS", "DIAGONAL"
+    twill.inputs["Scale"].default_value = 1.0
+    twill.inputs["Distortion"].default_value = 0.7
+    twill.inputs["Detail"].default_value = 2.0
+    L(mp_t.outputs["Vector"], twill.inputs["Vector"])
+    twillr = nt.nodes.new("ShaderNodeValToRGB")
+    te = twillr.color_ramp.elements
+    te[0].position, te[0].color = 0.18, (0.0, 0.0, 0.0, 1.0)
+    te[1].position, te[1].color = 0.62, (1.0, 1.0, 1.0, 1.0)
+    L(twill.outputs["Fac"], twillr.inputs["Fac"])
+
+    # Height mix: WEIGHTED AVERAGE, not add+clamp. Summing four 0..1
+    # fields and clamping at 1 put almost every pixel at the ceiling,
+    # so the bump was a flat sheet and the mat rendered textureless.
+    def _w(src, w, label):
+        m = nt.nodes.new("ShaderNodeMath")
+        m.label = label
+        m.operation = "MULTIPLY"
+        m.inputs[1].default_value = w
+        L(src, m.inputs[0])
+        return m
+
+    hw1 = _w(dome.outputs["Color"], 0.34, "h_dome")
+    hw2 = _w(twillr.outputs["Color"], 0.34, "h_twill")
+    hw3 = _w(slubr.outputs["Color"], 0.20, "h_slub")
+    hw4 = _w(fuzz.outputs["Fac"], 0.12, "h_fuzz")
+    hsum1 = nt.nodes.new("ShaderNodeMath")
+    hsum1.operation = "ADD"
+    L(hw1.outputs["Value"], hsum1.inputs[0])
+    L(hw2.outputs["Value"], hsum1.inputs[1])
+    hsum2 = nt.nodes.new("ShaderNodeMath")
+    hsum2.operation = "ADD"
+    L(hsum1.outputs["Value"], hsum2.inputs[0])
+    L(hw3.outputs["Value"], hsum2.inputs[1])
+    hsum3 = nt.nodes.new("ShaderNodeMath")
+    hsum3.operation = "ADD"
+    L(hsum2.outputs["Value"], hsum3.inputs[0])
+    L(hw4.outputs["Value"], hsum3.inputs[1])
+
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.95
+    bump.inputs["Distance"].default_value = 0.00040
+    L(hsum3.outputs["Value"], bump.inputs["Height"])
+    L(bump.outputs["Normal"], bsdf.inputs["Normal"])
+
+    # colour: broad heather mottle, not a flat dye lot
     wash = _noise(nt, 3.5, 2.0, "wash")
+    L(tc.outputs["Generated"], wash.inputs["Vector"])
     washr = nt.nodes.new("ShaderNodeValToRGB")
     wse = washr.color_ramp.elements
-    wse[0].position, wse[0].color = 0.30, (0.038, 0.040, 0.047, 1.0)
-    wse[1].position, wse[1].color = 0.72, (0.058, 0.062, 0.072, 1.0)
-    bump = nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.65   # round 17
+    wse[0].position, wse[0].color = 0.30, (0.028, 0.030, 0.036, 1.0)
+    wse[1].position, wse[1].color = 0.72, (0.050, 0.054, 0.064, 1.0)
+    L(wash.outputs["Fac"], washr.inputs["Fac"])
+
+    # two mottle octaves: ~100 mm dye-lot drift + ~30 mm yarn blend.
+    # At the 800 px preview that is 43 px / 13 px -- the scale that
+    # actually reads as cloth rather than a flat card.
+    heather_a = _noise(nt, 9.0, 3.0, "heather_a")
+    heather_b = _noise(nt, 30.0, 4.0, "heather_b")
+    L(tc.outputs["Generated"], heather_a.inputs["Vector"])
+    L(tc.outputs["Generated"], heather_b.inputs["Vector"])
+    # NOTE: summing two 0..1 noises (mean 0.78) then mapping 0.30..0.95
+    # pinned almost every pixel at the top stop -- the mottle was there
+    # in the graph and invisible on screen. Drive the ramp from one
+    # noise across its true 0.32..0.68 working range instead.
+    hr = nt.nodes.new("ShaderNodeMapRange")
+    hr.inputs["From Min"].default_value = 0.32
+    hr.inputs["From Max"].default_value = 0.68
+    hr.inputs["To Min"].default_value = 0.80
+    hr.inputs["To Max"].default_value = 1.12
+    L(heather_a.outputs["Fac"], hr.inputs["Value"])
+    hr2 = nt.nodes.new("ShaderNodeMapRange")
+    hr2.inputs["From Min"].default_value = 0.36
+    hr2.inputs["From Max"].default_value = 0.64
+    hr2.inputs["To Min"].default_value = 0.94
+    hr2.inputs["To Max"].default_value = 1.06
+    L(heather_b.outputs["Fac"], hr2.inputs["Value"])
+    hmul = nt.nodes.new("ShaderNodeMixRGB")
+    hmul.blend_type = "MULTIPLY"
+    hmul.inputs["Fac"].default_value = 1.0
+    L(hr.outputs["Result"], hmul.inputs["Color1"])
+    L(hr2.outputs["Result"], hmul.inputs["Color2"])
+    heatherr = nt.nodes.new("ShaderNodeMixRGB")
+    heatherr.blend_type = "MULTIPLY"
+    heatherr.inputs["Fac"].default_value = 1.0
+    L(washr.outputs["Color"], heatherr.inputs["Color1"])
+    L(hmul.outputs["Color"], heatherr.inputs["Color2"])
+    # the thread grid also TINTS: bump alone vanishes under a soft
+    # frontal key, while a +/-7% colour ripple survives at 2-3 px
+    wcol = nt.nodes.new("ShaderNodeMapRange")
+    wcol.inputs["From Min"].default_value = 0.0
+    wcol.inputs["From Max"].default_value = 1.0
+    wcol.inputs["To Min"].default_value = 0.90
+    wcol.inputs["To Max"].default_value = 1.10
+    L(dome.outputs["Color"], wcol.inputs["Value"])
+    wmul = nt.nodes.new("ShaderNodeMixRGB")
+    wmul.blend_type = "MULTIPLY"
+    wmul.inputs["Fac"].default_value = 1.0
+    L(heatherr.outputs["Color"], wmul.inputs["Color1"])
+    L(wcol.outputs["Result"], wmul.inputs["Color2"])
+    tw_col = nt.nodes.new("ShaderNodeMapRange")
+    tw_col.inputs["From Min"].default_value = 0.0
+    tw_col.inputs["From Max"].default_value = 1.0
+    tw_col.inputs["To Min"].default_value = 0.90
+    tw_col.inputs["To Max"].default_value = 1.09
+    L(twillr.outputs["Color"], tw_col.inputs["Value"])
+    twmul = nt.nodes.new("ShaderNodeMixRGB")
+    twmul.blend_type = "MULTIPLY"
+    twmul.inputs["Fac"].default_value = 1.0
+    L(wmul.outputs["Color"], twmul.inputs["Color1"])
+    L(tw_col.outputs["Result"], twmul.inputs["Color2"])
+    L(twmul.outputs["Color"], bsdf.inputs["Base Color"])
+
     rramp = nt.nodes.new("ShaderNodeValToRGB")
     re = rramp.color_ramp.elements
-    re[0].position, re[0].color = 0.0, (0.70, 0.70, 0.70, 1.0)
+    re[0].position, re[0].color = 0.0, (0.86, 0.86, 0.86, 1.0)
     re[1].position, re[1].color = 1.0, (0.96, 0.96, 0.96, 1.0)
-    L = nt.links.new
-    L(tc.outputs["Generated"], mp1.inputs["Vector"])
-    L(tc.outputs["Generated"], mp2.inputs["Vector"])
-    L(mp1.outputs["Vector"], w1.inputs["Vector"])
-    L(mp2.outputs["Vector"], w2.inputs["Vector"])
-    L(w1.outputs["Fac"], mult.inputs[0])
-    L(w2.outputs["Fac"], mult.inputs[1])
-    L(mult.outputs["Value"], addf.inputs[0])
-    L(fuzz.outputs["Fac"], addf.inputs[1])
-    L(addf.outputs["Value"], bump.inputs["Height"])
-    L(bump.outputs["Normal"], bsdf.inputs["Normal"])
-    L(wash.outputs["Fac"], washr.inputs["Fac"])
-    L(washr.outputs["Color"], bsdf.inputs["Base Color"])
-    L(addf.outputs["Value"], rramp.inputs["Fac"])
+    L(dome.outputs["Color"], rramp.inputs["Fac"])
     L(rramp.outputs["Color"], bsdf.inputs["Roughness"])
+
+    # satin sheen: enough to catch the window, not enough to frost
+    for _k, _v in (("Sheen Weight", 0.13), ("Sheen Roughness", 0.48)):
+        if _k in bsdf.inputs:
+            bsdf.inputs[_k].default_value = _v
+    if "Sheen Tint" in bsdf.inputs:
+        bsdf.inputs["Sheen Tint"].default_value = (1.0, 0.96, 0.90, 1.0)
+
+    mat["micro_texture"] = True
     return mat
 
 
@@ -204,25 +341,95 @@ def proc_plaster(name):
     bsdf = nt.nodes["Principled BSDF"]
     tc = nt.nodes.new("ShaderNodeTexCoord")
     blotch = _noise(nt, 3.0, 1.5, "blotch")     # ~1 m clouds
+    mid = _noise(nt, 12.0, 3.0, "mid")           # ~30 cm drift
     tooth = _noise(nt, 42.0, 4.0, "tooth")       # ~8 cm tooth
+    # round 24c: a roller leaves a 10-25 mm nap stipple and the trowel
+    # leaves 30-80 mm islands. At the desk camera (0.33 px/mm) those are
+    # 3-8 px and 10-25 px -- the scales that actually read.
+    stipple = _noise(nt, 170.0, 3.0, "roller_stipple")
+    island = _noise(nt, 34.0, 3.0, "trowel_island")
     fine = _noise(nt, 900.0, 5.0, "fine")
+    # round 24: trowel arcs + stronger mottling — the old 0.47..0.56
+    # ramp was invisible at desk exposure and the wall read as paper
+    trowel = nt.nodes.new("ShaderNodeTexWave")
+    trowel.wave_type, trowel.bands_direction = "BANDS", "Z"
+    trowel.inputs["Scale"].default_value = 1.6
+    trowel.inputs["Distortion"].default_value = 7.0
+    trowel.inputs["Detail"].default_value = 3.0
+    tmap = nt.nodes.new("ShaderNodeMapping")
+    tmap.inputs["Scale"].default_value = (1.0, 1.0, 0.55)
     ramp = nt.nodes.new("ShaderNodeValToRGB")
     e = ramp.color_ramp.elements
-    e[0].position, e[0].color = 0.35, (0.470, 0.450, 0.420, 1.0)
-    e[1].position, e[1].color = 0.70, (0.560, 0.540, 0.505, 1.0)
+    e[0].position, e[0].color = 0.26, (0.238, 0.228, 0.212, 1.0)
+    e[1].position, e[1].color = 0.78, (0.585, 0.566, 0.532, 1.0)
+    # the nap mottle rides the albedo too: paint pools in the roller
+    # stipple and the wall never reads as paper
+    nap_ramp = nt.nodes.new("ShaderNodeValToRGB")
+    ne = nap_ramp.color_ramp.elements
+    ne[0].position, ne[0].color = 0.40, (0.930, 0.930, 0.935, 1.0)
+    ne[1].position, ne[1].color = 0.60, (1.070, 1.070, 1.062, 1.0)
     bump = nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.55   # round 16: stronger
+    bump.inputs["Strength"].default_value = 1.0    # round 24c
+    bump.inputs["Distance"].default_value = 0.00035
     rramp = nt.nodes.new("ShaderNodeValToRGB")
     re = rramp.color_ramp.elements
     re[0].position, re[0].color = 0.0, (0.78, 0.78, 0.78, 1.0)
     re[1].position, re[1].color = 1.0, (0.97, 0.97, 0.97, 1.0)
     L = nt.links.new
+    L(tc.outputs["Generated"], tmap.inputs["Vector"])
+    L(tmap.outputs["Vector"], trowel.inputs["Vector"])
     L(blotch.outputs["Fac"], ramp.inputs["Fac"])
-    L(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    L(tooth.outputs["Fac"], bump.inputs["Height"])
+    # trowel bands perturb the blotch ramp input a little
+    import mathutils as _mu
+    addt = nt.nodes.new("ShaderNodeMath")
+    addt.operation = "ADD"
+    addt.use_clamp = True
+    L(blotch.outputs["Fac"], addt.inputs[0])
+    L(mid.outputs["Fac"], addt.inputs[1])
+    mulw = nt.nodes.new("ShaderNodeMath")
+    mulw.operation = "MULTIPLY"
+    mulw.inputs[1].default_value = 0.22
+    L(trowel.outputs["Fac"], mulw.inputs[0])
+    addt2 = nt.nodes.new("ShaderNodeMath")
+    addt2.operation = "ADD"
+    addt2.use_clamp = True
+    L(addt.outputs["Value"], addt2.inputs[0])
+    L(mulw.outputs["Value"], addt2.inputs[1])
+    L(addt2.outputs["Value"], ramp.inputs["Fac"])
+    # height = trowel tooth + roller nap
+    nap_h = nt.nodes.new("ShaderNodeMath")
+    nap_h.operation = "MULTIPLY"
+    nap_h.inputs[1].default_value = 0.55
+    L(stipple.outputs["Fac"], nap_h.inputs[0])
+    tooth_h = nt.nodes.new("ShaderNodeMath")
+    tooth_h.operation = "MULTIPLY"
+    tooth_h.inputs[1].default_value = 0.75
+    L(tooth.outputs["Fac"], tooth_h.inputs[0])
+    island_h = nt.nodes.new("ShaderNodeMath")
+    island_h.operation = "MULTIPLY"
+    island_h.inputs[1].default_value = 0.30
+    L(island.outputs["Fac"], island_h.inputs[0])
+    hsum = nt.nodes.new("ShaderNodeMath")
+    hsum.operation = "ADD"
+    L(tooth_h.outputs["Value"], hsum.inputs[0])
+    L(nap_h.outputs["Value"], hsum.inputs[1])
+    hsum2 = nt.nodes.new("ShaderNodeMath")
+    hsum2.operation = "ADD"
+    L(hsum.outputs["Value"], hsum2.inputs[0])
+    L(island_h.outputs["Value"], hsum2.inputs[1])
+    L(hsum2.outputs["Value"], bump.inputs["Height"])
     L(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    # albedo: multiply the ramp by the nap mottle
+    L(stipple.outputs["Fac"], nap_ramp.inputs["Fac"])
+    nap_mix = nt.nodes.new("ShaderNodeMixRGB")
+    nap_mix.blend_type = "MULTIPLY"
+    nap_mix.inputs["Fac"].default_value = 1.0
+    L(ramp.outputs["Color"], nap_mix.inputs["Color1"])
+    L(nap_ramp.outputs["Color"], nap_mix.inputs["Color2"])
+    L(nap_mix.outputs["Color"], bsdf.inputs["Base Color"])
     L(fine.outputs["Fac"], rramp.inputs["Fac"])
     L(rramp.outputs["Color"], bsdf.inputs["Roughness"])
+    mat["micro_texture"] = True
     return mat
 
 
@@ -238,8 +445,11 @@ def screen_mat(name):
     grad.gradient_type = "LINEAR"
     ramp = nt.nodes.new("ShaderNodeValToRGB")
     e = ramp.color_ramp.elements
-    e[0].position, e[0].color = 0.05, (0.010, 0.013, 0.022, 1.0)
-    e[1].position, e[1].color = 0.95, (0.055, 0.078, 0.110, 1.0)
+    # round 24: a powered-off panel is nearly black and GLOSSY; the
+    # old 0.055 navy + 0.55 emission read as a switched-on flat card.
+    # Keep a whisper of the gradient so it is not a hole in the frame.
+    e[0].position, e[0].color = 0.05, (0.012, 0.014, 0.019, 1.0)
+    e[1].position, e[1].color = 0.95, (0.034, 0.043, 0.058, 1.0)
     L = nt.links.new
     L(tc.outputs["Generated"], grad.inputs["Vector"])
     L(grad.outputs["Fac"], ramp.inputs["Fac"])
@@ -248,8 +458,12 @@ def screen_mat(name):
         if key in bsdf.inputs:
             L(ramp.outputs["Color"], bsdf.inputs[key])
             break
-    bsdf.inputs["Emission Strength"].default_value = 0.55
-    bsdf.inputs["Roughness"].default_value = 0.08
+    bsdf.inputs["Emission Strength"].default_value = 0.16
+    bsdf.inputs["Roughness"].default_value = 0.045
+    for _k, _v in (("Coat Weight", 0.65), ("Coat Roughness", 0.04),
+                   ("Specular IOR Level", 0.55)):
+        if _k in bsdf.inputs:
+            bsdf.inputs[_k].default_value = _v
     return mat
 
 
@@ -611,7 +825,7 @@ def main():
     m_stitch = S.pbr("env_stitch", (0.42, 0.38, 0.31), rough=0.70)
     S.micro_texture(m_stitch, 700, 0.35, 0.0002, 0.62, 0.78, detail=4.0)
     m_wall = proc_plaster("env_wall")
-    m_base = S.pbr("env_baseboard", (0.75, 0.73, 0.69), rough=0.55)
+    m_base = S.pbr("env_baseboard", (0.62, 0.605, 0.578), rough=0.50)
     m_carpet = S.pbr("env_carpet", (0.115, 0.105, 0.095), rough=0.98)
     S.micro_texture(m_carpet, 900, 0.45, 0.0009, 0.95, 1.0, detail=4.0)
     m_alu = S.pbr("env_alu", (0.55, 0.56, 0.585), rough=0.30, metal=1.0)
@@ -650,7 +864,13 @@ def main():
     # ---- desk, wall, floor
     # round 20: the agent's plank desk — end-grain strips, thickness
     # variance, y-jitter, one bowed board (loc = top-surface centre)
-    _esmats = {"wood": EM.proc_walnut2("env_walnut2")}
+    # round 24: the mat and wall builders take OPTIONAL materials --
+    # without these keys they silently fell back to flat PBR plus a
+    # generic bump, which is why the weave and the trowelled plaster
+    # never appeared in any round.
+    _esmats = {"wood": EM.proc_walnut2("env_walnut2"),
+               "fabric": m_fabric,
+               "wall": m_wall}
     PROPS.extend(ES.build_plank_desk((cx, cy + 0.06, desk_z), _esmats))
     # round 20: the agent's room — plaster + stepped two-piece
     # baseboard + chair rail, floor + dark rug (loc = wall inner face
@@ -663,18 +883,13 @@ def main():
     mat_objs = ES.build_desk_mat((cx, cy - 0.010, desk_z), _esmats)
     PROPS.extend(mat_objs)
 
-    # ---- round 12: the sculpted props replace the primitives
-    # (env_props.py — the agent-built high-detail module)
-    ep_mats = {"nb_pages": m_pages}
+    ep_mats = {"nb_pages": m_pages, "mon_screen": m_screen}
     # materials for my own builders (round 17)
     my_mats = {
         "mug_outer": S.pbr("my_mug", (0.72, 0.46, 0.33), rough=0.38),
         "mug_glaze": S.pbr("my_glaze", (0.16, 0.10, 0.07), rough=0.08),
         "mug_coffee": S.pbr("my_coffee", (0.045, 0.027, 0.016), rough=0.06),
         "mug_crema": S.pbr("my_crema", (0.30, 0.19, 0.11), rough=0.35),
-        "ms_body": S.pbr("my_ms", (0.83, 0.83, 0.85), rough=0.16),
-        "ms_seam": S.pbr("my_ms_seam", (0.05, 0.05, 0.055), rough=0.35),
-        "ms_wheel": S.pbr("my_ms_wheel", (0.28, 0.28, 0.30), rough=0.45),
         "pen_cap": S.pbr("my_pen_cap", (0.085, 0.087, 0.095), rough=0.30),
         "pen_clip_metal": S.pbr("my_pen_clip", (0.72, 0.73, 0.75),
                                 rough=0.25, metal=1.0),
@@ -691,11 +906,13 @@ def main():
     # USB-C x2 + headphone, debossed top circle
     mini_x, mini_y = cx + 0.42, cy + 0.36
     PROPS.extend(EP.build_minipc((mini_x, mini_y, desk_z), ep_mats))
-    # round 21: props v2 — the waisted-profile mouse with a real
-    # channel, wheel well and thumb ledge (rounds 17-19 still failed
-    # review: "shaped nothing like a mouse")
-    PROPS.extend(P2.build_mouse_v4((cx + 0.40, cy - 0.105, desk_z),
-                                   my_mats, rot_z=0.30))
+    # round 24: CC0 Grab3D asset (9.7k tris, 2K normal/roughness),
+    # retinted graphite — the procedural v4 read as "a white blob"
+    # partly because my_mats overrode its graphite with a white
+    # round-19 material (ms_body 0.83 / rough 0.16) and partly because
+    # it never had a real button/wheel breakdown.
+    PROPS.extend(P2.build_mouse_asset((cx + 0.40, cy - 0.105, desk_z),
+                                      rot_z=0.38))
     # round 21: props v2 — the HOLLOW holder (outer tapered wall + inner
     # wall + thick rim = a cavity you can see into) with the three
     # standing pens built inside as one assembly
@@ -757,8 +974,13 @@ def main():
            for p in _pl[half] if p["ref"].startswith("J_")}
     jl = [o for o in parts["L"]["board"] if o.name.startswith("J_L1")]
     jr = [o for o in parts["R"]["board"] if o.name.startswith("J_R1")]
+    # round 24: the chunky nano_usb shell was removed from the product
+    # scene (it read as a grey brick in the MCU window). Anchor the
+    # cable at the module PCB instead; z is clamped to the rim below.
     usb = [o for o in parts["L"].get("nano", [])
-           if o.name.startswith("nano_usb")]
+           if o.name.startswith("nano_pcb")]
+    if not usb:
+        usb = list(parts["L"].get("nano", []))
     (lb0, lb1) = S.bbox_mm(parts["L"]["tub"])
     (rb0, rb1) = S.bbox_mm(parts["R"]["tub"])
     (j0, j1) = S.bbox_mm(jl)
@@ -904,20 +1126,26 @@ def main():
 
     # ---- environment lighting (calibrated round 7; unchanged)
     env_world()
-    li_window = light("env_window", "AREA", 22, (cx - 1.05, cy - 0.28, 0.66),
+    li_window = light("env_window", "AREA", 14, (cx - 1.05, cy - 0.28, 0.66),
                       (cx, cy + 0.05, 0.04), color=(0.93, 0.95, 1.02),
-                      size=1.15)
-    li_fill = light("env_fill", "AREA", 4, (cx + 0.85, cy - 0.20, 0.30),
+                      size=0.90)
+    li_fill = light("env_fill", "AREA", 2.2, (cx + 0.85, cy - 0.20, 0.30),
                     (cx, cy + 0.05, 0.02), color=(1.0, 0.92, 0.80),
-                    size=0.70)
+                    size=0.55)
     # round 17: a LOW GRAZING sweep from the front-right skims the
     # desk surface — every bump on the walnut, weave and plaster
     # catches a raking shadow (the flatness fix: one big soft
     # overhead-ish source leaves nothing to see)
     li_graze = light("env_graze", "AREA", 4.5,
-                     (cx + 0.80, cy - 0.52, 0.09),
-                     (cx - 0.15, cy + 0.10, 0.005),
-                     color=(1.0, 0.97, 0.92), size=0.55)
+                     (cx + 0.72, cy - 0.58, 0.055),
+                     (cx - 0.18, cy + 0.10, 0.002),
+                     color=(1.0, 0.985, 0.965), size=0.48)
+    # round 24: a second raking sweep from the LEFT — one graze leaves
+    # half the desk unlit and the grain only shows on one side
+    li_graze2 = light("env_graze2", "AREA", 4.5,
+                      (cx - 0.72, cy - 0.36, 0.075),
+                      (cx + 0.10, cy + 0.08, 0.002),
+                      color=(1.0, 0.95, 0.88), size=0.42)
     # RGB accents behind the board for the gaming mood (dark until the
     # gaming shot enables them)
     rgb_pos = ((cx - 0.66, cy + 0.34, 0.16), (cx - 0.72, cy + 0.46, 0.20),
@@ -1026,9 +1254,10 @@ def main():
             o.hide_render = (name != "mat")
         set_visible(tower_objs, name == "gaming")
         gaming = (name == "gaming")
-        li_window.data.energy = 4.0 if gaming else 22.0
-        li_fill.data.energy = 1.5 if gaming else 4.0
-        li_graze.data.energy = 1.0 if gaming else 4.5
+        li_window.data.energy = 4.0 if gaming else 14.0
+        li_fill.data.energy = 1.2 if gaming else 2.2
+        li_graze.data.energy = 1.8 if gaming else 4.5
+        li_graze2.data.energy = 1.2 if gaming else 4.5
         for i, li in enumerate(rgb_lights):
             li.data.energy = (0.55, 0.35, 0.45)[i] if gaming else 0.0
         S.render_to(cam, os.path.join(args.out, "env", f"{name}.png"),
