@@ -776,7 +776,13 @@ def proc_cable_braid(name):
     bsdf = _bsdf(nt)
     L = nt.links.new
     tc = nt.nodes.new("ShaderNodeTexCoord")
-    gen = tc.outputs["Generated"]
+    # round 24e: OBJECT space, not Generated. A cable is a CURVE, and
+    # Generated is its bounding box -- on a 300 x 5 mm run the braid
+    # bands (620/unit) collapsed to a smear across the jacket, which is
+    # why the sheath read as a plain grey tube in review. Object
+    # coordinates are metres, which is what the scales below were
+    # always written for ("pitch ~1.6 mm on a 1 m host").
+    gen = tc.outputs["Object"]
 
     # broad jacket tone wash (worn vs fresh braid zones)
     tone_nz = _noise(nt, 15.0, 2.0, 0.50, name="jacket_tone")
@@ -801,16 +807,19 @@ def proc_cable_braid(name):
                8.0, 2.5, 0.0013, name="braid_a_warp")
     vb = _warp(nt, mp_b.outputs["Vector"], mp_w.outputs["Vector"],
                9.5, 2.5, 0.0015, name="braid_b_warp")
-    wa = _wave(nt, 620.0, 0.1, 3.0, 2.0, bands="X", name="braid_a")
+    # round 24e: 620/unit = 1.6 mm strands, which at the mat camera
+    # (0.9 px/mm) is a one-pixel blur -- the jacket read as a plain
+    # tube. 220/unit = 4.5 mm strands, and the bump carries them.
+    wa = _wave(nt, 220.0, 0.1, 3.0, 2.0, bands="X", name="braid_a")
     L(va, wa.inputs["Vector"])
-    wb = _wave(nt, 620.0, 0.1, 3.0, 2.0, bands="X", name="braid_b")
+    wb = _wave(nt, 220.0, 0.1, 3.0, 2.0, bands="X", name="braid_b")
     L(vb, wb.inputs["Vector"])
     dia = _math(nt, "MULTIPLY", "diamond_braid")
     L(wa.outputs["Fac"], dia.inputs[0])
     L(wb.outputs["Fac"], dia.inputs[1])
-    braid = _ramp(nt, [(0.0, (0.78, 0.78, 0.78)),
-                       (0.55, (0.92, 0.92, 0.92)),
-                       (1.0, (1.06, 1.06, 1.06))],
+    braid = _ramp(nt, [(0.0, (0.62, 0.62, 0.62)),
+                       (0.52, (1.02, 1.02, 1.02)),
+                       (1.0, (1.22, 1.22, 1.22))],
                   name="braid_shading", interp="B_SPLINE")
     L(dia.outputs["Value"], braid.inputs["Fac"])
 
@@ -827,17 +836,17 @@ def proc_cable_braid(name):
     h = _math(nt, "ADD", "braid_height")
     L(dia.outputs["Value"], h.inputs[0])
     L(fz.outputs["Value"], h.inputs[1])
-    bump = _bump(nt, 0.38, 0.00035, name="braid_bump")
+    bump = _bump(nt, 0.55, 0.00060, name="braid_bump")
     L(h.outputs["Value"], bump.inputs["Height"])
     L(bump.outputs["Normal"], bsdf.inputs["Normal"])
 
-    rr = _maprange(nt, 0.35, 0.55, name="fuzz_rough")
+    rr = _maprange(nt, 0.26, 0.40, name="fuzz_rough")
     L(fuzz.outputs["Fac"], rr.inputs["Value"])
     L(rr.outputs["Result"], bsdf.inputs["Roughness"])
 
     bsdf.inputs["Metallic"].default_value = 0.0
-    _set(bsdf, "Coat Weight", 0.10)       # whisper of sheen, if coats exist
-    _set(bsdf, "Coat Roughness", 0.35)
+    _set(bsdf, "Coat Weight", 0.35)       # satin jacket: the highlight
+    _set(bsdf, "Coat Roughness", 0.18)    # is what reads at 3-4 px
     return mat
 
 

@@ -78,7 +78,8 @@ CAP_STEM_Z = 1.5         # cap stem tip above the PCB top (inside switch)
 # round 23: tub -56 -> -40 — the foam-to-case label gap was 40mm
 # vs ~20mm everywhere else
 EXPLODE = {"knob": 82.0, "cover": 66.0, "caps": 44.0,
-           "gaskets": 42.0, "swbodies": 24.0, "plate": 24.0,
+           "gaskets": 24.0, "gaskets_b": -17.5,
+           "swbodies": 24.0, "plate": 24.0,
            "foam": -17.5, "tub": -40.0}
 # nice!nano courtyard in the FOOTPRINT's local (file) frame, from the
 # embedded Socket_Strips_2x12_P2.54mm_NiceNano footprint (KiCad 10)
@@ -824,8 +825,38 @@ def build_keyboard(args):
 
         parts[h].setdefault("foam", []).append(
             case_slab(f"foam_b_{h}", 2.55, -0.275))
-        parts[h].setdefault("gaskets", []).append(
-            case_slab(f"gsk_t_{h}", 1.00, 2.70))
+        # ---- TOP GASKETS: real PORON pads, not a slab (round 24c
+        # review: "where are gaskets? should be small poron pads on the
+        # plate tabs"). plate/<half>-lands.json carries the eight tab
+        # roots; the pad centre is the tab root + 2.0 mm outward and the
+        # pad is 7 x 4 mm, exactly as plate/gen_plate.py defines the
+        # DXF PORON layer.
+        try:
+            lands = json.load(open(os.path.join(
+                REPO, "plate", f"Hojicha44-{half}-lands.json")))
+        except Exception as e:
+            lands = {"tabs": []}
+            print(f"  [scene] lands.json unavailable ({e})", flush=True)
+        for ti, t in enumerate(lands.get("tabs", [])):
+            a = math.radians(t["angle"])
+            ox = t["x"] + math.cos(a) * 2.0
+            oy = t["y"] + math.sin(a) * 2.0
+            for face, th, zc in (("t", 1.00, 2.70), ("b", 2.55, -0.275)):
+                # The pad is 7 x 4 mm with the SHORT side along the
+                # tab's outward axis (the lands' `pad: [7, 4]` is
+                # width x protrusion) -- the first pass had it the
+                # other way round, so every gasket sat 90 deg across
+                # its tab. Local X is the outward direction here.
+                o = add_cube(f"gsk_{face}_{h}_{ti}",
+                             (ox * SCALE, oy * SCALE, zc * SCALE),
+                             (4.0, 7.0, th), m_poron,
+                             rot_z=math.degrees(a))
+                # top pads sit ON the plate (so they explode with it);
+                # bottom pads belong to the foam level
+                grp = "gaskets" if face == "t" else "gaskets_b"
+                parts[h].setdefault(grp, []).append(o)
+        print(f"[scene] {h}: {len(lands.get('tabs', []))} tab pads per "
+              f"face (poron)", flush=True)
         print(f"[scene] {half}: case-outline foam+gasket slabs at the "
               f"compressed heights", flush=True)
 
@@ -1178,7 +1209,8 @@ def build_keyboard(args):
             # value band, so the top half of the stack read as one
             # white mass. Dark cover + gunmetal plate separate the
             # bone caps without going back to the radical palette.
-            "gaskets": ((0.180, 0.160, 0.140), 0.72, 0.0),  # dark rubber
+            "gaskets": ((0.470, 0.425, 0.360), 0.84, 0.0),  # poron
+            "gaskets_b": ((0.470, 0.425, 0.360), 0.84, 0.0),  # poron
             "plate":   ((0.300, 0.300, 0.320), 0.32, 0.9),  # gunmetal
 
             "caps":    ((0.780, 0.750, 0.690), 0.45, 0.0),  # bone
@@ -1214,16 +1246,11 @@ def build_keyboard(args):
                 assign([o], m_stem if o.name.endswith("_stem")
                        else m_housing)
             materialize_pcb_diagram(parts[h].get("board", []), h)
-        # round-14 review: "there should be no foam above pcb" — the
-        # top-gasket slab is HIDDEN in the exploded (it still exists in
-        # every other shot; the diagram shows one foam layer, in the
-        # case, below the PCB)
-        for h in parts:
-            for o in parts[h].get("gaskets", []):
-                o.hide_render = True
+        # round 24e: the gaskets are small PORON PADS now, not a slab,
+        # so they are SHOWN (round-14's rule hid the old full-outline
+        # slab). They are a layer of the stack the reviewer asked for.
         print(f"[scene] stack-colours on ({len(stack_pal)} layers + "
-              f"pcb traces + component tints; top gaskets hidden)",
-              flush=True)
+              f"gerber PCB + poron pads shown)", flush=True)
 
     return parts, all_objs
 
@@ -1871,7 +1898,7 @@ def main():
             # was the tainted top)
             _stack_groups = ("board", "plate", "tub", "cover", "caps",
                              "swbodies", "nano", "foam", "knob",
-                             "gaskets")
+                             "gaskets", "gaskets_b")
             _pre_stack = [
                 (o, list(o.data.materials), o.hide_render)
                 for h in parts
@@ -1896,7 +1923,8 @@ def main():
                 stack_pal = {
                     "tub":     ((0.140, 0.135, 0.125), 0.55, 0.0),  # graphite
                     "foam":    ((0.520, 0.470, 0.380), 0.75, 0.0),  # pale sand
-                    "gaskets": ((0.150, 0.135, 0.120), 0.74, 0.0),  # dark rubber
+                    "gaskets": ((0.470, 0.425, 0.360), 0.84, 0.0),  # poron
+                    "gaskets_b": ((0.470, 0.425, 0.360), 0.84, 0.0),  # poron
                     "plate":   ((0.195, 0.195, 0.210), 0.38, 0.9),  # gunmetal
 
                     "caps":    ((0.780, 0.750, 0.690), 0.45, 0.0),  # bone
@@ -1925,7 +1953,8 @@ def main():
                     "tub":     (700, 0.22, 0.00010, 0.44, 0.60),
                     "cover":   (700, 0.22, 0.00010, 0.40, 0.56),
                     "plate":   (1300, 0.10, 0.00002, 0.30, 0.44),
-                    "gaskets": (480, 0.55, 0.00022, 0.66, 0.84),
+                    "gaskets": (480, 0.55, 0.00022, 0.62, 0.80),
+                    "gaskets_b": (480, 0.55, 0.00022, 0.62, 0.80),
                     "caps":    (900, 0.20, 0.00005, 0.40, 0.52),
                     "knob":    (320, 0.10, 0.00001, 0.26, 0.36),
                     "nano":    (700, 0.18, 0.00006, 0.50, 0.64),
@@ -1951,15 +1980,13 @@ def main():
                     # layers by measured geometry: copper / mask+silk
                     # planes / FR4, with the gerber artwork on the mask
                     materialize_pcb_diagram(parts[h].get("board", []), h)
-                # round-14 review: "there should be no foam above pcb" — the
-                # top-gasket slab is HIDDEN in the exploded (it still exists in
-                # every other shot; the diagram shows one foam layer, in the
-                # case, below the PCB)
-                for h in parts:
-                    for o in parts[h].get("gaskets", []):
-                        o.hide_render = True
+                # round 24c: the gaskets are real PORON PADS on the
+                # cover tabs now (not a slab), so the diagram SHOWS
+                # them — they are a layer of the stack the reviewer
+                # asked to see. Round-14's "no foam above the PCB"
+                # rule applied to the old full-outline slab.
                 print(f"[scene] stack-colours on ({len(stack_pal)} layers + "
-                      f"pcb traces + component tints; top gaskets hidden)",
+                      f"gerber artwork; poron tab pads shown)",
                       flush=True)
             for grp, dz in EXPLODE.items():
                 for h in parts:
@@ -1985,7 +2012,10 @@ def main():
             # diagram wants -- near and far plates must read at the
             # same scale. x is nudged +12 mm so the asymmetric knob
             # stack lands centred.
-            cam = add_cam("exploded", (cx - 0.072, cy - 0.79, 0.475),
+            # round 24e: lifted from 0.475 to 0.575 -- the PORON pads
+            # sit on the plate's rim and a 30-degree view hid them
+            # behind the switch plate; this angle looks onto that rim.
+            cam = add_cam("exploded", (cx - 0.072, cy - 0.79, 0.575),
                           (cx + 0.008, cy, 0.012), lens=74)
             if args.framecheck:
                 frame_report(cam, all_objs, "exploded", res)

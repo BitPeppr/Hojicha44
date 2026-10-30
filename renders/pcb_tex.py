@@ -34,7 +34,7 @@ MASK_GREEN_D = (12, 54, 30)
 # copper UNDER MASK is not gold -- the resin tints it. It reads as a
 # lighter, more saturated green on a real board, which is exactly why a
 # finished PCB shows its traces as a tonal web rather than as metal.
-COPPER = (64, 146, 84)
+COPPER = (96, 176, 104)
 COPPER_HOT = (74, 146, 84)       # bus/pour edges, a touch lighter
 COPPER_EXPOSED = (206, 170, 92)  # ENIG pads: bright champagne gold
 SILK = (196, 198, 190)
@@ -91,12 +91,13 @@ def _draw_route(d, pts, mm, rng, w_mm=0.25):
     d.line(px, fill=None, width=max(1, int(round(w_mm * mm))), joint="curve")
 
 
-def _line(d, pts, mm, w_mm, col):
-    px = [(x * mm, y * mm) for x, y in pts]
+def _line(d, pts, mm, w_mm, col, org=(0.0, 0.0)):
+    px = [((x - org[0]) * mm, (y - org[1]) * mm) for x, y in pts]
     d.line(px, fill=col, width=max(1, int(round(w_mm * mm))), joint="curve")
 
 
-def _pad(d, x, y, w, h, mm, col, round_=False):
+def _pad(d, x, y, w, h, mm, col, org=(0.0, 0.0), round_=False):
+    x, y = x - org[0], y - org[1]
     x0, y0 = (x - w / 2) * mm, (y - h / 2) * mm
     x1, y1 = (x + w / 2) * mm, (y + h / 2) * mm
     if round_:
@@ -106,10 +107,10 @@ def _pad(d, x, y, w, h, mm, col, round_=False):
                             fill=col)
 
 
-def _via(d, x, y, mm, col, ring=(20, 40, 26)):
+def _via(d, x, y, mm, col, ring=(20, 40, 26), org=(0.0, 0.0)):
     """Annular ring: copper circle with the drill punched through."""
     r = 0.35 * mm
-    cx, cy = x * mm, y * mm
+    cx, cy = (x - org[0]) * mm, (y - org[1]) * mm
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=col)
     ri = 0.16 * mm
     d.ellipse([cx - ri, cy - ri, cx + ri, cy + ri], fill=ring)
@@ -170,7 +171,7 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
     px0, py0 = T(x0 + 2.0, y0 + 2.0)
     px1, py1 = T(x1 - 2.0, y1 - 2.0)
     da.rounded_rectangle([px0, py0, px1, py1], radius=int(1.6 * mm),
-                         fill=(26, 88, 48))
+                         fill=(20, 72, 40))
     hatch = Image.new("L", (W, H), 0)
     dh = ImageDraw.Draw(hatch)
     step = int(1.2 * mm)
@@ -180,7 +181,7 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
     ImageDraw.Draw(pour_mask).rounded_rectangle(
         [px0, py0, px1, py1], radius=int(1.6 * mm), fill=255)
     albedo = Image.composite(
-        Image.new("RGB", (W, H), (30, 98, 54)), albedo,
+        Image.new("RGB", (W, H), (26, 88, 48)), albedo,
         Image.composite(hatch, Image.new("L", (W, H), 0), pour_mask))
     da = ImageDraw.Draw(albedo)
 
@@ -232,7 +233,7 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
             if q is None:
                 continue
             traces.append((route_path((q["x"] + 1.2, q["y"]), (q["x"] + 1.2, lane),
-                                      rng, 0.45), 0.30))
+                                      rng, 0.45), 0.34))
             traces.append(([(group[0]["x"] - 2.0, lane),
                         (group[-1]["x"] + 4.0, lane)], 0.34))
 
@@ -248,7 +249,7 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
             if q is None:
                 continue
             traces.append((route_path((q["x"], q["y"] - 0.9), (lane_x, q["y"] - 0.9),
-                                      rng, 0.5), 0.26))
+                                      rng, 0.5), 0.30))
 
     # ---- switch -> diode stub and pad-to-pad matrix runs
     for p in sws:
@@ -271,7 +272,7 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
             py_ = mcu["y"] - 13.97 + (i // 2) * 2.54
             end = (px_ + sgn * (6.0 + (i % 7) * 3.2),
                    py_ - 4.0 - (i % 5) * 2.6)
-            traces.append((route_path((px_, py_), end, rng, 0.55), 0.26))
+            traces.append((route_path((px_, py_), end, rng, 0.55), 0.30))
 
     # jack / encoder runs
     enc = next((p for p in others if p["ref"].startswith("ENC_")), None)
@@ -290,63 +291,66 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
     # they are drawn on the metal map but get the dull copper ink on
     # the albedo
     for pts, w in traces:
-        _line(dm, pts, mm, w, 255)
-        _line(da, pts, mm, w, COPPER)
+        _line(dm, pts, mm, w, 255, origin)
+        _line(da, pts, mm, w, COPPER, origin)
     dm = ImageDraw.Draw(metal)
     da = ImageDraw.Draw(albedo)
 
     # ---- pads (exposed): drawn last, with a mask-opening ring
     for p in sws:
         for (px_, py_) in sw_pads(p):
-            _pad(da, px_, py_, 2.6, 1.7, mm, COPPER_EXPOSED)
-            _pad(dm, px_, py_, 2.6, 1.7, mm, 255)
+            _pad(da, px_, py_, 2.6, 1.7, mm, COPPER_EXPOSED, origin)
+            _pad(dm, px_, py_, 2.6, 1.7, mm, 255, origin)
         # post holes punched through everything
         for dy in (-5.5, 5.5):
-            da.ellipse([(p["x"] - 0.95) * mm, (p["y"] + dy - 0.95) * mm,
-                        (p["x"] + 0.95) * mm, (p["y"] + dy + 0.95) * mm],
+            hx, hy = p["x"] - origin[0], p["y"] - origin[1] + dy
+            da.ellipse([(hx - 0.95) * mm, (hy - 0.95) * mm,
+                        (hx + 0.95) * mm, (hy + 0.95) * mm],
                        fill=(230, 230, 228))
 
     for q in diodes:
         for dx in (-1.35, 1.35):
-            _pad(da, q["x"] + dx, q["y"], 1.5, 1.5, mm, COPPER_EXPOSED)
-            _pad(dm, q["x"] + dx, q["y"], 1.5, 1.5, mm, 255)
+            _pad(da, q["x"] + dx, q["y"], 1.5, 1.5, mm, COPPER_EXPOSED, origin)
+            _pad(dm, q["x"] + dx, q["y"], 1.5, 1.5, mm, 255, origin)
 
     if mcu is not None:
         for sgn in (-1, 1):
             for i in range(12):
                 px_ = mcu["x"] + sgn * 6.35
                 py_ = mcu["y"] - 13.97 + i * 2.54
-                _pad(da, px_, py_, 1.9, 1.5, mm, COPPER_EXPOSED)
-                _pad(dm, px_, py_, 1.9, 1.5, mm, 255)
+                _pad(da, px_, py_, 1.9, 1.5, mm, COPPER_EXPOSED, origin)
+                _pad(dm, px_, py_, 1.9, 1.5, mm, 255, origin)
 
     for j in jacks:
         for i in range(4):
             _pad(da, j["x"] + 2.5, j["y"] - 3.0 + i * 2.0, 1.6, 1.2, mm,
-                 COPPER_EXPOSED)
-            _pad(dm, j["x"] + 2.5, j["y"] - 3.0 + i * 2.0, 1.6, 1.2, mm, 255)
+                 COPPER_EXPOSED, origin)
+            _pad(dm, j["x"] + 2.5, j["y"] - 3.0 + i * 2.0, 1.6, 1.2, mm, 255,
+                 origin)
 
     if enc is not None:
         for i in range(3):
             _pad(da, enc["x"] - 4.3, enc["y"] - 2.5 + i * 2.5, 1.6, 1.4, mm,
-                 COPPER_EXPOSED)
+                 COPPER_EXPOSED, origin)
             _pad(dm, enc["x"] - 4.3, enc["y"] - 2.5 + i * 2.5, 1.6, 1.4, mm,
-                 255)
-        _pad(da, enc["x"], enc["y"], 2.0, 2.0, mm, COPPER_EXPOSED)
-        _pad(dm, enc["x"], enc["y"], 2.0, 2.0, mm, 255)
+                 255, origin)
+        _pad(da, enc["x"], enc["y"], 2.0, 2.0, mm, COPPER_EXPOSED, origin)
+        _pad(dm, enc["x"], enc["y"], 2.0, 2.0, mm, 255, origin)
 
     # mounting holes + fiducials
     for p in others:
         if p["ref"].startswith("MT_"):
             r = 1.6
-            da.ellipse([(p["x"] - r) * mm, (p["y"] - r) * mm,
-                        (p["x"] + r) * mm, (p["y"] + r) * mm],
-                       fill=(228, 228, 226))
-            da.ellipse([(p["x"] - r + 0.18) * mm, (p["y"] - r + 0.18) * mm,
-                        (p["x"] + r - 0.18) * mm, (p["y"] + r - 0.18) * mm],
+            hx, hy = p["x"] - origin[0], p["y"] - origin[1]
+            da.ellipse([(hx - r) * mm, (hy - r) * mm,
+                        (hx + r) * mm, (hy + r) * mm], fill=(228, 228, 226))
+            da.ellipse([(hx - r + 0.18) * mm, (hy - r + 0.18) * mm,
+                        (hx + r - 0.18) * mm, (hy + r - 0.18) * mm],
                        fill=MASK_GREEN_D)
         if p["ref"].startswith("FID_"):
-            _pad(da, p["x"], p["y"], 1.0, 1.0, mm, COPPER_EXPOSED, round_=True)
-            _pad(dm, p["x"], p["y"], 1.0, 1.0, mm, 255, round_=True)
+            _pad(da, p["x"], p["y"], 1.0, 1.0, mm, COPPER_EXPOSED, origin,
+                 round_=True)
+            _pad(dm, p["x"], p["y"], 1.0, 1.0, mm, 255, origin, round_=True)
 
     # ---- vias, scattered along the routes
     for i in range(70):
@@ -357,11 +361,11 @@ def build_art(placements, bbox, outdir, seed=44, silk_text=True,
         y = t[seg][1] + (t[seg + 1][1] - t[seg][1]) * f
         if x0 + 1 < x < x1 - 1 and y0 + 1 < y < y1 - 1:
             vmask = Image.new("L", (W, H), 0)
-            _via(ImageDraw.Draw(vmask), x, y, mm, 255, ring=0)
+            _via(ImageDraw.Draw(vmask), x, y, mm, 255, ring=0, org=origin)
             albedo.paste(COPPER_EXPOSED, (0, 0), vmask)
             metal.paste(255, (0, 0), vmask)
         if i % 9 == 0:
-            _via(ImageDraw.Draw(metal), x, y, mm, 90, ring=40)
+            _via(ImageDraw.Draw(metal), x, y, mm, 90, ring=40, org=origin)
 
     # ---- silkscreen: switch outlines, diode bars, refs, logo
     f_small = _font(max(9, int(1.05 * mm)))

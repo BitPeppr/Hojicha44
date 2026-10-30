@@ -318,7 +318,6 @@ def proc_weave(name, base=(0.048, 0.051, 0.060)):
     re[0].position, re[0].color = 0.0, (0.86, 0.86, 0.86, 1.0)
     re[1].position, re[1].color = 1.0, (0.96, 0.96, 0.96, 1.0)
     L(dome.outputs["Color"], rramp.inputs["Fac"])
-    L(rramp.outputs["Color"], bsdf.inputs["Roughness"])
 
     # satin sheen: enough to catch the window, not enough to frost
     for _k, _v in (("Sheen Weight", 0.13), ("Sheen Roughness", 0.48)):
@@ -326,6 +325,55 @@ def proc_weave(name, base=(0.048, 0.051, 0.060)):
             bsdf.inputs[_k].default_value = _v
     if "Sheen Tint" in bsdf.inputs:
         bsdf.inputs["Sheen Tint"].default_value = (1.0, 0.96, 0.90, 1.0)
+
+    # ---- the WEAR ZONE (round 24c) ------------------------------
+    # A mat that has had two split halves sitting on it for a year is
+    # flatter and shinier where the forearms rest. Generated space is
+    # the mat's bbox, so the radius is measured in METRES from the
+    # centre (corrected for the 0.9 x 0.4 aspect), and the mask lifts
+    # the sheen and drops the roughness -- a soft, believable polish
+    # that also gives the weave a reason to read differently across
+    # the frame.
+    wear_c = nt.nodes.new("ShaderNodeVectorMath")
+    wear_c.operation = "SUBTRACT"
+    wear_c.inputs[1].default_value = (0.5, 0.5, 0.0)
+    L(tc.outputs["Generated"], wear_c.inputs[0])
+    wear_s = nt.nodes.new("ShaderNodeVectorMath")
+    wear_s.operation = "MULTIPLY"
+    wear_s.inputs[1].default_value = (0.40, 0.90, 0.0)   # metres
+    L(wear_c.outputs["Vector"], wear_s.inputs[0])
+    wear_len = nt.nodes.new("ShaderNodeVectorMath")
+    wear_len.operation = "LENGTH"
+    L(wear_s.outputs["Vector"], wear_len.inputs[0])
+    wear = nt.nodes.new("ShaderNodeMapRange")
+    wear.inputs["From Min"].default_value = 0.135
+    wear.inputs["From Max"].default_value = 0.330
+    wear.inputs["To Min"].default_value = 1.0
+    wear.inputs["To Max"].default_value = 0.0
+    for _k, _v in (("Interpolation Type", "SMOOTHSTEP"),
+                   ("clamp", True)):
+        if _k in wear.inputs:
+            try:
+                wear.inputs[_k].default_value = _v
+            except Exception:
+                pass
+    L(wear_len.outputs["Value"], wear.inputs["Value"])
+    sheen_w = nt.nodes.new("ShaderNodeMath")
+    sheen_w.operation = "MULTIPLY_ADD"
+    sheen_w.inputs[1].default_value = 0.32
+    sheen_w.inputs[2].default_value = 0.13
+    L(wear.outputs["Result"], sheen_w.inputs[0])
+    if "Sheen Weight" in bsdf.inputs:
+        L(sheen_w.outputs["Value"], bsdf.inputs["Sheen Weight"])
+    wear_r = nt.nodes.new("ShaderNodeMath")
+    wear_r.operation = "MULTIPLY_ADD"
+    wear_r.inputs[1].default_value = -0.10
+    L(wear.outputs["Result"], wear_r.inputs[0])
+    rr_new = nt.nodes.new("ShaderNodeMath")
+    rr_new.operation = "ADD"
+    L(fuzz.outputs["Fac"], rr_new.inputs[0])
+    L(wear_r.outputs["Value"], rr_new.inputs[1])
+    L(rr_new.outputs["Value"], bsdf.inputs["Roughness"])
 
     mat["micro_texture"] = True
     return mat
@@ -561,7 +609,7 @@ def cable(name, pts, r, mat, keyboard=False):
     cu.dimensions = "3D"
     cu.fill_mode = "FULL"
     cu.bevel_depth = r
-    cu.bevel_resolution = 6
+    cu.bevel_resolution = 10
     spl = cu.splines.new("BEZIER")
     spl.bezier_points.add(len(pts) - 1)
     for p, co in zip(spl.bezier_points, pts):
@@ -796,7 +844,8 @@ def main():
     args = S.parse_args()
     res = tuple(int(v) for v in args.res.split("x"))
     shots = [s for s in args.shots.split(",")
-             if s in ("desk", "mat", "gaming", "dev")] or ["desk", "mat"]
+             if s in ("desk", "mat", "gaming", "dev", "laptop")
+             ] or ["desk", "mat"]
     os.makedirs(os.path.join(args.out, "env"), exist_ok=True)
     S.init_scene()
     parts, all_objs = S.build_keyboard(args)
@@ -883,6 +932,46 @@ def main():
     mat_objs = ES.build_desk_mat((cx, cy - 0.010, desk_z), _esmats)
     PROPS.extend(mat_objs)
 
+    # ---- round 24d: the LAPTOP set ---------------------------------
+    # One hero computer instead of the monitor / mini / dock / mouse.
+    # A MacBook Pro 16" M3 Max (Space Black) built to the shipped
+    # numbers in props_macbook.py, the keyboard turned to a different
+    # angle, plus a phone, two pens and a USB-C stick.
+    import props_macbook as MB
+    # the laptop faces the camera (its screen is the one screen in
+    # the frame), angled a few degrees off-axis so it is not a mugshot
+    mb_objs = MB.build_macbook((cx - 0.245, cy + 0.075, desk_z),
+                               rot_z=6.0, open_deg=106.0)
+    PROPS.extend(mb_objs)
+    lap_objs = list(mb_objs)
+    ph_objs = MB.build_phone((cx - 0.60, cy - 0.30, desk_z), rot_z=-24.0)
+    PROPS.extend(ph_objs)
+    pen_objs = (MB.build_pen((cx - 0.075, cy - 0.285, desk_z),
+                             rot_z=math.radians(-24.0))
+                + MB.build_pen((cx - 0.030, cy - 0.312, desk_z),
+                               rot_z=math.radians(-24.0),
+                               colour=(0.035, 0.045, 0.075)))
+    PROPS.extend(pen_objs)
+    # a USB-C stick, lying at the laptop's right corner. Both halves
+    # are offset ALONG the stick's own axis -- the first pass offset
+    # the shell diagonally in world space and read as an L.
+    usb_objs = []
+    _ux, _uy = cx - 0.045, cy - 0.185
+    _uang = math.radians(24.0)
+    _ca, _sa = math.cos(_uang), math.sin(_uang)
+    _u = box("env_usb_body", (_ux, _uy, desk_z + 0.0045),
+             (0.026, 0.0125, 0.009), m_rubber, bevel=0.0016)
+    _u.rotation_euler.z = _uang
+    _tx = _ux + _ca * 0.018
+    _ty = _uy + _sa * 0.018
+    _c = box("env_usb_tip", (_tx, _ty, desk_z + 0.0045),
+             (0.010, 0.0075, 0.0042), m_alu, bevel=0.0008)
+    _c.rotation_euler.z = _uang
+    usb_objs = [_u, _c]
+    PROPS.extend(usb_objs)
+
+    # ---- round 12: the sculpted props replace the primitives
+    # (env_props.py — the agent-built high-detail module)
     ep_mats = {"nb_pages": m_pages, "mon_screen": m_screen}
     # materials for my own builders (round 17)
     my_mats = {
@@ -905,19 +994,22 @@ def main():
     # generic mini PC: vent grilles both flanks, full back I/O, front
     # USB-C x2 + headphone, debossed top circle
     mini_x, mini_y = cx + 0.42, cy + 0.36
-    PROPS.extend(EP.build_minipc((mini_x, mini_y, desk_z), ep_mats))
+    mini_objs = EP.build_minipc((mini_x, mini_y, desk_z), ep_mats)
+    PROPS.extend(mini_objs)
     # round 24: CC0 Grab3D asset (9.7k tris, 2K normal/roughness),
     # retinted graphite — the procedural v4 read as "a white blob"
     # partly because my_mats overrode its graphite with a white
     # round-19 material (ms_body 0.83 / rough 0.16) and partly because
     # it never had a real button/wheel breakdown.
-    PROPS.extend(P2.build_mouse_asset((cx + 0.40, cy - 0.105, desk_z),
-                                      rot_z=0.38))
+    mouse_objs = P2.build_mouse_asset((cx + 0.40, cy - 0.105, desk_z),
+                                      rot_z=0.38)
+    PROPS.extend(mouse_objs)
     # round 21: props v2 — the HOLLOW holder (outer tapered wall + inner
     # wall + thick rim = a cavity you can see into) with the three
     # standing pens built inside as one assembly
     cupx, cupy = cx - 0.62, cy + 0.20
-    PROPS.extend(P2.build_pen_holder_v3((cupx, cupy, desk_z), my_mats))
+    cup_objs = P2.build_pen_holder_v3((cupx, cupy, desk_z), my_mats)
+    PROPS.extend(cup_objs)
     # notebook: overhanging covers, page block with true sheet lines
     # (proc_page_edges), spine ridge, strap, ribbon, title block
     nbx, nby = cx - 0.44, cy + 0.33
@@ -925,8 +1017,8 @@ def main():
                                       ep_mats,
                                       rot_z=math.radians(-14)))
     # round 21: props v2 — tapered + glazed, meniscus, genuine C-handle
-    PROPS.extend(P2.build_mug_v3((cx + 0.70, cy + 0.30, desk_z),
-                                 my_mats))
+    mug_objs = P2.build_mug_v3((cx + 0.70, cy + 0.30, desk_z), my_mats)
+    PROPS.extend(mug_objs)
     # architect lamp: rocker switch, knuckle joints, real bulb
     lampx, lampy = cx - 0.80, cy + 0.44
     shade_pt = (lampx + 0.150, lampy - 0.110, desk_z + 0.345)
@@ -950,6 +1042,7 @@ def main():
         (0.092, 0.044, 0.015), m_alu, bevel=0.004)
     box("env_dock_lid", (dock_x, dock_y, dock_z + 0.0205),
         (0.084, 0.036, 0.0018), m_alu, bevel=0.0012)
+    dock_objs = None
     for i, (px, pw, ph) in enumerate(((-0.024, 0.009, 0.0034),
                                       (-0.008, 0.009, 0.0034),
                                       (0.010, 0.0135, 0.0040),
@@ -1037,9 +1130,14 @@ def main():
     tip_r = tuple(hole_r + dir_r * PLUG_TIP)
     mid_y = (tip_l[1] + tip_r[1]) / 2
     mid_x = (tip_l[0] + tip_r[0]) / 2
-    sag_z = mat_top + 0.0035
+    # The jacket is r=2.3 mm. Too low and the sheath sinks into the
+    # weave (round 24d); too high and the run FLOATS (round 24e).
+    # 3.8 mm at the control point leaves ~1.5 mm of air, and the
+    # spline's own overshoot brings the belly down until it reads as
+    # resting on the fabric.
+    sag_z = mat_top + 0.0038
     sag = (mid_x, mid_y, sag_z)
-    cable("env_trrs_cable", [tip_l, sag, tip_r], 0.0024, m_cable,
+    cable("env_trrs_cable", [tip_l, sag, tip_r], 0.0023, m_cable,
           keyboard=True)
 
     # USB-C: nano (left half, back rim) -> dock, right-angle at the dock
@@ -1056,12 +1154,17 @@ def main():
     dock_port = (dock_x - 0.006, dock_y - 0.026, dock_z + 0.010)
     box("env_usbc_dock_plug", (dock_x - 0.006, dock_y - 0.027, dock_z + 0.010),
         (0.013, 0.010, 0.0060), m_connector, bevel=0.0015, cable=True)
+    # round 24e: the second control point sat at mat_top + 5 mm and the
+    # third at desk_z + 4 mm -- i.e. 2.6 mm INSIDE the mat, so the run
+    # sank through the weave on its way to the dock ("cable still clips
+    # mat"). Every control point now clears the mat surface by at least
+    # the 2 mm jacket radius, plus visible air.
     cable("env_usbc_cable", [
         usb_exit,
-        (usb_exit[0] + 0.040, usb_exit_y + 0.020, mat_top + 0.005),
-        (dock_x - 0.045, dock_y - 0.030, desk_z + 0.004),
+        (usb_exit[0] + 0.042, usb_exit_y + 0.032, mat_top + 0.0085),
+        (dock_x - 0.058, dock_y - 0.036, mat_top + 0.0055),
         dock_port,
-    ], 0.0020, m_cable, keyboard=True)
+    ], 0.0022, m_cable, keyboard=True)
     # round 17: the full visible power/data chain — the desk shot
     # answers "where is power coming from?": a wall outlet behind the
     # desk, the mini's adapter cable arcing up to it, a short mini->
@@ -1178,6 +1281,16 @@ def main():
     # behind the halves (wireless gaming story)
     gaming_cam = S.add_cam("env_gaming", (cx + 0.06, cy - 1.32, 0.60),
                            (cx - 0.02, cy + 0.10, 0.06), lens=32)
+    # a dedicated low rim for the laptop set (0 elsewhere)
+    _rim = light("env_lap_rim", "AREA", 0.0,
+                 (cx - 0.95, cy - 0.30, 0.16),
+                 (cx - 0.26, cy + 0.10, 0.10), color=(1.0, 0.97, 0.92),
+                 size=0.55)
+    # laptop: a three-quarter over the desk — the MacBook screen and
+    # deck in the left third, the split keyboard on the mat to the
+    # right, phone + pens in the foreground
+    laptop_cam = S.add_cam("env_laptop", (cx - 0.06, cy - 1.02, 0.66),
+                           (cx - 0.02, cy + 0.07, 0.075), lens=32)
     # dev: high top-down over the seam, the mug between the halves,
     # notebook + monitor glow — the software-dev setup
     dev_cam = S.add_cam("env_dev", (cx + 0.06, cy - 0.34, 0.86),
@@ -1233,10 +1346,13 @@ def main():
                        + mat_objs)
     # the dev top-down frames the SETUP: keyboard on the mat
     dev_subjects = ([o for o in all_objs] + mat_objs)
+    laptop_subjects = ([o for o in all_objs] + mat_objs + lap_objs
+                       + ph_objs + pen_objs + usb_objs)
     cams = {"desk": (desk_cam, desk_subjects),
             "mat": (mat_cam, mat_subjects),
             "gaming": (gaming_cam, gaming_subjects),
-            "dev": (dev_cam, dev_subjects)}
+            "dev": (dev_cam, dev_subjects),
+            "laptop": (laptop_cam, laptop_subjects)}
     if args.framecheck:
         for name, (cam, subj) in cams.items():
             if name in shots:
@@ -1253,6 +1369,37 @@ def main():
         for o in CABLES:
             o.hide_render = (name != "mat")
         set_visible(tower_objs, name == "gaming")
+        # the laptop set carries NO monitor, mini, dock, mouse or mug:
+        # one computer, and the keyboard turned to a different angle
+        lap_set = (name == "laptop")
+        for o in (mon_objs + mini_objs + mouse_objs + mug_objs + cup_objs
+                  + [q for q in PROPS if q.name.startswith("env_dock")]):
+            if lap_set:
+                o.hide_render = True
+        for o in lap_objs + ph_objs + pen_objs + usb_objs:
+            o.hide_render = not lap_set
+        if lap_set:
+            # no wiring in this set at all: the monitor/dock cables
+            # were still hanging in midair behind the laptop
+            for _o in PROPS:
+                if getattr(_o, "type", None) == "CURVE":
+                    _o.hide_render = True
+            # a low rim from the left so the black shell separates
+            # from the background and the deck reads against the lid
+            _rim.data.energy = 6.0
+            _rim.data.color = (1.0, 0.97, 0.92)
+            # turn the whole keyboard (both halves ride their pose
+            # empties) and slide it right on the mat
+            for _pe in (bpy.data.objects.get("pose_L"),
+                        bpy.data.objects.get("pose_R")):
+                if _pe is None:
+                    continue
+                _pe.rotation_euler.z += math.radians(13.0)
+                _pe.location.x += 0.20
+                _pe.location.y -= 0.02
+            for _mo in mat_objs:
+                _mo.location.x += 0.19
+                _mo.location.y -= 0.02
         gaming = (name == "gaming")
         li_window.data.energy = 4.0 if gaming else 14.0
         li_fill.data.energy = 1.2 if gaming else 2.2
