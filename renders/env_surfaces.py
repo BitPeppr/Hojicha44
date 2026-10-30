@@ -563,34 +563,25 @@ def build_desk_mat(loc, mats, rot_z=0.0):
     # the crease the flap lifts along: a dark seam on the sheet
     objs.append(_panel("mat_fold_crease", wA, wB, 0.0016, 0.0008, m_crease))
 
-    # ---- the stitched border (round 24c) -------------------------
-    # A real bound mat shows TWO things: a raised edge band (the folded
-    # and glued rim) and the stitch run that binds it. The old welt was
-    # a single loop of raised boxes -- a dotted ridge, read as "a
-    # string of pearls". Now: a continuous rounded rim band, plus a
-    # denser stitch run on top of it, each stitch TWISTED +/-20 deg off
-    # the tangent so the run reads as thread, and sunk 0.35 mm into the
-    # band so it looks sewn into it rather than glued on.
+    # ---- stitched border (round 24f) -----------------------------
+    # The raised rim band + twisted stitch run read as a fat braided
+    # cord lying on the mat's edge. Real bound mats are FLAT: the
+    # binding is pressed into the fabric and all you see is a fine
+    # stitch line a few millimetres in from the edge. So the band is
+    # gone and the stitches are small, low domes with no twist.
     hw = MAT_W / 2.0 - WELT_INSET
     hd = MAT_D / 2.0 - WELT_INSET
     wr = max(0.0015, MAT_R - WELT_INSET)
-    for i, (px, py, ang) in enumerate(_rrect_outline(hw, hd, wr, 0.018)):
-        objs.append(_box(f"mat_rim_{i:03d}", loc, rz,
-                         (px, py, top + 0.00055),
-                         (0.0195, 0.0072, 0.0016), m_fabric,
-                         rot=(0.0, 0.0, ang)))
-    for i, (px, py, ang) in enumerate(_rrect_outline(hw, hd, wr, 0.0042)):
-        tw = 20.0 if (i % 2 == 0) else -20.0
+    for i, (px, py, ang) in enumerate(_rrect_outline(hw, hd, wr, 0.0030)):
         objs.append(_box(f"mat_stitch_{i:03d}", loc, rz,
-                         (px, py, top + 0.00115),
-                         (0.0034, 0.0011, 0.00065), m_welt,
-                         rot=(0.0, 0.0, ang + tw)))
-    # a woven maker's label, sewn at the back-right corner: small, dark,
-    # with its own finer weave -- the detail that says "product"
-    lx = hw - 0.030
-    ly = hd - 0.016
-    objs.append(_box("mat_label", loc, rz, (lx, ly, top + 0.00035),
-                     (0.030, 0.014, 0.0007), m_welt, rot=(0.0, 0.0, 90.0)))
+                         (px, py, top + 0.00012),
+                         (0.0019, 0.00055, 0.00028), m_welt,
+                         rot=(0.0, 0.0, ang)))
+    # a woven maker's label, flat and small, at the back-right corner
+    lx = hw - 0.028
+    ly = hd - 0.013
+    objs.append(_box("mat_label", loc, rz, (lx, ly, top + 0.00006),
+                     (0.026, 0.011, 0.00025), m_welt, rot=(0.0, 0.0, 90.0)))
     return objs
 
 

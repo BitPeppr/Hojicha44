@@ -817,9 +817,9 @@ def proc_cable_braid(name):
     dia = _math(nt, "MULTIPLY", "diamond_braid")
     L(wa.outputs["Fac"], dia.inputs[0])
     L(wb.outputs["Fac"], dia.inputs[1])
-    braid = _ramp(nt, [(0.0, (0.62, 0.62, 0.62)),
-                       (0.52, (1.02, 1.02, 1.02)),
-                       (1.0, (1.22, 1.22, 1.22))],
+    braid = _ramp(nt, [(0.0, (0.84, 0.84, 0.84)),
+                       (0.52, (1.00, 1.00, 1.00)),
+                       (1.0, (1.10, 1.10, 1.10))],
                   name="braid_shading", interp="B_SPLINE")
     L(dia.outputs["Value"], braid.inputs["Fac"])
 
@@ -836,7 +836,7 @@ def proc_cable_braid(name):
     h = _math(nt, "ADD", "braid_height")
     L(dia.outputs["Value"], h.inputs[0])
     L(fz.outputs["Value"], h.inputs[1])
-    bump = _bump(nt, 0.55, 0.00060, name="braid_bump")
+    bump = _bump(nt, 0.28, 0.00035, name="braid_bump")
     L(h.outputs["Value"], bump.inputs["Height"])
     L(bump.outputs["Normal"], bsdf.inputs["Normal"])
 
